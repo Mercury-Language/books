@@ -2,5 +2,172 @@
 
 \chapter{Arrays}
 
+An array in Mercury is a mutable vector of values, indexed by position
+starting from zero.  Arrays are unique in that they provide $O(1)$
+access and update.  In order to make this property safe in a declarative
+language, arrays have to be unique: a mutable array can only ever have
+one live reference at any given moment.
 
+\section{The Array Type, Modes and Insts}
 
+Arrays are abstract types,
+\begin{verbatim}
+:- type array(T).
+\end{verbatim}
+
+The three main modes for @array@s are @array_di@, @array_uo@ and
+@array_ui@ with the same meaning as @di@, @uo@ and @ui@ respectively,
+but specialised for @array@s.  An @array@ of values with more complex insts
+(e.g. arrays of predicates) must be passed around using the parametric
+insts @array(I)@ and @uniq_array(I)@, the former being used for
+immutable @array@s.  \XXX{Of course, even the @array@ access preds don't use
+the parametric modes, so they're rather useless except for inst
+casting, in which case we don't really need them anyway...}
+
+\section{Initialising Arrays}
+
+Since Mercury @array@s are polymorphic and there is no equivalent notion
+of C's @NULL@ and so forth, @array@s must be initialised with a
+programmer-supplied default value to be be placed in each @array@
+cell.  The first argument is the number of cells the @array@ is to have:
+\begin{verbatim}
+:- func init(int, T) = aray(T).
+\end{verbatim}
+The empty @array@ is a special case (@array@s can be resized) and can be
+constructed without an initialiser:
+\begin{verbatim}
+:- func make_empty_array = array(T).
+\end{verbatim}
+Finally, it is possible to initialise an array from a list:
+\begin{verbatim}
+:- func array(list(T)) = array(T).
+\end{verbatim}
+
+\section{Array Bounds}
+
+\XXX{The current design pays lip-service to the notion that we may one
+day have offset arrays.  I don't think we should mention this here,
+since I think it was a mistake to mention it and not go the whole hog.}
+
+Array cells are indexed starting from zero.  The highest numbered cell
+index in an @array@ with @N@ cells is therefore @N - 1@.  The @size@
+function returns the number of cells in an @array@; the @max@ function
+return the highest numbered index of the array, or @-1@ if the array is
+empty \XXX{the documentation for @max/1@ should reflect this}:
+\begin{verbatim}
+:- func size(array(T)) = int.
+:- func size(array_ui) = out is det.
+:- func size(in      ) = out is det.
+
+:- func max(array(T)) = int.
+:- func max(array_ui) = out is det.
+:- func max(in      ) = out is det.
+\end{verbatim}
+It follows that @size(A) = max(A) + 1@.
+
+There is a predicate to check that a given index lies within a given
+@array@'s bounds:
+\begin{verbatim}
+:- pred in_bounds(array(T), int).
+:- mode in_bounds(array_ui, in ) is semidet.
+:- mode in_bounds(in,       in ) is semidet.
+\end{verbatim}
+
+\section{Access and Update}
+
+Array members are accessed via the conventionally named functions:
+\begin{verbatim}
+:- func array(T) ^ elem(int) = T.
+:- mode array_ui ^ elem(in ) = out is det.
+:- mode in       ^ elem(in ) = out is det.
+
+:- func ( array(T) ^ elem(int) := T  ) = array(T).
+:- mode ( array_di ^ elem(in ) := in ) = array_uo is det.
+\end{verbatim}
+These functions check that the given index is within the array bounds
+and will throw an exception if not.  These lookup operations are both
+$O(1)$ in space and time.  \XXX{How good are C compilers at moving
+bounds checks out of inner loops?}
+
+\XXX{Should I mention the unsafe versions?}
+
+There are two other predicates each for access and update that are
+sometimes useful.  The pair, @semidet_lookup@ and @semidet_set@, merely
+fail if the index is out of bounds, rather than throwing an exception:
+\begin{verbatim}
+:- pred semidet_lookup(array(T), int, T  ).
+:- mode semidet_lookup(array_ui, in,  out) is semidet.
+:- mode semidet_lookup(in,       in,  out) is semidet.
+
+:- pred semidet_set(array(T), int, T, array(T)).
+:- mode semidet_set(array_di, in, in, array_uo) is semidet.
+\end{verbatim}
+
+The second pair, @slow_set@ and @semidet_slow_set@, do not require the
+input @array@ to be unique:
+\begin{verbatim}
+:- func slow_set(array(T), int, T ) = array(T).
+:- mode slow_set(array_ui, in,  in) = array_uo is det.
+:- mode slow_set(in,       in,  in) = array_uo is det.
+
+:- pred semidet_slow_set(array(T), int, T,  array(T)).
+:- mode semidet_slow_set(array_ui, in,  in, array_uo) is semidet.
+:- mode semidet_slow_set(in,       in,  in, array_uo) is semidet.
+\end{verbatim}
+If the input @array@ is not unique, then destructive update (i.e. $O(1)$
+update) is not possible so a unique copy -- $O(n)$ -- of the input
+@array@ is made made and then updated.  As before, @semidet_slow_set@
+will fail rather than throw an exception if the index argument is out of
+bounds.
+
+% \XXX{Why is the unique input argument @array_ui@ rather than @array_di@ ?
+% Now that we have mode-specific clauses, we should not have a problem.}
+
+\section{Utility Functions and Predicates}
+
+\XXX{Here!}
+
+\section{Implementing Multi-Dimensional Arrays}
+
+As provided, Mercury arrays are one-dimensional.  Some applications
+require arrays with two or more dimensions.  These kinds of arrays come
+in two flavours: rectangular and ragged.
+
+A rectangular @array@ with dimensions @W1 * W2 * ... * Wn@ is a
+one-dimensional @array@ whose cells are indexed by @(X1, X2, ..., Xn)@
+where @0 =< Xi < Wi@, mapping to the index
+@(W1 * X1) + (W2 * X2) + ... + (Wn * Xn)@ in the one-dimensional
+representation.
+
+A ragged @array@ is one whose cells are themselves @array@s.  Hence the
+cell whose index is given by @(X1, X2, ..., Xn)@ in an $n$-dimensional
+ragged array is accessed via
+@A ^ elem(X1) ^ elem(X2) ^ ... ^ elem(Xn)@.  Since an @array@'s size is
+not part of its type, there is no requirement that each of the elements
+of @A ^ elem(X1) ^ elem(X2) ^ ... ^ elem(Xj)@ (for some @j =< n@) have
+the same size.  Accessing a cell in a ragged @array@ is usually a little
+slower than accessing a cell in a rectangular @array@; however, ragged
+@array@s may be much more economical in terms of space for sparse data.
+
+Representing rectangular and ragged arrays each requires a little more
+work.
+
+\subsection{Rectangular Arrays}
+
+\XXX{I've written the @table@ library module.  Get it checked in and
+talk about it here.}
+
+It is necessary to construct a special-purpose representation for each
+number of dimensions.  Here is an example of how one might code up a
+two-dimensional @array@ ADT:
+\begin{verbatim}
+
+\end{verbatim}
+
+\subsection{Ragged Arrays}
+
+\section{Caveats}
+
+\XXX{They're not really unique at the moment.}
+
+\XXX{Get nested uniqueness working.}

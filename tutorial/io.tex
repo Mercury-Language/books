@@ -52,9 +52,9 @@ exposition):
 :- mode main(di, uo) is det.
 
 main(IO0, IO) :-
-    io__write_string("pi = ", IO0, IO1),
-    io__write_float(math__pi, IO1, IO2),
-    io__nl(                   IO2, IO ).
+    io.write_string("pi = ", IO0, IO1),
+    io.write_float(math.pi, IO1, IO2),
+    io.nl(                   IO2, IO ).
 \end{verbatim}
 The type of the IO state is called just io and is defined
 as an abstract type in the @io@ library module.  The
@@ -62,10 +62,10 @@ top-level predicate @main/2@ takes the initial IO state as a
 @di@ mode argument (\emph{destructive input}), and produces another as a
 @uo@ mode result (\emph{unique output}).  The three IO operations in the body
 show how the initial IO state, @IO0@, is transformed into
-the final IO state, @IO@.  So, @io__write_string/3@ destroys
+the final IO state, @IO@.  So, @io.write_string/3@ destroys
 @IO0@ and produces @IO1@ as a unique output.  Next,
-@io__write_float/3@ destroys @IO1@ and produces @IO2@ as a
-unique output.  Finally, @io__nl@ (which writes out a
+@io.write_float/3@ destroys @IO1@ and produces @IO2@ as a
+unique output.  Finally, @io.nl@ (which writes out a
 newline) destroys @IO2@ and produces @IO@ as a unique output.
 
 In order to ensure that old versions of the world state cannot
@@ -86,8 +86,8 @@ Example:
 :- mode main(di, uo) is det.
 
 main(IO0, IO) :-
-    io__write_string("Hello, ",  IO0, IO1),
-    io__write_string("world!\n", IO0, IO ).
+    io.write_string("Hello, ",  IO0, IO1),
+    io.write_string("world!\n", IO0, IO ).
 \end{verbatim}
 Here @IO0@ is used twice; the compiler spots the bug and
 rejects the program with
@@ -158,11 +158,11 @@ For example, the following code
 write_strings([],            !IO).
 
 write_strings([S1],          !IO) :-
-    io__write_string(S1,     !IO).
+    io.write_string(S1,     !IO).
 
 write_strings([S1, S2 | Ss], !IO) :-
-    io__write_string(S1,     !IO),
-    io__write_string(", ",   !IO),
+    io.write_string(S1,     !IO),
+    io.write_string(", ",   !IO),
     write_strings(Ss,        !IO).
 \end{verbatim}
 is transformed by the compiler into\footnote{Note that the pred and mode declarations reflect
@@ -178,11 +178,11 @@ write_strings([],            IO0, IO) :-
     IO = IO0.
 
 write_strings([S1],          IO0, IO) :-
-    io__write_string(S1,     IO0, IO).
+    io.write_string(S1,     IO0, IO).
 
 write_strings([S1, S2 | Ss], IO0, IO) :-
-    io__write_string(S1,     IO0, IO1),
-    io__write_string(", ",   IO1, IO2),
+    io.write_string(S1,     IO0, IO1),
+    io.write_string(", ",   IO1, IO2),
     write_strings(Ss,        IO2, IO ).
 \end{verbatim}
 Henceforth we will use state variable syntax rather than
@@ -205,36 +205,36 @@ with.
 The @io@ library module includes predicates for the output
 of the basic types:
 \begin{verbatim}
-:- pred io__write_string(string, io, io).
-:- mode io__write_string(in,     di, uo) is det.
+:- pred io.write_string(string, io, io).
+:- mode io.write_string(in,     di, uo) is det.
 
-:- pred io__write_char(char, io, io).
-:- mode io__write_char(in,   di, uo) is det.
+:- pred io.write_char(char, io, io).
+:- mode io.write_char(in,   di, uo) is det.
 
-:- pred io__write_int(int, io, io).
-:- mode io__write_int(in,  di, uo) is det.
+:- pred io.write_int(int, io, io).
+:- mode io.write_int(in,  di, uo) is det.
 
-:- pred io__write_float(float, io, io).
-:- mode io__write_float(in,    di, uo) is det.
+:- pred io.write_float(float, io, io).
+:- mode io.write_float(in,    di, uo) is det.
 \end{verbatim}
 However, it's typically easier to use the more general
 formatted output predicate:
 \begin{verbatim}
-:- pred io__format(string, list(poly_type), io, io).
-:- mode io__format(in,     in,              di, uo) is det.
+:- pred io.format(string, list(poly_type), io, io).
+:- mode io.format(in,     in,              di, uo) is det.
 \end{verbatim}
 The @string@ argument describes how the output is to be formatted, very
 similar in spirit and detail to what one would pass to C's @printf()@.
 The @list@ argument is a type safe means of passing the parameters to be
 formatted.
 
-Using @io__format/4@ one might write
+Using @io.format/4@ one might write
 \begin{verbatim}
 :- pred write_record(string, int, float, io, io).
 :- mode write_record(in,     in,  in,    di, uo) is det.
 
 write_record(Name, Age, Children, !IO) :-
-    io__format("%s is %d years old and has %f children.\n",
+    io.format("%s is %d years old and has %f children.\n",
                [s(Name), i(Age), f(Children)], !IO).
 \end{verbatim}
 and then we could call
@@ -252,15 +252,15 @@ functionally equivalent
 :- mode write_record(in,     in,  in,    di, uo) is det.
 
 write_record(Name, Age, Children,           !IO) :-
-    io__write_string(Name,                  !IO),
-    io__write_string(" is ",                !IO),
-    io__write_int(Age,                      !IO),
-    io__write_string(" years old and has ", !IO),
-    io__write_float(Children,               !IO),
-    io__write_string(" children.\n",        !IO).
+    io.write_string(Name,                  !IO),
+    io.write_string(" is ",                !IO),
+    io.write_int(Age,                      !IO),
+    io.write_string(" years old and has ", !IO),
+    io.write_float(Children,               !IO),
+    io.write_string(" children.\n",        !IO).
 \end{verbatim}
 
-In fact, @io__format/4@ is quite a bit more powerful, in
+In fact, @io.format/4@ is quite a bit more powerful, in
 that the @%@ formatting specifications can include
 details as to the style of formatting, precision,
 justification and so forth.
@@ -268,10 +268,10 @@ justification and so forth.
 \XXX{I'm not sure I should mention @io\_\_print/3@ this early.}
 Another useful predicate the @io@ library module provides is
 \begin{verbatim}
-:- pred io__print(T,  io, io).
-:- mode io__print(in, di, uo) is det.
+:- pred io.print(T,  io, io).
+:- mode io.print(in, di, uo) is det.
 \end{verbatim}
-@io__print/3@ is used to print a representation of arbitrary
+@io.print/3@ is used to print a representation of arbitrary
 Mercury values.  Be aware, though, that if you try to
 print the results of expressions, the compiler may ask you
 to supply more type information to help resolve what
@@ -294,14 +294,14 @@ typically on of three things can happen:
 To this end the @io@ library module defines the following
 type to report the results of input operations:
 \begin{verbatim}
-:- type io__result(T) ---> ok(T)
+:- type io.result(T) ---> ok(T)
                       ;    eof
-                      ;    error(io__error).
+                      ;    error(io.error).
 \end{verbatim}
 In order, @ok(X)@ is returned if the input operation
 succeeded, reading @X@; @eof@ is returned if the end of file
 has been reached; and @error(ErrorCode)@ is returned if
-something went wrong (the function @io__error_message/1@ can
+something went wrong (the function @io.error_message/1@ can
 be used to turn @ErrorCode@ into a printable error message.)
 
 This arrangement forces the programmer to handle the error
@@ -318,17 +318,17 @@ respectively...}
 
 Two very basic input predicates are
 \begin{verbatim}
-:- pred io__read_char(io__result(char), io, io).
-:- mode io__read_char(in,               di, uo) is det.
+:- pred io.read_char(io.result(char), io, io).
+:- mode io.read_char(in,               di, uo) is det.
 
-:- pred io__read_line_as_string(io__result(string), io, io).
-:- mode io__read_line_as_string(in,                 di, uo)
+:- pred io.read_line_as_string(io.result(string), io, io).
+:- mode io.read_line_as_string(in,                 di, uo)
             is det.
 \end{verbatim}
 
 The input predicates are also less comprehensive in the
-sense that there are no predicates @io__read_int/3@,
-@io__read_float/3@ or @io__read_string/3@.  The problem is
+sense that there are no predicates @io.read_int/3@,
+@io.read_float/3@ or @io.read_string/3@.  The problem is
 that it's not clear exactly what should be allowed to
 terminate the input stream for an @int@, @float@ or @string@.
 Instead, the library leaves issues of parsing up to
@@ -350,16 +350,16 @@ letters in the input stream:
 :- import_module char, exception.
 
 main(!IO) :-
-    io__read_char(R, !IO),
+    io.read_char(R, !IO),
     (
         R = ok(C),
-        io__write_char(char__to_upper(C), !IO),
+        io.write_char(char.to_upper(C), !IO),
         main(!IO)
     ;
         R = eof
     ;
         R = error(E),
-        exception__throw(E)
+        exception.throw(E)
     ).
 \end{verbatim}
 

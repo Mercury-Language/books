@@ -2,273 +2,344 @@
 
 \chapter{Logic and Logic Programming}
 
+\XXX{Convert all logic to tt and Mercury syntax.  Add comments in the
+intro to make it clear what it would look like in a logic text book.}
+
 While programming in a purely functional style is a fairly intuitive
 notion, the notion of programming in logic might at first seem a little
 odd.  Nevertheless, in this section we shall demonstrate that there is
-an easily understood logic-based programming paradigm.  But first, a
+an easily understood logic-based programming paradigm.  A firm grasp of
+logic is a great help in understanding Mercury, so we start with a
 refresher course on basic logic.
+
+\section{The Abstract Stuff}
+
+To quote Douglas Adams, \emph{Don't Panic!}
+
+\subsection{What's the Point?}
+
+Logics help us to reason about the world.  Ordinary, natural language is
+generally too verbose and too imprecise to use effectively in complex
+situations.  When thinking about computer programs the problem is
+exacerbated because computers take everything we say to them literally
+and they have absolutely no imagination.
+
+A logic allows us to say simple things clearly and concisely and gives
+us an unambiguous mechanism for deducing more complex things thereafter.
+
+The simplicity of logic can be deceptive in two ways.  The first is it
+often seems \emph{too} simple to be of any use.  The second is that one
+is often tempted to say of a particular statement, ``Why do we need
+logic here?  This is clearly correct.''  The answer in both cases is
+that you'd be amazed at how often these points of view are wrong.
+
+Finally, when we use logic to help us think about and solve problems on
+paper, we can very often turn that effort directly into a reliable,
+working computer program with the minimum of effort.
+
+\subsection{What Is a Logic?}
+
+In the most abstract sense, a \emph{logic} consists of
+\being{itemize}
+\item a \emph{language} which specifies the set of well formed
+\emph{sentences}, and
+\item a set of \emph{inference rules} which allow us to deduce new
+sentences from a given set of sentences.
+\end{itemize}
+A sentence is often also referred to as a \emph{formula}.  We will use
+both terms interchangably throughout the book.
+
+\subsection{What is a Theory?}
+
+A theory is the set of sentences that can be obtained with respect to a
+particular logic where each sentence is either
+\begin{itemize}
+\item a member of a particular starting set of \emph{axioms}, which are
+taken to be ``true without proof'', or
+\item can be \emph{proved} from other sentences in the theory.
+\end{itemize}
+A sentence in a theory is referred to as a \emph{theorem}.
+
+\subsection{What is a Proof?}
+
+A \emph{proof} is a sequence of sentences where each step is either
+\begin{itemize}
+\item an axiom or
+\item a sentence obtained by application of an inference rule to one or
+more of the preceding sentences in the proof.
+\end{itemize}
+
+\subsection{What is an Interpretation?}
+
+An \emph{interpretation} can be viewed as the set of sentences that are
+true in a particular problem domain, all other sentences being deemed to
+be false.  One way of looking at an interpretaion is as a way of
+relating sentences in the logic to things in the problem domain.
+
+\subsection{Consistency, Completeness and Correctness}
+
+A theory is \emph{consistent} if it does not contain any mutually
+contradictory theorems.
+
+A theory is \emph{complete} with respect to an interpretation if the
+interpretation is a subset of the theory (otherwise the interpretation
+contains some sentences that are true but are not part of the theory.)
+
+A theory is \emph{correct} with respect to an interpretation if it is a
+subset of the interpretation (otherwise the theory claims some theorems
+are true that are in fact false under the given interpretation.)
+
+\subsection{Putting it All Together}
+
+So, for any particular problem, we need the following if we are going to
+reason about it logically:
+\begin{itemize}
+\item a language defining the sentences we can consider;
+\item a set of rules allowing us to deduce new sentences from old;
+\item a set of axioms defining our starting point;
+\item an interpretation connecting the results of our abstract, logical
+efforts to the problem domain we are interested in.
+\end{itemize}
 
 \section{Propositional Logic}
 
-We start off with propositional logic (otherwise known as the
-\emph{predicate calculus}) because it is simple and can be used to
-illustrate several ideas that we will need to understand predicate
-logic.
+The simplest useful logic is the \emph{propositional calculus}.
+The propositional calculus is used to reason about logical formulae
+composed of atomic propositions -- that is, simple statements that are
+either true or false.
 
-\subsection{Propositions}
+In what follows we use @P@ and @Q@ to stand for arbitrary sentences.
 
-A \emph{proposition} is simply a statement that is either true or false.
-An \emph{atomic} proposition is one that is indivisible (\ie not a
-combination of other propositions).  Examples of atomic propositions are
-``my name is Ralph'', ``Pink Floyd is a rock group'', ``the Moon is made
-of green cheese'' and so forth.  When we want to work with propositions,
-we usually abbreviate them with short names or even just single letters.
+\subsection{Language}
 
-In this section we will use $a$, $b$, $c$, \ldots to stand for arbitrary
-atomic propositions.
+\begin{itemize}
+\item We use @word@s or letters, @a@, @b@, @c@, \ldots to stand for
+\emph{atomic} propositions;
+\item we usually include @true@ as a proposition that is true in all
+interpretations and @false@ as a proposition that is false in all
+interpretations;
+\item @not P@ stands for the \emph{negation} ``@P@ is false'';
+\item @(P, Q)@ stands for the \emph{conjunction} ``@P@ and @Q@'' meaning
+\emph{both} @P@ and @Q@ are true;
+\item @(P ; Q)@ stands for the \emph{disjunction} ``@P@ or @Q@'' meaning
+\emph{at least one of} @P@ and @Q@ is true;
+\item @(P => Q)@ stands for the \emph{implication} ``if @P@ then @Q@''
+meaning if @P@ is true, then @Q@ must be true (it says nothing about @Q@
+in the case where @P@ is false).  @P@ is referred to as the
+\emph{antecedent} and @Q@ as the \emph{consequent} of the implication.
+\end{itemize}
 
-\subsection{Logical Formulae}
+We may occasionally use @(Q <= P)@ as a convenient notation for
+@(P => Q)@ and @(P <=> Q)@ for @((P => Q), (P <= Q))@ (the latter type
+of formula is called an \emph{equivalence}).
 
-Typically we want to combine atomic propositions into more complex
-\emph{compound} propositions or logical formulae.  For example, I may
-wish to combine the propositions ``I am outside'' and ``it is raining''
-into one.
+\textbf{Note on syntax:} we use Mercury style syntax throughout this
+chapter.  Books on logic will tend to use slightly different symbols for
+the logical connectives:
+\begin{itemize}
+\item @not P@ is conventionally written as $\Not$@P@;
+\item @(P, Q)@ is conventionally written as @P@$\Conj$@Q@;
+\item @(P ; Q)@ is conventionally written as @P@$\Disj$@Q@;
+\item @(P => Q)@ is conventionally written as @P@$\Imp$@Q@.
 
-In this section we will use $p$, $q$, $r$, \ldots to stand for arbitrary
-propositions (\ie $p$ may stand for an atomic or a compound
-proposition.)
+\subsection{Rules of Inference}
 
-There are a number of logical \emph{connectives} we can use to combine
-propositions into larger propositions.
+We present rules of inference using \emph{sequent notation}.  Sequents
+can be read thus: given sentences matching what appears above the line,
+we may deduce the sentence below the line.
 
-\subsection{Negation}
+We can always infer @true@, which is the negation of @false@.
+The double negation of a proposition is the same as asserting that
+proposition.
+\begin{verbatim}
+                                not not P       P
+-----           ----------      ----------      ----------
+true            not false       P               not not P
+\end{verbatim}
+(If we omit the double negation rule then we have an intuitionistic
+logic.)
 
-For any proposition $p$, $\Not{p}$ (read as ``not $p$'') is its
-\emph{negation}.  That is, if $p$ is true then $\Not{p}$ is false and
-vice versa.  We use the following \emph{truth table} to define negation:
-\[
-\begin{array}{c|c}
-p       & \Not p \\
-\hline
-\False  & \True  \\
-\True   & \False \\
-\end{array}
-\]
-where $\True$ stands for truth and $\False$ for falsity.
+We can form the conjunction of any two true propositions.
+We can reorder conjunctions.
+We can project a conjunct from a conjunction.
+Conjunction with any false proposition is also false.
+\begin{verbatim}
+P
+Q               P, Q            P, Q            not P
+-----           -----           -----           ----------
+P, Q            Q, P            P               not (P, Q)
+\end{verbatim}
+Conjunction is therefore commutative and associative.
 
-Note that $\Not{\Not{p}}$ is the same as $p$.
+We can form a disjunction of any other proposition with a true
+proposition.
+We can reorder disjunctions.
+If a disjunction is false then so are its disjuncts.
+\begin{verbatim}
+                                                not P
+P               P ; Q           not (P ; Q)     not Q
+------          ------          ------------    ------------
+P ; Q           Q ; P           not P           not (P ; Q)
+\end{verbatim}
+Disjunction is therefore commutative and associative.
 
-\subsection{Conjunction}
+If the antecedent of an implication is true then the consequent must
+also be true (\emph{modus ponens}).
+If the consequent of an implication is false then the antecedent must
+also be false (\emph{modus tollens}).
+We can introduce an implication using any proposition at all for a true
+consequent or a false antecedent:
+\begin{verbatim}
+P               not Q
+P => Q          P => Q          Q               not P
+-------         -------         -------         -------
+Q               not P           P => Q          P => Q
+\end{verbatim}
 
-For any propositions $p$ and $q$, the \emph{conjunction} $p \Conj q$
-(read as ``$p$ and $q$'') is true iff both $p$ and $q$ are true:
-\[
-\begin{array}{cc|c}
-p       & q       & p \Conj q \\
-\hline
-\False  & \False  & \False \\
-\False  & \True   & \False \\
-\True   & \False  & \False \\
-\True   & \True   & \True \\
-\end{array}
-\]
-So it follows that $p \Conj \Not{p}$ must be false.
+\subsection{On Implication}
 
-Conjunction has an identity: $\True \Conj p \Eqv p$.
+The rules for implication might seem a little odd.  One should be
+careful to avoid confusing logical implication with causation.  With
+causation, the consequent must follow ``because'' of the antecedent.
+Logical implication, on the other hand, need not make any kind sense.
+It is perfectly all right to put any proposition at all on either side
+of a logical implication; whether the implication is justified or not is
+another matter entirely and is dictated by its context within a theory
+or proof.
 
-Conjunction is associative: $(p \Conj q) \Conj r \Eqv p \Conj (q \Conj r)$.
+Another common source of confusion is that implication says nothing
+about what happens if the antecedent is false.  The idea is that if we
+have @(P => Q)@ and also @not P@ then the implication isn't
+``triggered'' and hence cannot make any false claim.  The only situation
+where an implication @(P => Q)@ is false is if @P@ is true, but @Q@ is
+\emph{false}.  In this case the implication is ``triggered'', but
+contradicts @not Q@ which has already been established.  Consequently,
+if we have @(P => Q)@ and we know that @Q@ is false then the only
+consistent deduction is that @P@ is also false.
 
-Conjunction is commutative: $p \Conj q \Eqv q \Conj p$.
+\subsection{Some Basic Proofs}
 
-Conjunction is idempotent: $p \Conj p \Eqv p$.
+It is instructive to see some simple proofs.  When constructing a proof
+we work bottom-up: we start with the theorem we wish to prove and then
+use the inference rules in reverse to get back to whatever we've allowed
+ourselves to take as given.
 
-\subsection{Disjunction}
+First off, let's show that from @(false ; P)@ we can infer @P@:
+\begin{verbatim}
+ 1      (false ; P)             given
 
-For any propositions $p$ and $q$, the \emph{disjunction} $p \Disj q$
-(read as ``$p$ or $q$'') is true iff at least one of $p$ and $q$ is
-true:
-\[
-\begin{array}{cc|c}
-p       & q       & p \Disj q \\
-\hline
-\False  & \False  & \False \\
-\False  & \True   & \True \\
-\True   & \False  & \True \\
-\True   & \True   & \True \\
-\end{array}
-\]
-So $p \Disj \Not{p}$ must be true since $p$ can only be true or false
-(this is known as Aristotle's law of the excluded middle.)
+ 2      not false               from the negation rules
+ 3      P                       resolution of 2 and 1
+\end{verbatim}
 
-Note that disjunction is inclusive in the sense that $p \Disj q$ means
-``$p$ and/or $q$,'' although by convention we only write ``or''.  If we
-want exclusive-disjunction then we say ``either $p$ or $q$'' to mean
-``$p$ or $q$, but not both.''
+Next, let's show that @not (false, P)@ is always true:
+\begin{verbatim}
+ 1      not false               from the negation rules
+ 2      not (false, P)          from the conjunction rules and 1
+\end{verbatim}
 
-Disjunction has an identity: $\False \Disj p \Eqv p$.
+The following relationship is extremely useful: @(P => Q)@ is equivalent
+to @(not P ; Q)@.  We prove this in two stages, first starting with the
+assumption @(not P ; Q)@.
+Since we start with a disjunction, it is sufficient to show that if each
+disjunct independently supports the conclusion then the disjunction as a
+whole must support the conclusion.
+\begin{verbatim}
+ 1      (not P ; Q)             given
 
-Disjunction is associative: $(p \Disj q) \Disj r \Eqv p \Disj (q \Disj r)$.
+ 2.L    not P                   assuming the left hand side of 1
+ 3.L    (P => Q)                from the implication rules and 2.L
 
-Disjunction is commutative: $p \Disj q \Eqv q \Disj p$.
+ 2.R    Q                       assuming the right hand side of 1
+ 3.R    (P => Q)                from the implication rules and 2.R
 
-Disjunction is idempotent: $p \Disj p \Eqv p$.
+ 4      (P => Q)                from 1, 3.L and 3.R
+\end{verbatim}
+To finish, we start with the assumption @(P => Q)@.  Since we start with
+an implication, it is sufficient to show that we can prove @(not P ; Q)@
+if either the antecedent is false or the consequent is true.
+\begin{verbatim}
+ 1      (P => Q)                given
 
-\subsection{Distribution over Conjunction and Disjunction}
+ 2.L    not P                   assuming the antecedent of 1 is false
+ 3.L    (not P ; Q)             from the disjunction rules and 2.L
 
-The following rules are very useful:
-\begin{align*}
-(p \Conj q) \Disj r
-& \Eqv (p \Disj r) \Conj (q \Disj r) \\
-(p \Disj q) \Conj r
-& \Eqv (p \Conj r) \Disj (q \Conj r) \\
-\end{align*}
+ 2.R    Q                       assuming the consequent of 1
+ 3.R    (not P ; Q)             from the disjunction rules and 2.R
 
-\subsection{Implication}
+ 4      (not P ; Q)             from 1, 3.L and 3.R
+\end{verbatim}
 
-For any propositions $p$ and $q$, the \emph{implication} $p \Imp q$
-(read as ``$p$ implies $q$'' or ``if $p$ then $q$'') is \emph{false} iff 
-$p$ is true and $q$ is false:
-\[
-\begin{array}{cc|c}
-p       & q       & p \Imp q \\
-\hline
-\False  & \False  & \True \\
-\False  & \True   & \True \\
-\True   & \False  & \False \\
-\True   & \True   & \True \\
-\end{array}
-\]
-This rule deserves something in the way of explanation.
+Augustus De Morgan, the 19th century logician, showed that @not (P, Q)@
+is equivalent to @(not P ; not Q)@, which is the same as saying
+@not (P ; Q)@ is equivalent to @(not P, not Q)@.  We prove this in two
+stages, first starting with the assumption @not (P, Q)@.
+\begin{verbatim}
+ 1      not (P, Q)              given
 
-Say I take $p$ to stand for the proposition ``I am outside in the rain
-without an umbrella'' and $q$ to stand for the proposition ``I am
-getting wet''.  Then the implication $p \Imp q$ stands for ``if I am
-outside in the rain without an umbrella then I am getting wet''.  Let's
-go through each line of the truth table in turn and see how we should
-interpret the implication.
-\begin{description}
-\item $\Not{p} \Conj \Not{q}$: the implication doesn't say
-\emph{anything} about $q$ if $p$ isn't true, so in this
-case we take the implication to be true (we give it the benefit of the
-doubt, if you like.)  For example, I might be standing indoors and be
-perfectly dry.
-\item $\Not{p} \Conj q$: this is much the same situation as above, so
-again we conclude that the implication is still true.  I may be standing
-indoors but also be getting wet -- because I'm having a shower, say.
-\item $p \Conj \Not{q}$: this situation directly contradicts what the
-implication says -- I am standing outside in the rain, but I am
-\emph{not} getting wet!  In this case we must conclude that the
-implication is false (\ie it does not fit with the facts.)
-\item $p \Conj q$: finally, if $p$ \emph{and} $q$ are true, then the
-implication has been shown to be true.
-\end{description}
+ 2.L    not P                   assuming the left hand side of 1 is false
+ 3.L    (not P ; not Q)         from the disjunction rules and 2.L
 
-The second thing to be aware of is that \emph{implication is not
-causation}!  This is a point that tends to lead to much initial
-confusion.  That is, if $p$ stands for ``my name is Ralph'' and $q$
-stands for ``the Moon is made of green cheese'', then it is perfectly
-all right to posit $p \Imp q$ (\ie  ``if my name is Ralph then the Moon
-is made of green cheese.'')
+ 2.R    not P                   assuming the right hand side of 1 is false
+ 3.R    (not P ; not Q)         from the disjunction rules and 2.R
 
-Note that we sometimes prefer to write $q \Bimp p$ which is just another
-way of writing $p \Imp q$.
+ 4      (not P ; not Q)         from 1, 3.L and 3.R
+\end{verbatim}
+Going the other way, we assume @not (P ; Q)@.
+\begin{verbatim}
+ 1      not (P ; Q)             given
 
-\subsection{Equivalence}
+ 2      not P                   from the disjunction rules and 1
+ 3      not Q                   from the disjunction rules and 1
+ 4      (not P, not Q)          from the conjunction of 2 and 3
+\end{verbatim}
 
-For any propositions $p$ and $q$, the \emph{equivalence} $p \Eqv q$
-(read as ``$p$ is equivalent to $q$'') is \emph{true} iff 
-both $p$ and $q$ are true or both $p$ and $q$ are false:
-\[
-\begin{array}{cc|c}
-p       & q       & p \Imp q \\
-\hline
-\False  & \False  & \True \\
-\False  & \True   & \False \\
-\True   & \False  & \False \\
-\True   & \True   & \True \\
-\end{array}
-\]
+The \emph{resolution} rule for disjunctions says that if one disjunct is
+false then the other must be true:
+\begin{verbatim}
+ 1      (P ; Q)                 given
+ 2      not P                   given
 
-\subsection{De Morgan's Laws}
+ 3      (not P => Q)            equivalent to 1
+ 4      Q                       modus ponens over 2 and 3
+\end{verbatim}
+As a special case of this rule we see that @P@ must follow from
+@(false ; P)@.
 
-The 19th century logician Augustus De Morgan proved two laws:
-\begin{align*}
-\Not{p \Conj q}
-& \Eqv \Not{p} \Disj \Not{q} \\
-\Not{p \Disj q}
-& \Eqv \Not{p} \Conj \Not{q}
-\end{align*}
-which can be seen to follow directly from the truth tables for the
-logical connectives.
+Aristotle's \emph{law of the excluded middle} states that the
+disjunction of a proposition with itself must be true:
+\begin{verbatim}
+ 1      (P ; not P)             given
 
-We can use De Morgan's laws, plus the fact that $\Not{\Not{p}} \Eqv p$,
-to deduce the following useful identities and implications:
-\begin{align*}
-(p \Eqv q)
-& \Eqv (p \Imp q) \Conj (q \Imp p) \\
-& \Eqv (p \Conj q) \Disj (\Not{p} \Conj \Not{q}) \\
-\\
-(p \Imp q)
-& \Eqv \Not{p} \Disj q \\
-& \Eqv (\Not{q} \Imp \Not{p}) \\
-\\
-(p \Imp q \Conj r)
-& \Eqv (p \Imp q) \Conj (p \Imp r) \\
-\\
-(p \Imp q \Conj r)
-& \Eqv (p \Imp q) \Conj (p \Imp r) \\
-\\
-(p \Disj q \Imp r)
-& \Eqv (p \Imp r) \Conj (q \Imp r) \\
-\\
-(p \Conj q)
-& \Imp p \\
-(p \Conj q)
-& \Imp q \\
-\end{align*}
-(In the second equation, $(p \Imp q) \Eqv (\Not{q} \Imp \Not{p})$, the
-right hand side is referred to as the \emph{contrapositive} form of the
-left.)
+ 2      true                    trivial
+ 3      (P => true)             from the implication rules and 2
+ 4      (not P => true)         from the implication rules and 2
 
-\subsection{Modus Ponens}
+ 5.L    P                       assuming the left hand side of 1
+ 6.L    true                    modus ponens over 5.L and 3
 
-The key rule we're interested in is as follows: if $p$ and $p \Imp q$
-then it must follow that $q$.  The name given to this rule, \emph{modus
-ponens} is Latin for ``mode that affirms''.
+ 5.R    not P                   assuming the right hand side of 1
+ 6.R    true                    modus ponens over 5.R and 4
 
-From modus ponens, we can infer transitivity of implication: say I know
-that $p \Imp q$ and $q \Imp r$; then given $p$ I can deduce $q$ and
-thence deduce $r$, which means I must also have $p \Imp r$.
+ 7      true                    from 1, 6.L and 6.R
+\end{verbatim}
 
-Modus ponens also gives us the well known resolution rule
-$(a \Disj q) \Conj \Not{a} \Imp q$:
-\begin{tabular}{rll}
-(1) & $(a \Disj q) \Conj \Not{a}$
-& --- starting point \\
-(2) & $(\Not{a} \Imp q) \Conj \Not{a}$
-& --- from (1) by definition of $\Imp$ \\
-(3) & $q$
-& --- from (2) via modus ponens \\
-(4) & $(a \Disj q) \Conj \Not{a} \Imp q$
-& --- since (3) is a consequence of (1) \\
-QED \\
-\end{tabular}
+Implication is transitive:
+\begin{verbatim}
+ 1      (P => Q)                given
+ 2      (Q => R)                given
 
-\subsection{Axioms, Goals and Proof}
+ 3.L    not P                   assuming antecedent of 1 is false
+ 4.L    (P => R)                from implication rules and 3.L
 
-For any given problem, there is going to be a minimal set of
-propositions that are simply taken as read -- the ground rules of the
-game, if you like.  These statements are known as the problem
-\emph{axioms}.
+ 3.R    Q                       assuming consequent of 1 is true
+ 4.R    R                       modus ponens over 3.R and 2
+ 5.R    (P => R)                from implication rules and 4.R
 
-The question being posed by the problem is usually referred to as the
-\emph{goal}.
+ 6      (P => R)                from 1, 2, 4.L and 5.R
+\end{verbatim}
 
-A \emph{proof} of a goal is a sequence of steps terminating in inference
-of the goal, where each step infers new statements by appling a rule of
-logic to one or more axioms or previously inferred statements.
-
-\subsection{An Example}
+\subsection{Cavilling Vilely}
 
 \XXX{Check this isn't copyright!  It's been doing the Cambridge Tripos
 rounds for years, at least.}
@@ -276,51 +347,110 @@ rounds for years, at least.}
 Consider the following somewhat contorted problem statement:
 \begin{quote}
 If Anna can cancan or Kant can't cant, then Greville will cavil vilely.
-If Greville will cavil vilely, Will will want.  But
-Will \emph{won't} want.  So is it true that Kant \emph{can} cant?
+If Greville will cavil vilely, Will will want.
+But Will \emph{won't} want.
+So can Kant cant?
 \end{quote}
 How can we use propositional logic to decide the truth of the question?
 Here's how.  We start by labelling the various propositions:
 \begin{description}
-\item let $a$ stand for ``Anna can cancan'';
-\item let $k$ stand for ``Kant can cant'';
-\item let $g$ stand for ``Greville will cavil vilely'';
-\item and let $w$ stand for ``Will will want''.
+\item let @a@ stand for ``Anna can cancan'';
+\item let @k@ stand for ``Kant can cant'';
+\item let @g@ stand for ``Greville will cavil vilely'';
+\item and let @w@ stand for ``Will will want''.
 \end{description}
-We can now write the first two statements (which we refer to as our
-\emph{axioms} since they are given to us) as $a \Disj \Not{k} \Imp g$,
-$g \Imp w$ and $\Not{w}$.  The first statement can be further simplified to
-$a \Imp g$ and $\Not{k} \Imp g$.  We will call these three simple rules our
-\emph{axioms}.
 
-The question (which we will refer to as the \emph{goal}) can be written
-as just $k$.
+Our axioms are obtained by translating the statement of the problem into
+sentences in propositional logic:
+\begin{verbatim}
+ 1      ((a ; not k) => g)      given
+ 2      (g => w)                given
+ 3      not w                   given
+\end{verbatim}
+Our \emph{goal} is to find a proof of either @k@ or @not k@; we can
+obtain a proof of the former as follows (and since the problem statement
+and logic are consistent, this means we can't prove the latter):
+\begin{verbatim}
+ 4      not g                   from the implication rules and 3 and 2
+ 5      not (a ; not k)         from the implication rules and 4 and 1
+ 6      (not a, k)              De Morgan's law applied to 5
+ 7      k                       projecting the right hand side of 6
+\end{verbatim}
+So Kant \emph{can} cant after all!
 
-Want we want to know is, can we deduce the goal from the axioms and the
-rules of logic?  In symbols, is the formula
-$(g \Imp w) \Conj (a \Imp g) \Conj (\Not{k} \Imp g) \Conj \Not{w} \Imp k)$
-true.
+\subsection{On Obtaining Proofs}
 
-Perhaps the simplest proof works as follows.  The contrapositive form of
-the axiom $g \Imp w$ is $\Not{w} \Imp \Not{g}$.  The contrapositive form
-of the axiom $\Not{k} \Imp g$ is $\Not{g} \Imp k$.  Since implication is
-transitive, we must therefore have $\Not{w} \Imp k$ as a consequence of
-our axioms.  Now we can apply modus ponens since we have $\Not{w}$ as an
-axiom, hence we must infer $k$.  But this is the goal, hence it is true
-that, given the axioms, Kant can cant!
+Finding a proof or disproof of a formula is not straightforward.  Since
+this book only introduces logic, an in-depth treatment of proof
+procedures is beyond its scope.  However, it behooves us to say a few
+words on the subject.
 
-A more formal presentation of this proof looks like this:\\
-\begin{tabular}{rll}
-(1) & $a \Disj \Not{k} \Imp g$ & --- axiom \\
-(2) & $g \Imp w$ & --- axiom \\
-(3) & $\Not{w}$ & --- axiom \\
-(4) & $\Not{w} \Imp \Not{g}$ & --- contrapositive form of (2) \\
-(5) & $\Not{k} \Imp g$ & --- by (1) \\
-(6) & $\Not{g} \Imp k$ & --- contrapositive form of (5) \\
-(7) & $\Not{w} \Imp k$ & --- by (4), (6) and transitivity of $\Imp$ \\
-(8) & $k$ & --- from (3) and (7) via modus ponens \\
-QED \\
-\end{tabular}
+The key idea in obtaining a proof is to work backwards from the goal.
+One has to look at the inference rules and the axioms of the problem
+domain and search for steps that will break down the goal into simpler
+subgoals.  This procedure continues until the subgoals are either
+trivial (deducible without axioms) or are themselves in the set of
+axioms.  The tricky part is that one may need to handle disjunctions (it
+is sometimes simpler to convert implications into their equivalent
+disjunctive forms) by proving that the goal is provable regardless of
+which disjunct is true.  Finding proofs is not easy and takes some
+practice before one becomes proficient.
+
+Note that if you don't \emph{know} that a particular formula is true or
+false then one has to simultaneously look for proofs of both
+possibilities: in a consistent theory you cannot find a disproof of a
+theorem or a proof of a non-theorem!
+
+While complete proof algorithms exist for deciding the truth of
+arbitrary formulae in the propositional calculus (see the
+\XXX{Davis-Putnam method}, for instance), unfortunately its more
+expressive cousin, the predicate calculus, does not admit this property
+(that is, there is no way to construct an algorithm to decide whether an
+arbitrary predicate calculus formula is true or false.)  Mercury can be
+viewed as implementing a correct, but incomplete, proof procedure for
+first order logic.  But don't worry about that for now.
+
+\subsection{Informal Shortcuts}
+
+We often want to sketch out a proof quickly before writing it down in a
+formal fashion (if, indeed, we decide we need this level of rigour.)  In
+such situations it is acceptable to take a ``term rewriting'' approach:
+given @P <=> Q@ we can always substitute @P@ for @Q@ and vice versa;
+given @P => Q@ we may substitute @P@ for @Q@ in the antecedent of
+implications and @Q@ for @P@ in the consequent of implications.  Below
+is a handy selection of ``rewriting'' rules:
+\begin{verbatim}
+(P => Q)             <=>  (not Q => not P)
+(P => Q)             <=>  (not P ; Q)
+((P, Q) => R)        <=>  (P => (Q => R))
+
+not true             <=>  false
+not false            <=>  true
+not not P            <=>  P
+
+(P, not P)           <=>  false
+(P, false)           <=>  false
+(P, true)            <=>  P
+
+(P ; not P)          <=>  true
+(P ; true)           <=>  true
+(P ; false)          <=>  P
+
+((P => Q), (Q => R))  =>  (P => R)
+(P, Q)                =>  P
+(not P, (P, Q))       =>  Q
+\end{verbatim}
+
+\subsection{An Interesting Observation}
+
+The reader may find it interesting to note that one can construct all
+the rules of inference of propositional logic using just implication and
+falsity:
+\begin{verbatim}
+not P                <=>  (P => false)
+(P ; Q)              <=>  (not P => Q)
+(P, Q)               <=>  ((P => not Q) => false)
+\end{verbatim}
 
 \section{Predicate Logic}
 
@@ -334,141 +464,215 @@ forth.  The relationship between odd numbers and this property of their
 squares is not explicitly represented, other than as a correspondence
 amongst the set of axioms.
 
-\subsection{Predicates and Logical Variables}
+Mercury programs are restricted predicate calculus theories; it is
+actually very helpful to bear this in mind when reasoning about them.
 
-Predicate logic (otherwise known as the \emph{predicate calculus} or
-\emph{first order logic} or \emph{first order predicate calculus})
-remedies the problem by adding \emph{logical variables} to propositional
-logic.  A predicate therefore describes a more general relationship than
-a proposition.  An instance of a predicate (\ie with values filled in
-for all its arguments) becomes a proposition.  For example, say we write
-$\Odd{X}$ to mean ``$X$ is an odd number,'' then $X$ is a logical
-varialbe, $\Odd$ is a predicate, and the statement $\Odd(3)$ is a
+\subsection{Language}
+
+The language of predicate calculus is slightly more complicated than
+that for propositional logic, introducing as it does logical variables,
+terms and parameterised predicates.
+\begin{itemize}
+\item \emph{Terms} represent objects in the problem domain, such as
+numbers, people, and so forth.  Terms can be structured -- a list of
+terms would itself be a perfectly good term.
+\item \emph{Logical variables} range over terms and appear as parameters
+to predicates.
+\item \emph{Predicates} represent properties of terms.  Unlike
+propositions, predicates may be parameterized.  For example, we might
+have a predicate @odd(X)@ to denote @X@ being an odd number, or a
+predicate @parent(A, B)@ to denote @A@ being a parent of @B@.  We
+normally assume the usual equality relation, @=@.
+\end{itemize}
+Sticking with Mercury syntax, predicates and term names start with
+@lower case@ letters (unless we are using symbols for conveience, such
+as @123@ or @*@ or list notation and such like.)  Variable names start
+with @Upper Case@ letters.
+
+Formulae are composed in much the same way as for the propositional
+calculus, with the addition of two ways of introducing logical
+variables.  Taking @P@ and @Q@ to stand for arbitrary logical formulae:
+\begin{itemize}
+\item @not P@ stands for the \emph{negation} ``@P@ is false'';
+\item @(P, Q)@ stands for the \emph{conjunction} ``@P@ and @Q@'' meaning
+\emph{both} @P@ and @Q@ are true;
+\item @(P ; Q)@ stands for the \emph{disjunction} ``@P@ or @Q@'' meaning
+\emph{at least one of} @P@ and @Q@ is true;
+\item @(P => Q)@ stands for the \emph{implication} ``if @P@ then @Q@'';
+\item @(some [X] P)@ stands for the \emph{existential
+quantification} ``for some value of @X@ @P@'';
+\item @(all [X] P)@ stands for the \emph{universal
+quantification} ``for all values of @X@ @P@'';
+\end{itemize}
+
+We allow several variables to appear in the list of a quantification
+with the understanding that
+\begin{verbatim}
+(some [X, Y, Z] P)
+\end{verbatim}
+really means
+\begin{verbatim}
+(some [X] (some [Y] (some [Z] P)))
+\end{verbatim}
+
+We will allow ourselves to use a pattern matching shorthand in
+definitions (@<=>@) and implications (@=>@ and @<=@), so rather than
+writing
+\begin{verbatim}
+(all [X] (p(X) <= X = 42))
+\end{verbatim}
+we simply write
+\begin{verbatim}
+p(42)
+\end{verbatim}
+to mean the same thing.
+
+Returning briefly to our ``square numbers'' example, we would write that
+as
+\begin{verbatim}
+(all [X, Y] ((odd(X), square(X, Y)) => odd(Y)))
+\end{verbatim}
+which reads as ``for all values of @X@ and @Y@, if @X@ is odd and @Y@ is
+the square of @X@, then @Y@ is odd.''
+
+\subsection{Rules of Inference}
+
+For the most part, the rules of inference for the predicate calculus
+appear identical to those for the propositional calculus.  The important
+difference is the rules that dictate how variables are handled.
+
+We can always infer @true@, which is the negation of @false@.
+The double negation of a proposition is the same as asserting that
 proposition.
+\begin{verbatim}
+                                not not P       P
+-----           ----------      ----------      ----------
+true            not false       P               not not P
+\end{verbatim}
+(If we omit the double negation rule then we have an intuitionistic
+logic.)
 
-We can now express the relationship between odd numbers and their
-squares as
-$\All{X}{\Odd(X) \Imp \Odd(X^2)}$ -- this reads as, ``For all $X$, if
-$X$ is odd then $X^2$ is odd.''
-(Predicates are also referred to as \emph{relations} in the literature.
-We adopt the convention whereby predicate names begin with a lower case
-letter and variable names begin with an upper case letter.)
+We can form the conjunction of any two true propositions.
+We can reorder conjunctions.
+We can project a conjunct from a conjunction.
+Conjunction with any false proposition is also false.
+\begin{verbatim}
+P
+Q               P, Q            P, Q            not P
+-----           -----           -----           ----------
+P, Q            Q, P            P               not (P, Q)
+\end{verbatim}
 
-Note that predicates may have any number of arguments.  A predicate that
-takes no arguments is therefore just the same as a proposition.
+We can form a disjunction of any other proposition with a true
+proposition.
+We can reorder disjunctions.
+If a disjunction is false then so are its disjuncts.
+\begin{verbatim}
+                                                not P
+P               P ; Q           not (P ; Q)     not Q
+------          ------          ------------    ------------
+P ; Q           Q ; P           not P           not (P ; Q)
+\end{verbatim}
 
-All of the logical rules that apply to the propositional calculus also
-apply to the predicate calculus, along with a few extra rules to deal
-with variables.
+If the antecedent of an implication is true then the consequent must
+also be true (\emph{modus ponens}).
+If the consequent of an implication is false then the antecedent must
+also be false (\emph{modus tollens}).
+We can introduce an implication using any proposition at all for a true
+consequent or a false antecedent:
+\begin{verbatim}
+P               not Q
+P => Q          P => Q          Q               not P
+-------         -------         -------         -------
+Q               not P           P => Q          P => Q
+\end{verbatim}
 
-\subsection{Terms and Types}
+We can substitute any term at all for a universally quantified
+variable.
+The dual of universal quantification is existential quantification.
+\begin{verbatim}
+all [X] P       some [X] P
+----------      --------------------
+P[a/X]          not (all [X] not P)
 
-The values that logical variables range over are referred to as
-\emph{terms}.  Terms can be thought of as abstract names or labels or
-descriptions of things.  Terms may have structure.
+P[a/X]          not (all [X] not P)
+-----------     --------------------
+some [X] P      some [X] P
+\end{verbatim}
+where @P[a/X]@ means @P@ with the term @a@ replacing all free
+occurrences of @X@ therein.  A free variable is one not in the scope of
+any enclosing quantification.  For instance, @X@ is free in @odd(X)@,
+but not in @some [X] odd(X)@.
 
-Terms take one of two forms: either a term $t$ is an ordinary logic
-variable $X$ or it is a \emph{functor} $f(t_1, t_2, t_3, \ldots)$
-with zero or more arguments, $t_1$, $t_2$, $t_3$, and so forth, each of
-which are themselves terms.
+\XXX{Check the above sequents.  I think there's a bug.}
 
-When we see a logical formula of the form $X = T$ where $T$ is a term,
-we refer to it as a \emph{binding} for the logical variable $X$.  If it
-is true then we say that $X$ is bound to $T$.
+\subsection{Finding the Length of a List}
 
-A \emph{ground} term is one which contains no variables:
-$@person(ralph)@$ is a ground term, whereas $@person(@X@)@$ is not
-(provided $X$ is not bound to a ground value.)
+Here's an example of how we can use logic to work out the length of a
+list.
+\begin{verbatim}
+all [X, Y]
+    length(Xs, N) <=>
+        (
+            (Xs = [], N = 0)
+        ;
+            some [X0, Xs0, N0]
+                (   Xs = [X0 | Xs0],
+                    length(Xs0, N0),
+                    N  = N0 + 1
+                )
+        )
+\end{verbatim}
+which, incidentally, corresponds to the Mercury definition
+\begin{verbatim}
+length([],         0     ).
+length([X0 | Xs0], N0 + 1) :- length(Xs0, N0).
+\end{verbatim}
 
-We group ground terms of similar nature together into sets known as
-\emph{types}.  For instance, we define the type of integers @int@ to
-be the set $\{\ldots, @-2@, @-1@, @0@, @1@, @2@, \ldots\}$, the type of
-characters @char@ to be the set $\{\ldots, @a@, @b@, @c@, \ldots\}$ and
-so on.
+First, let's see how we can prove @length([a, b], 2)@ (remember, we
+construct this proof bottom-up):
+\begin{verbatim}
+ 1      [] = []
+ 2      0  = 0
+ 3      ([] = [], 0 = 0)
+ 4      (([] = [], 0 = 0) ; ...)
+ 5      length([], 0)
 
-Type definitions can be parametric: the type $@maybe@(T)$, for
-instance, is defined as the set of values $\{@no@, @yes@(X) | X:T\}$.
-Instances of this type are $@maybe@(@int@)$, $@maybe@(@char@)$ and so on.
+ 6      [b]    = [b | []]
+ 7      0 + 1  = 0 + 1
+ 8      ([b] = [b | []], length([], 0), 0 + 1 = 0 + 1)
+ 9      some [X0, Xs0, N0] ([b] = [X0 | Xs0], ...)
+   ...
+10      length([b], 0 + 1)
 
-Our type definitions can be recursive.  The type $@list@(T)$
-representing lists could be defined as the set of values
-$\{@nil@, @cons@(X, Y) | X:T, Y:@list@(T)\}$.
+11      [a, b]    = [a | [b]]
+12      0 + 1 + 1 = 0 + 1 + 1
+13      ([a, b] = [a | [b]], length([b], 0 + 1), 0 + 1 + 1 = 0 + 1 + 1)
+14      some [X0, Xs0, N0] ([a, b] = [a | [b]], ...)
+   ...
+15      length([a, b], 0 + 1 + 1)
+\end{verbatim}
+and provided we accept that @0 + 1 + 1 = 2@ then our work here is done.
 
-By convention use the notation $X:T$ to denote the contraint
-$X \in T$ where $T$ is a type.
+We haven't actually \emph{calculated} anything here; rather we've just
+proved something we strongly suspected was true anyway.  What we really
+want to do, as logic programmers, is find some way of working out, for
+instance, what @N@ satisfies @length([a, b, c], N)@.
 
-(Note that terms are not logical formulae -- if you want variables to
-range over logical formulae as well then you need the second order
-predicate calculus.  However, we do not need such complex machinery for
-our purposes.)
+Just as we can take a term rewriting approach to solving problems in
+propositional logic, we can use similar shortcuts in predicate logic.
+In particular, this will avoid the need for us to pluck the right terms
+from thin air when looking for a proof of a formula containing variables.
+We use the following ``tricks'' while working backwards from the
+top-level goal:
+\begin{itemize}
+\item existentially quantified variables are left in the 
+\end{itemize}
+\XXX NEED TO SORT THIS BIT OUT.
 
-\subsection{Unification}
 
-Formulae of the form $t = u$ are referred to as \emph{unifications}.
-There is nothing special about the equality symbol -- it is just another
-relation, albeit one we take for granted.  Unification of functors is
-defined recursively as follows ($t_1$, $t_2$, \ldots, $t_n$, and $t_1'$,
-$t_2'$, \ldots, $t_n'$ are terms and $f$ is the name (\emph{function
-symbol}) of a functor):
-\begin{align*}
-f(t_1, t_2, \ldots, t_n) = f(t_1', t_2', \ldots, t_n')
-& \Eqv t_1 = t_1' \Conj t_2 = t_2' \Conj \ldots \Conj t_n = t_n'
-\end{align*}
-\XXX{Need I say more?}
 
-\subsection{Quantification}
 
-Quantifers are used to introduce logic variables to a formula and they
-come in two flavours.
-
-\emph{Universal quantification} is written as $\All{X}{p(X)}$ where
-$p(X)$ stands for any logical formula involving $X$.  The universally
-quantified formula is true iff $p$ really does hold for any possible
-value of $X$.
-
-(Of course, there is usually some \emph{type} constraint on the values
-$X$ can take on, such as ``$X$ must be an integer'', but we usually
-either leave such things implicit or place the type constraint in the
-quantifer: $\All{X:@int@}{p(X)}$.)
-
-\emph{Existential quantification} is written as $\Some{X}{p(X)}$ and is
-true iff there is at least one value for $X$ for which $p$ is true.
-
-If we want to quantify over several variables, we usually write
-$\All{X, Y, Z}{p}$ or $\Some{X, Y, Z}{p}$ as shorthand
-for
-$\All{X}{\All{Y}{\All{Z}{p}}}$ or
-$\Some{X}{\Some{Y}{\Some{Z}{p}}}$ respectively.
-
-A \emph{free variable} in a formula is one which was not introduced by a
-quantifier in that formula -- for instance, $Y$ is a free variable in
-$\All{X}{p(X, Y)}$.  Axioms and goals at the top-level should not
-include any free variables at all.
-
-We introduce a function $\FV$ to compute the set of free variables in a
-term or formula:
-\begin{align*}
-\text{(Over terms)} \\
-\FV(X)
-& = \{X\} \\
-\FV(f(t_1, t_2, \ldots, t_n))
-& = \FV(t_1) \Union \FV(t_2) \Union \ldots \Union \FV(t_n) \\
-\text{(Over formulae)} \\
-\FV(a(t_1, t_2, \ldots, t_n))
-& = \FV(t_1) \Union \FV(t_2) \Union \ldots \Union \FV(t_n) \\
-\FV(\Not{p})
-& = \FV(p) \\
-\FV(p \Conj q)
-& = \FV(p) \Union \FV(q) \\
-\FV(p \Disj q)
-& = \FV(p) \Union \FV(q) \\
-\FV(p \Imp q)
-& = \FV(p) \Union \FV(q) \\
-\FV(\All{X}{p})
-& = \FV(p) \Excluding \{X\} \\
-\FV(\Some{X}{p})
-& = \FV(p) \Excluding \{X\} \\
-\end{align*}
 
 De Morgan's laws extend to cover quantification, giving us the following
 identities:

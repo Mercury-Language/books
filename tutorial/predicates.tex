@@ -513,8 +513,9 @@ The complex unifications are most easily understood by first
 converting them into \emph{super homogeneous normal form} (which is
 what the compiler does.)  In SHNF, the left hand side of each
 unification is a variable and the right hand side is either
-another variable or a functor \XXX{have I explained this term?}, all of
-whose arguments are variables.  For example
+another variable or a functor with a distinct variable in each argument
+position.
+For example
 
 \begin{verbatim}
     foo(X, 2, 3) = foo(1, 2, Z)

@@ -1,0 +1,305 @@
+% vim: ft=tex ts=4 sw=4 et
+
+
+
+\chapter{@std\_util@, the Standard Utilities Module}
+
+The Mercury standard library module @std_util@ provides many useful
+types, predicates and functions that do not fit anywhere else in the
+Mercury standard library.  It also provides the interface to the Mercury
+run-time type information system (RTTI) and the universal type, but
+those aspects of this module are described separately in chapters
+\XXX{RTTI} and \XXX{@univ@, the Universal Type}.
+
+\section{Utility Types}
+
+\subsection{The @maybe@ Type}
+
+Often a computation will succeed, but may or may not produce a
+particular result.  Similarly, some fields in a structure may be filled
+in on separate passes by different predicates.  These situations are
+what the @maybe/1@ type is for:
+\begin{verbatim}
+:- type maybe(T) ---> no ; yes(T).
+\end{verbatim}
+Example: a record describing various aspects of a company employee
+contains a field recording whether or not the employee has a company car
+and, if so, information pertaining to the car in question:
+\begin{verbatim}
+:- type employee --->
+    employee(
+        name        :: string,
+        age         :: int,
+        salary      :: int,
+        ...
+        company_car :: maybe(company_car),
+        ...
+    ).
+\end{verbatim}
+
+There are a number of functions available for manipulating @maybe/1@
+types:
+\begin{verbatim}
+:- func map_maybe(func(T1) = T2, maybe(T1)) = maybe(T2).
+\end{verbatim}
+where
+\begin{verbatim}
+    map_maybe(F, no    ) = no.
+    map_maybe(F, yes(X)) = yes(F(X)).
+\end{verbatim}
+(there is a predicate version available with modes for non-deterministic
+higher order arguments.)
+
+Also useful is the following:
+\begin{verbatim}
+:- func fold_maybe(func(T1, T2) = T2, maybe(T1), T2) = T2.
+\end{verbatim}
+where
+\begin{verbatim}
+    fold_maybe(F, yes(X), A) = F(A, X).
+    fold_maybe(F, no,     A) = A.
+\end{verbatim}
+Example: we want to obtain the list of company cars that have been
+assigned to employees:
+\begin{verbatim}
+    list.foldl(
+        func(Employee) = fold_maybe(list.cons, Employee ^ company_car),
+        Employees,
+        []
+    )
+\end{verbatim}
+\XXX{Put @list.cons@ into @list.m@.}
+
+There are other predicates provided for manipulating @maybe/1@ values,
+but they are sufficiently specialised that we will not devote space to
+them here; the interested reader is referred to the documentation in the
+interface section of @std\_util@.
+
+\subsection{The @maybe_error@ Types}
+
+These are commonly used for predicates that may report errors, rather
+than simply failing or throwing an exception:
+\begin{verbatim}
+:- type maybe_error    ---> ok    ; error(string).
+:- type maybe_error(T) ---> ok(T) ; error(string).
+\end{verbatim}
+
+\subsection{@unit@, the Empty Type}
+
+Just as the Romans discovered that arithmetic was difficult without a
+representation for zero, it turns out that having a representation for
+the empty type (i.e. the type that stores no information whatsoever) is
+occasionally useful:
+\begin{verbatim}
+:- type univ ---> univ.
+\end{verbatim}
+@univ@ is often useful as a placeholder or dummy value.
+
+\subsection{The @pair@ Type}
+
+One sometimes needs to pair values together, but does not want to go to
+the trouble of defining a special type for the purpose (although this is
+often a good idea for program maintenance.)  To this end @std\_util@
+defines the @pair/2@ type:
+\begin{verbatim}
+:- type pair(T1, T2) ---> T1 - T2.
+:- type pair(T)      ==   pair(T, T).
+\end{verbatim}
+Note that infix `@-@' here is simply a data constructor and not
+arithmetic subraction.
+
+\Aside{The @pair/2@ type was part of Mercury long before the tuple types
+@{}/N@ were introduced.  At some point in the future the definition of
+@pair/@ may be made equivalent to @{}/2@ in a backwards compatible
+fashion, but this will require further development of the compiler
+\XXX{and possibly an extension to the language semantics}.}
+
+The three obvious utility functions are provided:
+\begin{verbatim}
+:- func fst(pair(T1, T2)) = T1.
+:- func snd(pair(T1, T2)) = T2.
+:- func pair(T1, T2)      = pair(T1, T2).
+\end{verbatim}
+with the obvious semantics:
+\begin{verbatim}
+    fst(pair(X, Y)) = X.
+    snd(pair(X, Y)) = Y.
+    pair(X, Y)      = X - Y.
+\end{verbatim}
+
+\subsection{General Purpose Higher Order Programming Utilities}
+
+\begin{verbatim}
+:- func compose(func(T2) = T3, func(T1) = T2, T1) = T3.
+
+:- func pow(func(T) = T, int, T) = T.
+
+:- func id(T) = T.
+\end{verbatim}
+where @compose@ is functional composition:
+\begin{verbatim}
+    compose(F, G, X) = F(G(X)).
+\end{verbatim}
+@pow@ is functional exponentiation:
+\begin{verbatim}
+    pow(F, 0    , X) = X.
+    pow(F, N + 1, X) = pow(F, N, F(X)).
+\end{verbatim}
+and @id@ is the identity function:
+\begin{verbatim}
+    id(X)            = X.
+\end{verbatim}
+
+Some predicates in the library (such as @list.filter@) take
+@semidet@ predicates with out outputs as arguments.  In these situations
+it is often useful to have the option of inverting the sense of such a
+predicate:
+\begin{verbatim}
+:- pred isnt(pred(T),             T ).
+:- mode isnt(pred(in) is semidet, in) is semidet.
+\end{verbatim}
+Example of use:
+\begin{verbatim}
+:- pred even(int).
+:- mode even(in ) is semidet.
+
+even(X) :- X `mod` 2 = 0.
+
+:- func evens(list(int)) = list(int).
+
+evens(Xs) = list.filter(even, Xs).
+
+:- func odds(list(int)).
+
+odds(Xs)  = list.filter(isnt(even), Xs).
+\end{verbatim}
+
+\section{Suppressing Determinism Strictness Warnings}
+
+Sometimes the compiler will issue a warning that a determinism
+declaration could be tighter for a predicate whose determinism should
+not be tighter for its intended use.  To solve these problems one can
+use
+\begin{verbatim}
+:- pred semidet_succeed is semidet.
+
+:- pred semidet_fail    is semidet.
+\end{verbatim}
+which are equivalent to @true@ and @false@, but the compiler accepts
+their determinism as @semidet@.
+\XXX{Add @semidet\_false@.}
+
+\XXX{Need I mention @cc\_multi\_equal@?}
+
+\section{All Solutions Predicates}
+
+The all-solutions predicates provided by @std_util@ are the only pure
+means of aggregating all the possible answers to a non-deterministic
+predicate.
+
+The basic all-solutions predicates are:
+\begin{verbatim}
+:- func solutions(pred(T))             = list(T)).
+:- mode solutions(pred(out) is multi ) = out is det.
+:- mode solutions(pred(out) is nondet) = out is det.
+
+:- func solutions_set(pred(T))             = set(T)).
+:- mode solutions_set(pred(out) is multi ) = out is det.
+:- mode solutions_set(pred(out) is nondet) = out is det.
+
+:- pred unsorted_solutions(pred(T),             list(T)).
+:- mode unsorted_solutions(pred(out) is multi,  out(non_empty_list))
+            is cc_multi.
+:- mode unsorted_solutions(pred(out) is nondet, out                )
+            is cc_multi.
+\end{verbatim}
+@unsorted\_solutions(P, Xs)@ will unify @Xs@ with the list of all
+solutions to @P@.  The solutions appearing in @Xs@ are in no particular
+order and @Xs@ may contain duplicates.  For example, if we have
+\begin{verbatim}
+:- pred p(int).
+:- mode p(out) is multi.
+
+p(3).
+p(1).
+p(4).
+p(1).
+\end{verbatim}
+then @unsorted_solutions(p, Xs)@ may result in @Xs = [1, 4, 3, 1]@, say,
+or @Xs = [3, 4, 1, 1]@ or any other permutation of thereof (the
+determinism is @cc\_multi@ since this predicate succeeds exactly once.)
+
+The @solutions@ and @solutions\_set@ predicates are defined to have the
+following semantics:
+\begin{verbatim}
+    solutions(p) = Xs
+  <=>
+    unsorted_solutions(p, Ys),
+    Xs = list.sort_and_remove_dups(Ys)
+
+    solutions_set(p) = Xs
+  <=>
+    unsorted_solutions(p, Ys),
+    Xs = set.list_to_set(Ys)
+\end{verbatim}
+
+The @aggregate@ family are often useful:
+\begin{verbatim}
+:- func aggregate(pred(T1),            func(T1, T2) = T2,         T2) = T2.
+:- mode aggregate(pred(out) is multi,  func(in, in) = out is det, in) = out
+            is det.
+:- mode aggregate(pred(out) is nondet, func(in, in) = out is det, in) = out
+            is det.
+
+:- func aggregate(pred(T1),            pred(T1, T2, T2),        T2, T2).
+:- mode aggregate(pred(out) is multi,  pred(in, di, uo) is det, di, uo)
+            is det.
+:- mode aggregate(pred(out) is nondet, pred(in, di, uo) is det, di, uo)
+            is det.
+\end{verbatim}
+The @aggregate@ function is defined to satisfy
+\begin{verbatim}
+    aggregate(P, F, A) = list.foldl(F, solutions(P), A)
+\end{verbatim}
+and the @aggregate@ predicate is defined analagously.
+(There is also an @aggregate2@ predicate that takes two accumulator
+pairs in much the same way as, say, @list.foldl2@.)
+
+If, for whatever reason, you prefer to handle each result of the
+non-deterministic predicate as it is obtained, you can use
+@unsorted\_aggregate@:
+\begin{verbatim}
+:- pred unsorted_aggregate(pred(T1),            pred(T1, T2, T2),
+            T2, T2 ).
+:- mode unsorted_aggregate(pred(out) is multi,  pred(in, in, out) is det,
+            in, out) is cc_multi.
+:- mode unsorted_aggregate(pred(out) is multi,  pred(in, di, uo ) is det,
+            di, uo ) is cc_multi.
+...
+\end{verbatim}
+(@unsorted\_aggregate@ has many more modes dealing with other
+combinations of non-determinism and uniqueness; the reader is referred
+to the documentation in the @std\_util@ module for more detail.)
+
+There is also a variant of @unsorted\_aggregate@ which provides a
+mechanism which allows the computation to be halted before all solutions
+to the non-deterministic predicate have been enumerated:
+\begin{verbatim}
+:- pred do_while(pred(T1),            pred(T1, bool, T2, T2 ),
+            T2, T2 ).
+:- mode do_while(pred(out) is multi,  pred(in, out,  in, out) is det,
+            in, out) is cc_multi.
+:- mode do_while(pred(out) is multi,  pred(in, out,  di, uo ) is det,
+            di, uo ) is cc_multi.
+:- mode do_while(pred(out) is nondet, pred(in, out,  in, out) is det,
+            in, out) is cc_multi.
+:- mode do_while(pred(out) is nondet, pred(in, out,  di, uo ) is det,
+            di, uo ) is cc_multi.
+\end{verbatim}
+If the @bool@ result of the second argument is @yes@ then @do\_while@
+continues to iterate over the next solution to the non-deterministic
+predicate; if the @bool@ result is @no@ then @do\_while@ terminates
+without enumerating any more solutions to the non-deterministic
+predicate.  \XXX{I think this could be put more clearly...}
+
+

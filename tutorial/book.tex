@@ -27,6 +27,9 @@
 
 \usepackage{doc}              % -- I want \MakeShortVerb
 \usepackage{amsmath}          % -- I want align*
+\usepackage{verbatim}         % -- It's better than the default, apparently
+\usepackage{epsfig}           % -- I want \epsfbox
+\usepackage{multirow}         % -- I want \multirow for tables
 
 \pagestyle{headings}
     %
@@ -57,7 +60,7 @@
 \author{Ralph Becket \\ \texttt{\small rafe@cs.mu.oz.au}}
 \date{15 October 2001}
 
-\maketitle
+% \maketitle
 
 % \begin{abstract}
 %
@@ -65,11 +68,12 @@
 %
 % \end{abstract}
 
-\tableofcontents
+%\tableofcontents
 
 %- Body -----------------------------------------------------------------------%
 
 \MakeShortVerb{\@}            % -- @...@ is now shorthand for \verb@...@
+\MakeShortVerb{\#}            % -- #...# is now shorthand for \verb#...#
 
     % \text(rm|tt|sf|bf|it|sc|sl|up|md|normal){} \emph{}
 
@@ -151,40 +155,40 @@
     %                           -- use \right. for no <keysym>
     %                           -- empty lines etc. forbidden in math mode
 
-% \includeonly{}
 % \include{}
     %
     % -- \includeonly takes a list of file names and filters any \includes
+    %    (can only appear in the preamble.)
     % -- \include takes a single file name, starts a new page
     % -- \input does not start a new page
     % -- omit the .tex suffix from the file names
 
-\include{introduction}
-\include{hello-world}
-\include{declarative-vs-imperative}
-\include{logic}
-\include{syntax-and-terminology}
-\include{types}
-\include{predicates}
-\include{functions}
-\include{io}
-\include{modes}
+% \include{introduction}
+% \include{hello-world}
+% \include{declarative-vs-imperative}
+% \include{logic}
+% \include{syntax-and-terminology}
+% \include{types}
+% \include{predicates}
+% \include{functions}
+% \include{io}
+% \include{modes}
 \include{modules}
-\include{higher-order}
-\include{type-classes}
-\include{std-util}
-\include{lists}
-\include{assoc-lists}
-\include{maps}
-\include{arrays}
-\include{compiling-programs}
-\include{stores}
-\include{exceptions}
-\include{FFI}
-\include{impure-code}
-\include{pragmas}
-\include{debugging}
-\include{optimization}
-\include{RTTI}
+% \include{higher-order}
+% \include{type-classes}
+% \include{std-util}
+% \include{lists}
+% \include{assoc-lists}
+% \include{maps}
+% \include{arrays}
+% \include{compiling-programs}
+% \include{stores}
+% \include{exceptions}
+% \include{FFI}
+% \include{impure-code}
+% \include{pragmas}
+% \include{debugging}
+% \include{optimization}
+% \include{RTTI}
 
 \end{document}

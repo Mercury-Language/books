@@ -1,0 +1,148 @@
+% vim: ft=tex ts=4 sw=4 et
+
+
+
+\chapter{Run-Time Type Information}
+
+Mercury knows the type of every variable in a program and makes this
+information available to the programmer.  This is called run-time type
+information or RTTI for short.
+
+RTTI has two main uses: the first is to allow dynamic type casting,
+where a value of an unknown (i.e. polymorphic) type is tested to see
+whether or not it belongs to a particular known type, in which case it
+can then be treated as such.  This is the sort of thing that happens all
+the time in Java programs (and is a source of some inefficiency
+for Java programs, by the way.)
+
+The second use is to support type-independent reading and writing of
+values; for instance, the @io.read@ and @io.write@ predicates.  The
+advantage of RTTI is that one module can contain all the code necessary
+to read and write values of any type whatsoever.  Without RTTI, separate
+@read@ and @write@ predicates would have to be written for every type in
+a program.  \XXX{Is it worth mentioning the relationship with dynamic
+type class casts, if we had them?  And what about the limits of type
+class based approaches in general for this sort of thing.}
+
+An example of both kinds of use can be found in the standard
+library module, @pprint@, which provides the means to pretty print
+(attractively display) arbitrary values.  The RTTI system allows the
+pretty printer to examine an arbitrary value and identify its concrete
+type and the name and arguments of the data constructor comprising the
+value.  The latter information alone is sufficient to be able to
+recursively construct a textual representation of a value.  The pretty
+printer goes one step further: types such as @list@s, @array@s,
+@tuple@s and so forth are handled specially since they have more
+pleasing alternative representations.  For instance, it is better to
+display a list as @[1, 2, 3]@ than @[|](1, [|](2, [|](3, [])))@.  In
+order to perform this feat it is necessary to attempt dynamic casts of
+the value in question into each of the types that have special
+representations.
+
+Often the run-time type information for a variable can be decided at
+compile time; however, for polymorphically typed arguments the compiler
+transparently arranges for extra arguments to be introduced to the
+various functions and predicates in which the associated run-time type
+information is passed by the callers of the predicate in question.
+
+This chapter describes the key aspects of the Mercury RTTI system.  The
+RTTI interface is provided in the @std_util@ standard library module.
+
+\section{Type Descriptors and Type Constructor Descriptors}
+
+A @type_desc@ (short for \emph{type descriptor}) is a representation of
+the concerete type of a value.  The function @type_of@ returns the
+@type_desc@ for its argument.  For example, @type_of([1, 2, 3])@ is the
+@type_desc@ representing @list(int)@:
+\begin{verbatim}
+:- func type_of(T) = type_desc.
+\end{verbatim}
+
+Sometimes one is only interested in the ``top-level'' of a value's type,
+otherwise known as the top-level \emph{type constructor}.  For instance,
+one may be interested in finding out whether a value is a @list@ of some
+kind, regardless of the type of the list members.  A @type_ctor_desc@
+(short for \emph{type constructor descriptor}) is a representation of
+the top-level type constructor of a value.  The function @type_ctor@
+returns the @type_ctor_desc@ for its argument.  For example,
+@type_ctor([1, 2, 3])@ is the @type_ctor_desc@ representing @list/1@.
+\begin{verbatim}
+:- func type_ctor(T) = type_ctor_desc.
+\end{verbatim}
+
+There is an inverse operation to @type_of@, called @has_type@:
+\begin{verbatim}
+:- some [T] pred      T `has_type` type_desc_desc.
+\end{verbatim}
+This looks slightly odd, but is nevertheless very useful!  The
+expression @X `has_type` TypeDesc@ notionally unifies @X@ with a value
+whose type descriptor is represented by @TypeDesc@.  Since the type of
+@X@ is existentially quantified, all we know about it is that
+@type_of(X) = TypeDesc@.  We typically use @has_type@ not to use @X@,
+per se, but rather to work out the type represented by @TypeDesc@ --
+this is explained in the section below in @Dynamic Casts@.
+\XXX{Too scary too early?}
+
+\section{Deconstructing Types}
+
+Given a @type_desc@ one can identify its @type_ctor_desc@ and the
+@type_desc@s of its arguments:
+\begin{verbatim}
+:- pred type_ctor_and_args(type_desc, type_ctor_desc, list(type_desc)).
+:- mode type_ctor_and_args(in,        out,            out            ) is det.
+
+:- func type_ctor(type_desc) = type_ctor_desc.
+
+:- func type_args(type_desc) = list(type_desc).
+\end{verbatim}
+
+Given a @type_ctor_desc@ one can identify its name, arity, and the name
+of its defining module:
+\begin{verbatim}
+    % type_ctor_name_and_arity(TypeCtorDesc, ModuleName, TypeName, TypeArity).
+:- pred type_ctor_name_and_arity(type_ctor_desc, string, string, int).
+:- mode type_ctor_name_and_arity(in,             out,    out,    out) is det.
+
+:- func type_ctor_name(type_ctor_desc)        = string.
+
+:- func type_ctor_arity(type_ctor_desc)       = int.
+
+:- func type_ctor_module_name(type_ctor_desc) = string.
+\end{verbatim}
+
+\section{Constructing Values}
+
+\section{Dynamic Casts}
+
+Basic type casting is provided by the @dynamic_cast/2@ predicate:
+\begin{verbatim}
+:- pred dynamic_cast(T1, T2).
+:- mode dynamic_cast(in, out) is semidet.
+\end{verbatim}
+with the definition
+\begin{verbatim}
+dynamic_cast(X, Y) :- univ(X) = univ(Y).
+\end{verbatim}
+using @mode univ(in) = out is det@ and @mode univ(out) = in is semidet@
+respectively.  Values of type @univ@ need to carry around the
+@type_desc@ associated with the value they encapsulate; a dynamic cast,
+therefore, only needs to ensure that the @type_desc@s for @X@ and @Y@
+are the same.  \XXX{What about subtypes?}  A dynamic cast does not affect
+the value in @X@; instead, if it succeeds it merely binds the value to
+the variable @Y@ whose type (in most normal uses) \emph{is} known ahead
+of time.
+
+Unfortunately, @dynamic_cast@ alone is not sufficient to handle cases
+such as casting into @list/1@, where the type parameter is not of
+interest: @dynamic_cast@ requires that the target type be known.  To
+solve this problem we can use the following idiom:
+\begin{verbatim}
+:- some [T2] pred dynamic_cast_to_list(T1, list(T2)).
+:-           mode dynamic_cast_to_list(in, out     ) is semidet.
+
+dynamic_cast_to_list(X, L) :-
+    [ArgTypeDesc] = type_args(type_of(X)),
+    (_ `with_type` ArgType) `has_type` ArgTypeDesc,
+    dynamic_cast(X, L `with_type` list(ArgType)).
+\end{verbatim}
+This is a complicated piece of code which bears some explanation.

@@ -1,9 +1,185 @@
 % vim: ft=tex ff=unix ts=4 sw=4 et wm=8 tw=0
 
 \chapter{Compiling Programs}
+
+The Melbourne Mercury compiler comes with a suite of powerful tools to
+simplify the compilation of Mercury programs for various purposes,
+including building executables, shared and static libraries, linking
+with foreign language object files and so forth.
+
+This chapter aims to give a very brief introduction to the most
+commonly used facilities of the compiler and its associated tools.
+
+\section{The Mercury Directory}
+
+But first, a useful tip.  If you create a subdirectory called @Mercury@
+in the directory in which you will be running the compilation, then the
+Mercury tools will assume (unless explicitly told otherwise) that all
+intermediate files used in the compilation process (of which there are
+many) should be placed in the Mercury directory.  This helps to avoid
+cluttering up the working directory with files that should not be edited
+by hand or, for the most part, be of any interest to the programmer.
+
+The Mercury build tools are fairly smart and will go to some lengths to
+avoid unnecessary recompilation.  However, there are rare occasions in
+which they cannot work out that a particular intermediate file needs
+updating, in which case one way of solving the problem is to simply
+delete all the contents of the @Mercury@ directory, for example with 
+@rm -rf Mercury/*@, and restart the build process from scratch.
+
+\section{Building Executables}
+
+\XXX{Make a comment somewhere at the start of the book that shell script
+stuff lines will start with a @\$@ in the first column.}
+
+The simplest way to build an executable from a Mercury program is just
+this:
+\begin{verbatim}
+$ mmc --make foo
+\end{verbatim}
+where @foo@ is the name of the top-level Mercury module defining the
+@main/2@ predicate.
+
+The @--make@ option to @mmc@ will cause it to examine all the Mercury
+dependencies of module @foo@ (i.e. the modules it imports, the modules
+they import and so forth) and carry out any necessary compilation steps
+for either @foo@ or any if its dependencies.  @mmc@ will try to do only
+the minimum amount of work necessary to create an up-to-date executable
+(i.e. it will avoid unnecessary recompilation of @foo@ or its
+dependencies.)  There is no need to separately compile @foo@'s
+dependencies -- @mmc --make@ will work it all out for you.
+
+It can also be useful to specify @--smart-recompilation@.  With this
+option turned on, @mmc@ will even avoid unnecessary
+recompilation in the case where the interface of a dependency has
+been changed, but not in a way that would make any difference (this
+can be a \emph{real} timesaver for large projects.)
+
 \section{Mmake}
-\section{Compiler Flags}
+
+Some projects may require various preprocessing steps or special options
+to be set as part of the build process.  As a rule of thumb, any time
+one needs more than @mmc --make@ then one should probably use the @mmake@
+system.  If you need to use various other compilation options then @mmake@
+is almost certainly the easiest tool to use.
+
+\subsection{Mmakefiles}
+
+@mmake@ is based upon the well known @make@ tool, common on Unix systems,
+amongst others.  In order to use @mmake@, one first needs to write a
+file called @Mmakefile@ with the necessary build instructions.
+
+Here are the contents of a sample @Mmakefile@:
+\begin{verbatim}
+MAIN_TARGET = foo
+depend: $(MAIN_TARGET).depend
+
+GRADEFLAGS = --debug
+\end{verbatim}
+By and large, the order of the lines in an @Mmakefile@ doesn't make any
+difference.  Each line in an @Mmakefile@ is either an assignment to an
+variable or a dependency rule.
+
+A variable assignment looks like @GRADEFLAGS = --debug@ where the variable
+name appears to the left of the @=@ sign and the string to be assigned to
+it appears on the right.  Any current environment variables are also
+visible to an @Mmakefile@, so if you are going to run @mmake@ knowing that
+an environment variable, @BAZ@, say, is going to be set, you can refer to
+@BAZ@ in your @Mmakefile@ just as if it had been defined in the @Mmakefile@
+itself.
+
+Whenever @$(BAZ)@ appears in an @Mmakefile@, the string assigned to @BAZ@
+is substituted instead.
+
+If you need a @$@ sign to appear anywhere in an @Mmakefile@,
+you need to write @$$@ instead: @mmake@ assumes that anything else
+is introducing a variable substitution.
+
+A simple dependency rule looks like this:
+\begin{verbatim}
+depend: $(MAIN_TARGET).depend
+\end{verbatim}
+The name of the \emph{target} appears to the left of the colon and the
+names of the targets it depends on (there may be several, separated
+with spaces) appear to the right.  Amongst other things, @mmake@
+analyses the dependency rules and ensures the various targets are
+up-to-date in bottom-up order (a target is deemed up-to-date if the
+corresponding file is newer than those for its dependencies.)
+
+Given the simple @Mmakefile@ above, if we invoke @mmake depend@ then
+@mmake@ will start by building the target @foo.depend@ (since @foo@
+is assigned to @MAIN_TARGET@.)  In this case @depend@ is a so-called
+\emph{dummy target} since a file called @depend@ is never actually
+created.  The target @foo.depend@ causes the Mercury build system to
+examine the module @foo@ and compute its dependencies.  It is important
+to build @foo.depend@ before attempting to compile @foo@.  Moreover,
+any time the dependencies for @foo@ change (e.g. by changing the
+interface of @foo@ or any of its dependencies) then @foo.depend@ must
+be rebuilt for the compilation process to work properly.
+
+Next, we can invoke just @mmake@ on its own, in which case it will
+attempt to build the module named in @MAIN_TARGET@ (if it has a value)
+as an executable.  Otherwise one can name an explicit target.  For
+instance, one could simply do
+\begin{verbatim}
+$ mmake foo.depend
+$ mmake foo
+\end{verbatim}
+without having to use an @Mmakefile@ at all!  (Of course, in this
+case it's easier to just invoke @mmc --make foo@.)
+
+Dependency rules can also include an explicit build procedure for a
+target that overrides any default process that @mmake@ might have.
+For example, say we needed to preprocess a given file, @bar.z@ say,
+in order to obtain the requisite Mercury module, we would include
+the following in the @Mmakefile@:
+\begin{verbatim}
+bar.m: bar.z
+        cat bar.z | my_preprocessor > bar.m
+\end{verbatim}
+Now, when @mmake@ needs @bar.m@ and sees that either @bar.z@ is
+newer than @bar.m@
+or that @bar.m@ does not exist at all, it will run the commands
+that appear on the lines below the dependency rule.  Commands
+should be indented by a single hard tab character (ASCII code 9,
+not spaces) and there should be no blank lines between commands
+if there are more than one.
+
+@mmake@ already knows how to compile ordinary Mercury code.  The main
+reason for supplying an explicit build procedure is to handle foreign
+code that will be linked with the output from the Mercury compiler to
+construct the executable.
+
+The main use for the @mmake@ system is to handle complex settings
+for calls to the Mercury tools.  One invariably runs the
+build process more than once while developing a program, so it
+helps to only have to write down the various flags and settings
+once in an @Mmakefile@.
+
+\subsection{Module-Specific Options}
+
+\subsection{Cleaning Up}
+
+Targets clean and realclean.
+
 \section{Compilation Grades}
 
+Standard.
+
+Debugging.
+
+Profiling.
+
+--use-grade-subdirs
+
+\section{Linking Mercury Programs with Foreign Code}
+
+\section{Building and Installing Libraries}
+
+Tools know from installation where standard libs etc. live.
+
+When installing and using libraries from elsewhere we have to pass
+this information to the tools.
 
 
+\section{Useful Compiler Flags and Environment Variables}

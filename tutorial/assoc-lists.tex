@@ -2,5 +2,72 @@
 
 \chapter{Association Lists}
 
+Association lists are dictionary structures defined simply as lists of
+@Key - Value@ pairs.  The standard library module @assoc_list@ provides the
+corresponding type definition and a suite of utility predicates.  For
+most applications a @map@ is usually a more appropriate choice, although
+an @assoc_list@ may be more convenient in some cases.
 
+Association lists have $O(1)$ for insertion and updates and $O(n)$ for
+searching and deletion.
 
+\section{Definition}
+
+\begin{verbatim}
+:- type assoc_list(K, V) == list(pair(K, V)).
+\end{verbatim}
+where the type @pair/2@ is taken from @std_util@.
+
+\section{Searching and Changing}
+
+Updates to an @assoc_list@ are made by simply consing @Key - Value@
+pairs to the @list@.  If more than one @Key - Value@ pair with the same
+@key@ is present in an @assoc_list@, only the first such is significant.
+
+The @search@ predicate unifies its @V@ argument with the right hand side
+of the first @pair@ in the @list@ whose left hand side unifies with its
+@K@ argument and fails if there is no such pair.
+\begin{verbatim}
+:- pred search(assoc_list(K, V), K,  V  ).
+:- mode search(in,               in, out) is semidet.
+\end{verbatim}
+
+The @remove@ predicate acts similarly, except that it also returns the
+@assoc_list@ with the @Key - Value@ pair removed.
+\begin{verbatim}
+:- pred remove(assoc_list(K, V), K,  V,   assoc_list(K, V)).
+:- mode remove(in,               in, out, out             ) is semidet.
+\end{verbatim}
+Note that if there is more than one @Key - Value@ pair in the list for
+the same @Key@ then only the first such will be removed by 
+@remove(AList, Key)@, which means there will still be a mapping for
+@Key@ in the resulting @assoc_list@.  \XXX{Using a closure here
+shouldn't upset anyone...}
+
+\section{Utility Functions}
+
+\begin{verbatim}
+:- func reverse_members(assoc_list(K, V)) = assoc_list(V, K).
+
+:- func from_corresponding_lists(list(K), list(V)) = assoc_list(K, V).
+
+:- func keys(assoc_list(K, V)) = list(K).
+
+:- func values(assoc_list(K, V)) = list(V).
+\end{verbatim}
+The same caveats apply to the utility functions if an @assoc_list@
+contains more than one @Key - Value@ pair for a given @Key@.  In this
+case, @keys@ will contain duplicate entries and @values@ may include items
+that are not accessible via the @search@ predicate.
+
+@reverse_members@ preserves the order of the members and, if the same
+@Value@ appears in more than one @Key - Value@ pair, then @search@ will
+only see the first such in the output from @reverse_members@.  \XXX{This
+is not actually part of the spec.  Tighten up the documentation in
+@assoc\_list.m@.}
+
+@from_corresponding_lists@ will throw an exception if its list arguments
+differ in length.  The order of keys and values is preserved in the
+resulting @assoc_list@.
+
+\XXX{Spread some examples around.}

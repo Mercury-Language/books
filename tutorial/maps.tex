@@ -31,7 +31,7 @@ phone numbers:
 :- mode main(di, uo) is det.
 
 main(!IO) :-
-    io__read_line_as_string(Result, !IO),
+    io.read_line_as_string(Result, !IO),
     (
         Result = eof
     ;
@@ -46,8 +46,8 @@ main(!IO) :-
         Name = to_lower(substring(Name0, 0, length(Name0) - 1)),
 
         ( if   phone_book ^ elem(Name) = Number
-          then io__format("%d\n", [s(Number)], !IO)
-          else io__format("`%s' is not in the phone book.\n",
+          then io.format("%d\n", [s(Number)], !IO)
+          else io.format("`%s' is not in the phone book.\n",
                     [s(Name0)], !IO)
         ),
         main(!IO)
@@ -59,7 +59,7 @@ main(!IO) :-
 :- func phone_book = map(string, string).
 :- pragma memo(phone_book/0).
 
-phone_book = map__from_assoc_list([
+phone_book = map.from_assoc_list([
         "ralph" -       "9873 1234",
         "tyson" -       "9873 4342",
         "fergus" -      "9873 1237",
@@ -79,11 +79,11 @@ An empty map is constructed by calling the nullary @init@ function:
 There are predicates to decide whether a given map is empty or
 contains a mapping for a particular key:
 \begin{verbatim}
-:- pred map__is_empty(map(K, V)).
-:- mode map__is_empty(in) is semidet.
+:- pred map.is_empty(map(K, V)).
+:- mode map.is_empty(in) is semidet.
 
-:- pred map__contains_key(map(K, V), K).
-:- mode map__contains_key(in,        in) is semidet.
+:- pred map.contains_key(map(K, V), K).
+:- mode map.contains_key(in,        in) is semidet.
 \end{verbatim}
 We have two field-access like functions for lookup up values
 associated with keys.  The first, @elem@, simply fails if there
@@ -183,13 +183,17 @@ giving @QualityOfPet ^ elem(cat) = good@ and
 @QualityOfPet ^ elem(snake) = inadvisable@.
 \XXX{This example may also need a little work.}
 
-\subsection{Other Maps}
+\section{Set-Like Operations}
+
+\subsection{Union}
 
 One can use the following functions to merge @map@s together:
 \begin{verbatim}
 :- func merge(map(K, V), map(K, V)) = map(K, V).
 
 :- func overlay(map(K,V), map(K,V)) = map(K,V).
+
+:- func union(func(V, V) = V, map(K, V), map(K, V)) = map(K, V).
 \end{verbatim}
 The @merge@ function will throw an exception if the two maps have a key
 in common.  The @overlay@ function will not, taking the values for
@@ -215,6 +219,74 @@ will result in @Routes ^ elem(perth) = adelaide@ and
 @Routes ^ elem(melbourne) = alice_springs@.
 \XXX{Another bad example.  Should use this one for @multi\_map@.}
 
+The @union@ function also takes an argument that is used to decide which
+value is used when the @map@ arguments have a key in common.  For
+example:
+\begin{verbatim}
+    MapA = from_assoc_list([a - 1, b - 2, c - 3, d - 4]),
+    MapB = from_assoc_list([a - 4, b - 3, c - 2, e - 1]),
+    Map  = union(int.max, MapA, MapB)
+\end{verbatim}
+will result in
+\begin{verbatim}
+    to_sorted_assoc_list(Map) = [a - 4, b - 3, c - 3, d - 4, e - 1]
+\end{verbatim}
+
+\subsection{Intersection}
+
+One can use the following to compute the ``intersection'' of two @map@s:
+\begin{verbatim}
+:- func intersect(func(V, V) = V, map(K, V), map(K, V)) = map(K, V).
+\end{verbatim}
+The function argument performs the same job as the one in @union@,
+hence:
+\begin{verbatim}
+    MapA = from_assoc_list([a - 1, b - 2, c - 3, d - 4]),
+    MapB = from_assoc_list([a - 4, b - 3, c - 2, e - 1]),
+    Map  = intersect(int.max, MapA, MapB)
+\end{verbatim}
+will result in
+\begin{verbatim}
+    to_sorted_assoc_list(Map) = [a - 4, b - 3, c - 3]
+\end{verbatim}
+
+\section{Mapping and Folding}
+
+\subsection{Mapping}
+
+The following function will apply a transformation function to every
+value in a @map@:
+\begin{verbatim}
+:- func map_values(func(K, V) = W, map(K, V)) = map(K, W).
+\end{verbatim}
+For example:
+\begin{verbatim}
+    CharInts    = from_assoc_list([a - 1, b - 2, c - 3]),
+    CharStrings = map_values(int_to_string, CharInts)
+\end{verbatim}
+giving
+\begin{verbatim}
+    to_sorted_assoc_list(CharStrings) = [a - "1", b - "2", c - "3"]
+\end{verbatim}
+
+\subsection{Folding}
+
+To compute a value from every key-value mapping (in ascending key order,
+if that is significant), use
+\begin{verbatim}
+:- func foldl(func(K, V, T) = T, map(K, V), T) = T.
+\end{verbatim}
+For example:
+\begin{verbatim}
+    CharInts    = from_assoc_list([a - 1, b - 2, c - 3]),
+    Sum         = foldl(func(_, X, A) = X + A, CharInts, 0)
+\end{verbatim}
+will compute @Sum = 6@.
+
+\subsection{Combined Mapping and Folding}
+
+\XXX{Do I really want to mention @map\_foldl@?}
+
 \section{Miscellaneous Operations}
 
 \XXX{This section needs examples throughout.}
@@ -226,22 +298,30 @@ following:
 
 :- func delete_list(map(K,V), list(K)) = map(K,V).
 
-:- pred map__remove(map(K,V), K, V, map(K,V)).
-:- mode map__remove(in, in, out, out) is semidet.
+:- pred map.remove(map(K,V), K, V, map(K,V)).
+:- mode map.remove(in, in, out, out) is semidet.
 
-:- pred map__det_remove(map(K,V), K, V, map(K,V)).
-:- mode map__det_remove(in, in, out, out) is det.
+:- pred map.det_remove(map(K,V), K, V, map(K,V)).
+:- mode map.det_remove(in, in, out, out) is det.
 \end{verbatim}
 The @delete@ and @delete_list@ functions simply ignore key arguments
 that do not have mappings in the @map@ argument.
 
-The predicate @map__remove@ will fail if the given key is not present,
+The predicate @map.remove@ will fail if the given key is not present,
 otherwise it returns both the value mapping of the key and a version of
 the @map@ that does not contain a mapping for the key.
 
-The present @map__det_remove@ is similar, except that it will throw an
+The present @map.det_remove@ is similar, except that it will throw an
 exception if the given @map@ does not have a mapping for the key in
 question.
+
+Related functions are @select@ which allows one to specify a subset of
+keys to retain the mappings for:
+\begin{verbatim}
+:- func select(map(K, V), set(K)) = map(K, V).
+\end{verbatim}
+That is, @select(Map, KeySet)@ returns the @map@ containing
+only those mappings found in @Map@ whose keys are members of @KeySet@.
 
 One can obtain a count of the number of mappings in a map with
 \begin{verbatim}
@@ -268,4 +348,3 @@ The following convert @map@s to @assoc_list@s:
 @to_sorted_assoc_list@ returns the corresponding @assoc_list@ with keys
 in ascending order.
 
-XXX HERE!

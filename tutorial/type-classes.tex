@@ -125,26 +125,26 @@ Next, let's look at how we define @int@ as an instance of @number@:
     zero        = 0,
     one         = 1,
     from_int(X) = X,
-    -X          = 'int__-'(X),
-    X + Y       = X `'int__+'` Y,
-    X - Y       = X `'int__-'` Y,
-    X * Y       = X `'int__*'` Y,
-    X / Y       = X `'int__/'` Y
+    -X          = 'int.-'(X),
+    X + Y       = X `'int.+'` Y,
+    X - Y       = X `'int.-'` Y,
+    X * Y       = X `'int.*'` Y,
+    X / Y       = X `'int./'` Y
 ].
 \end{verbatim}
 (Recall that @`name`@ allows us to use @name@ as an infix operator and
 that we have to @'@quote@'@ names that contain so-called graphical
-characters; so @`'int__+'`@ means ``using the @+@ operator defined in
+characters; so @`'int.+'`@ means ``using the @+@ operator defined in
 the @int@ module as an infix operator.'')
 
 If we wanted to, we could instead have written
 \begin{verbatim}
 :- instance number(int) where [
     ...
-    func(+) is 'int__+'
-    func(-) is 'int__-'
-    func(*) is 'int__*'
-    func(/) is 'int__/'
+    func(+) is 'int.+'
+    func(-) is 'int.-'
+    func(*) is 'int.*'
+    func(/) is 'int./'
 ].
 \end{verbatim}
 simply using the @int@ module implementations directly, rather than
@@ -158,11 +158,11 @@ Making @float@ an instance of @number@ is very similar:
     zero        = 0.0,
     one         = 1.0,
     from_int(X) = X,
-    -X          = 'float__-'(X),
-    X + Y       = X `'float__+'` Y,
-    X - Y       = X `'float__-'` Y,
-    X * Y       = X `'float__*'` Y,
-    X / Y       = X `'float__/'` Y
+    -X          = 'float.-'(X),
+    X + Y       = X `'float.+'` Y,
+    X - Y       = X `'float.-'` Y,
+    X * Y       = X `'float.*'` Y,
+    X / Y       = X `'float./'` Y
 ].
 \end{verbatim}
 
@@ -624,7 +624,7 @@ of their type.  Unfortunately we cannot simply write
 
 write_strings([],       !IO).
 write_strings([X | Xs], !IO) :-
-    io__write_string(string(X), !IO),
+    io.write_string(string(X), !IO),
     write_strings(Xs, !IO).
 \end{verbatim}
 because this would restrict the first argument to all members of the
@@ -645,7 +645,7 @@ solve the problem with @write_strings@:
 
 write_strings([],                     !IO).
 write_strings([a_stringable(X) | Xs], !IO) :-
-    io__write_string(string(X), !IO),
+    io.write_string(string(X), !IO),
     write_strings(Xs, !IO).
 \end{verbatim}
 We start by introducing a new type, @some_stringable@.  This type has a 

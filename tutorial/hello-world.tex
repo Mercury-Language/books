@@ -30,13 +30,14 @@ have to jump straight in with the knowledge that things will get easier
 thereafter.
 
 We define a \emph{predicate} called @main@ with two parameters which
-we've named @IO0@ and @IO@:
+we've named @IO_in@ and @IO_out@:
 \begin{myverbatim}
-main(IO0, IO) :-
-    io.write_string("Hello, World!\n", IO0, IO).
+main(IO_in, IO_out) :-
+    io.write_string("Hello, World!\n", IO_in, IO_out).
 \end{myverbatim}
-Throughout this book we will use the
-notation @name/arity@ to refer to symbols, hence we will write @main/2@
+Throughout this book we use the notation @name/arity@ to refer to symbols
+(the \emph{arity} is the number of arguments), except when the arity is
+zero, in which case we'll just write @name@.  Consequently we use @main/2@
 when talking about this predicate.  Every Mercury program must include a
 @main/2@ predicate that is called when the program is run.
 
@@ -114,8 +115,8 @@ the source code in a file called @hello.m@:
 
 :- implementation.
 
-main(IO0, IO) :-
-    io.write_string("Hello, World!\n", IO0, IO).
+main(IO_in, IO_out) :-
+    io.write_string("Hello, World!\n", IO_in, IO_out).
 \end{myverbatim}
 A Mercury module starts with a @module@ declaration giving its name,
 followed immediately by an @interface@ declaration.  What follows
@@ -132,12 +133,12 @@ visible to other users of the module.
 We build and run the @hello@ program like this:
 \begin{myverbatim}
 > mmc --make hello
-Making hello.int3
-Making hello.c
-Making hello.o
-Making hello
+  Making hello.int3
+  Making hello.c
+  Making hello.o
+  Making hello
 > ./hello
-Hello, World!
+  Hello, World!
 \end{myverbatim}
 Et voila!
 
@@ -146,10 +147,10 @@ Et voila!
 To illustrate a point, let's define @main/2@ in a slightly more
 long-winded way:
 \begin{myverbatim}
-main(IO0, IO) :-
-    io.write_string("Hello, ", IO0, IO1),
+main(IO_in, IO_out) :-
+    io.write_string("Hello, ", IO_in, IO1),
     io.write_string("World!",  IO1, IO2),
-    io.nl(IO2, IO).
+    io.nl(IO2, IO_out).
 \end{myverbatim}
 (The predicate @io.nl/2@ simply writes out a newline character.)
 
@@ -192,9 +193,9 @@ cyphertext will reveal the original plaintext message.
 A session with a @rot13@ program might look like this:
 \begin{myverbatim}
 > I shot an arrow in the air, she fell to Earth in Berkely Square.
-V fubg na neebj va gur nve, fur sryy gb Rnegu va Orexryl Fdhner.
+  V fubg na neebj va gur nve, fur sryy gb Rnegu va Orexryl Fdhner.
 > V fubg na neebj va gur nve, fur sryy gb Rnegu va Orexryl Fdhner.
-I shot an arrow in the air, she fell to Earth in Berkely Square.
+  I shot an arrow in the air, she fell to Earth in Berkely Square.
 \end{myverbatim}
 
 It is the custom in some public fora, newsgroups for instance, to use
@@ -321,7 +322,7 @@ expressions}.  Thus we can shorten the definition of @rot13/1@ to
 rot13(X) = ( if encrypt_letter(X, Y) then Y else X ) :-
     true.
 \end{myverbatim}
-where @true/0@ is a built-in predicate that always succeeds, but does
+where @true@ is a built-in predicate that always succeeds, but does
 nothing else.  The @then@ and @else@ arms of a conditional expression
 contain expressions, rather than goals.
 
@@ -439,9 +440,9 @@ mistakes, and print out any words in the latter that do not appear in the
 former:
 \begin{myverbatim}
 > ./spell_check my_dictionary_file my_text_file
-doog
-kat
-mowse
+  doog
+  kat
+  mowse
 \end{myverbatim}
 (On Unix systems one can usually find a dictionary file in
 @/usr/dict/words@.)
@@ -573,7 +574,7 @@ write_words_in_list([Word | Words], !IO) :-
     io.nl(!IO),
     write_words_in_list(Words, !IO).
 \end{myverbatim}
-The functor @[]/0@ matches for the empty list, while @[Word | Words]@
+The functor @[]@ matches for the empty list, while @[Word | Words]@
 unifies @Word@ and @Words@ with the head and tail respectively of a
 non-empty list.  Since the first argument must be one or the other, our two
 clauses constitute a complete switch on the first argument.
@@ -701,11 +702,11 @@ Our final example demonstrates how some predicates can have
 multiple solutions and can even be used in more than one ``direction''.
 
 To represent the information in the data base clearly, we need to introduce
-some new types.  We define the type @gender/0@ which has \emph{data
-constructors} (\ie possible values) @male/0@ and @female/0@.  We also
-define @date/0@ with a single data constructor, @date/3@ (another
+some new types.  We define the type @gender@ which has \emph{data
+constructors} (\ie possible values) @male@ and @female@.  We also
+define @date@ with a single data constructor, @date/3@ (another
 example of overloading), with three named fields for year, month and day.
-And we add the type @name/0@ as a synonym for @string@:
+And we add the type @name@ as a synonym for @string@:
 \begin{myverbatim}
 :- type gender ---> male ; female.
 :- type date   ---> date(year :: int, month :: int, day ::int).

@@ -5,7 +5,7 @@
 There are two ways of dealing with error conditions that are detected at
 run-time.  The first is for the operation which detected the error to
 return an error code of some sort.  This is what happens in the @io@
-library with predicates that return an @io__result@.  Return codes
+library with predicates that return an @io.result@.  Return codes
 generally have to be dealt with as soon as the operation returns; in
 some situations this can mean that the underlying algorithm ends up
 hidden beneath a slew of error handling code.
@@ -34,22 +34,22 @@ obvious code using error code handling is unfortunately ugly:
 :- import_module io, string, list.
 
 main(!IO) :-
-    io__open_input("input_file", OpenInputResult, !IO),
+    io.open_input("input_file", OpenInputResult, !IO),
     (
         OpenInputResult = error(_),
         report_error("Couldn't open input_file", !IO)
     ;
         OpenInputResult = ok(Input),
-        io__open_output("output_file", OpenOutputResult, !IO),
+        io.open_output("output_file", OpenOutputResult, !IO),
         (
             OpenOutputResult = error(_),
-            io__close_input(Input, !IO),
+            io.close_input(Input, !IO),
             report_error("Couldn't open output_file", !IO)
         ;
             OpenOutputResult = ok(Output),
             translate(Input, Output, TranslateResult, !IO),
-            io__close_output(Output, !IO),
-            io__close_input(Input, !IO),
+            io.close_output(Output, !IO),
+            io.close_input(Input, !IO),
             (
                 TranslateResult = error(_),
                 report_error("Something went wrong in translation", !IO)
@@ -63,11 +63,11 @@ main(!IO) :-
 :- mode report_error(in,     di, uo) is det.
 
 report_error(ErrMsg, !IO) :-
-    io__stderr_stream(StdErr, !IO),
-    io__format(, StdErr, "%s\n", [s(ErrMsg)], !IO),
-    io__set_exit_status(1, !IO).
+    io.stderr_stream(StdErr, !IO),
+    io.format(, StdErr, "%s\n", [s(ErrMsg)], !IO),
+    io.set_exit_status(1, !IO).
 
-:- pred translate(input_stream, output_stream, io__res, io, io).
+:- pred translate(input_stream, output_stream, io.res, io, io).
 :- mode translate(in,           in,            out,     di, uo) is det.
 
 translate(Input, Output, Result, !IO) :- ...
@@ -103,14 +103,14 @@ open_files_and_translate(unit, !IO) :-
     open_in("input_file", Input, !IO),
     open_out("output_file", Input, Output, !IO),
     translate(Input, Output, !IO),
-    io__close_output(Output),
-    io__close_input(Input).
+    io.close_output(Output),
+    io.close_input(Input).
 
 :- pred open_in(string, input_stream, io, io).
 :- mode open_in(in,     in,           di, uo) is det.
 
 open_in(File, Input, !IO) :-
-    io__open_input(File, Result, !IO),
+    io.open_input(File, Result, !IO),
     (
         Result = ok(Input)
     ;
@@ -122,12 +122,12 @@ open_in(File, Input, !IO) :-
 :- mode open_out(in,     in,           out,           di, uo) is det.
 
 open_out(File, Output, !IO) :-
-    io__open_output(File, Result, !IO),
+    io.open_output(File, Result, !IO),
     (
         Result = ok(Output)
     ;
         Result = error(_),
-        io__close_input(Input),
+        io.close_input(Input),
         throw("Couldn't open " ++ File)
     ).
 \end{verbatim}
@@ -390,11 +390,11 @@ code, we could handle it like this:
     try_io(parse_input, Result, !IO),
     (
         Result = succeeded(Parse),
-        io__format("Parsing succeeded\n", [], !IO),
+        io.format("Parsing succeeded\n", [], !IO),
         ...
     ;
         Result = exception(U),
-        io__format("Parsing exception\n", [], !IO),
+        io.format("Parsing exception\n", [], !IO),
         ( if   U = univ(E)
           then handle_parser_exception(E)
           else rethrow(Result)
@@ -404,7 +404,7 @@ code, we could handle it like this:
 \end{verbatim}
 As pointed out earlier, were it not for @try_io@ returning the @io@
 state after catching the exception, we could not make the call to
-@io__format@ in the exception handler.
+@io.format@ in the exception handler.
 
 It is important to be aware that it is the programmer's
 responsibility to ensure that @store@s and various aspects of the

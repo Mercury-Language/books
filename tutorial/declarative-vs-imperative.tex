@@ -2,12 +2,28 @@
 
 \chapter{Declarative vs Imperative Programming}
 
+Mercury is a \emph{declarative} programming language.  The majority of
+languages, like C and Java, are \emph{imperative}.  This chapter sets
+out to explain the difference and why the designers of Mercury decided
+on a declarative approach.
+
+
+
+
+
+
+
 \section{Definitions}
 
 \begin{description}
 \item{Imperative:} a sequence of instructions for transforming state.
-\item{Declarative:} a specification of \emph{what} is to be computed.
+\item{Declarative:} a specification of the relationship between the
+input and output.
 \end{description}
+Another way of looking at the distinction is that an imperative program
+focusses almost entirely on \emph{how} a computation is to proceed
+wheras a declarative program focusses almost entirely on \emph{what} is
+to be computed.
 
 Declarative languages typically have a simple translation into
 conventional mathematical logic, which is how the meaning of a program

@@ -1,398 +1,1018 @@
-% vim: ft=tex ff=unix ts=4 sw=4 et wm=8 tw=0
+% vim: ft=tex ff=unix ts=4 sw=4 et tw=76
 
-\chapter{The Mode and Determinism Systems}
+\chapter{Modes}
 
-One of the things that distinguishes Mercury from other languages
-is its strong mode system.  In casual use, the term \emph{mode}
-encompasses both direction of data flow and determinism.
+REORGANISE CHAPTER AS FOLLOWS:
+\begin{itemize}
+\item Split into two chapters.
+\emph{Basic Modes.}
+\begin{itemize}
+\item in, out
+\item determinisms
+\item di, uo
+\end{itemize}
+\emph{Advanced Modes.}
+\begin{itemize}
+\item modes and insts
+\item mode definitions
+\item inst definitions
+\item SHNF
+\item reordering
+\item determinism inference
+\item committed choice
+\item mostly uniqueness
+\item mode-specific clauses
+\end{itemize}
+\item \XXX{Move higher order insts to HO chapter.}
+\item \XXX{In modules chapter, mention that there are no abstract insts or
+modes.}
+\end{itemize}
 
-\section{Direction of Data Flow}
+\XXX{Add a light-and-fluffy intro.  Explain that what's important is
+in/out/di/uo and a basic grasp of determinism categories.  Thereafter,
+one can return to this chapter on an as-needs basis.}
 
-In logic, there is no difference between the goal @(A, B)@ and
-the goal @(B, A)@.  However, the compiler must convert the
-logical specification that is a Mercury program into an
-imperative language that can be executed on a computer.  This
-constraint means that it matters very much for efficiency and,
-in some cases, correctness, if @A@ ``produces'' values that
-are ``consumed'' by @B@, or vice versa.
+Mercury's mode system performs several jobs: it tells us whether a given
+predicate argument is an input or output, whether it is unique on input
+or output, and how many solutions a particular predicate call can have.
 
-The mode system is what allows Mercury to compile logic
-programs so efficiently.  The body of each procedure of a
-predicate is reordered so that the producer of a value is
-guaranteed to be executed before any consumers.
+\section{Predicates and Procedures}
 
-This scheme also allows the compiler to identify programming
-errors such as using an unbound variable as an argument to a
-procedure expecting an input value.
+Consider the following predicate that computes the concatenation of two
+lists:
+\begin{myverbatim}
+:- pred append(list(T), list(T), list(T)).
+:- mode append(in,      in,      out    ) is det.
+:- mode append(in,      out,     in     ) is semidet.
+:- mode append(out,     out,     in     ) is multi.
 
-Before we can discuss modes properly, however, we must first
-examine the notion of \emph{insts}.
+append([],       Bs, Bs      ).
+append([A | As], Bs, [A | Cs]) :- append(As, Bs, Cs).
+\end{myverbatim}
+The definition reads as follows: ``appending the empty list and the list
+@Bs@ is just the list @Bs@; appending the non-empty list @[A | As]@ and
+the list @Bs@ is the list whose head is @A@ and whose tail @Cs@ is
+formed by appending @As@ and @Bs@.
 
-\subsection{Insts}
+The following are all solutions of @append/3@:
+\begin{myverbatim}
+    append([], [1, 2, 3], [1, 2, 3])
+    append([1],   [2, 3], [1, 2, 3])
+    append([1, 2],   [3], [1, 2, 3])
+    append([1, 2, 3], [], [1, 2, 3])
+\end{myverbatim}
+but these are \emph{not}:
+\begin{myverbatim}
+    append([],     [], [1, 2, 3])
+    append([1],   [3], [1, 2, 3])
+    append([], [2, 3], [1, 2, 3])
+\end{myverbatim}
 
-An \emph{inst} describes the instantiation state of a variable
-at any point in a Mercury program.  Broadly speaking, a
-variable's inst will be one of the following:
+Four mode declarations are given for @append/3@, each one describing a
+different \emph{procedure}.  A procedure is a particular combination
+of inputs and outputs for a given predicate.
+
+It's easiest to understand the different procedures of @append/3@ if we
+first convert its definition into \emph{super-homogeneous normal form}.
+SHNF expands out all syntactic sugar and introduces new variables and
+unifications so that each atomic goal is one of the following:
 \begin{description}
-\item[@free@] where the variable has not been bound to anything yet;
-\item[@bound@] to a value (the top-level
-  data constructor of the value is fixed, but each argument has its own
-  inst);
-  \XXX{should the tutorial mention partially instantiated
-  values at all?}
-\item[@unique@] where the variable is the only live (\ie non-@dead@)
-  reference to its binding;
-\item[@dead@] where the value bound to the variable will never be
-  examined again, even on backtracking.
+\item [a predicate call,] @p(X, ...)@, in which each argument is a
+variable;
+\item [a construction or deconstruction,] @X = a(Y, ...)@, in which @a@
+is a data constructor, each of whose arguments is a variable;
+\item [an equality test or assignment,] @X = Y@, between two variables.
 \end{description}
+In a construction, @X@ is an output and @Y, ...@ are inputs.  In a
+deconstruction, @X@ is an input and @Y, ...@ are outputs.  In an
+equality test, both @X@ and @Y@ are inputs, while in an assignment
+either @X@ is an input and @Y@ is an output or vice versa.  Assignments
+and constructions always succeed, whereas deconstructions and equality
+tests may fail.
 
-A variable's inst tells us which possible states it can be
-in at some point in the program.
+The SHNF for @append/3@ is
+\begin{myverbatim}
+append(H1, H2, H3) :-
+    (
+        H1 = [],
+        H2 = Bs,
+        H3 = Bs
+    ;
+        H1 = [X1 | X2],  X1 = A,  X2 = As,
+        H2 = Bs,
+        H3 = [Y1 | Y2],  Y1 = A,  Y2 = Cs,
+        append(Z1, Z2, Z3),  Z1 = As,  Z2 = Bs,  Z3 = Cs
+    ).
+\end{myverbatim}
+(Although this \emph{looks} more complicated than the original
+definition, SHNF means we only have to consider very simple kinds of
+goal in each instance.  Any unnecessary unifications and so forth will
+be optimized away by the compiler before generating an executable.)
 
-The need for higher order insts (which we will come to)
-and the potential for manipulating partially instantiated
-values means that insts cannot be restricted to the set
-@{free, ground, unique, dead}@.  However, it is sufficient
-to restrict ourselves to the @{free, ground}@ subset of
-possible insts in order to understand the basic ideas.
+The cardinal rule is that a goal requiring a particular variable as an
+input can only be executed \emph{after} that variable has been
+\emph{bound}, either because it is an input head variable, or it
+previously appeared as an output argument of a predicate call, or it was
+previously bound in a unification.
 
-\XXX{Need to include the syntax etc. for inst
-declarations.  Also mention parametric insts.}
+In order to satisfy the rule, the Mercury compiler has to reorder the
+goals in conjunctions separately for each procedure.  (In other words,
+the same predicate definition will be compiled for each
+procedure.)
+Reordering is sound because
+Mercury is a logic programming language and, declaratively speaking, it
+doesn't matter if we write ``@P@ and @Q@'' or ``@Q@ and @P@'' -- they
+both mean the same thing.  The order matters when we try to execute
+a program, but it doesn't affect the \emph{semantics} (\ie the meaning)
+of the program.
 
-On top of the built-in insts (@free@, @ground@, @unique@, @dead@
-and the higher order insts), it is possible to define your
-own insts.  \XXX{Finish this off...}
+Let's see how mode reordering works for each mode of @append/3@.
+
+\subsection{The First Mode}
+
+The first mode of @append/3@ is
+\begin{myverbatim}
+:- mode append(in, in, out) is det.
+\end{myverbatim}
+which tells us that calls to this procedure have head variables @H1@ and
+@H2@ as inputs (\ie they start off already bound to something) while
+@H3@ is an output (\ie it starts off \emph{free}, but will be bound to
+something by the time the procedure finishes.)
+
+A goal @append(As, Bs, Cs)@ in this mode reads ``given @As@ and @Bs@,
+compute the @Cs@ that results from appending @As@ and @Bs@''.  Thus the
+goal
+\begin{myverbatim}
+    append([1], [2, 3], Cs)
+\end{myverbatim}
+will compute the solution @Cs = [1, 2, 3]@.
+
+Since disjuncts have no effect on one another, we can consider each
+disjunct separately.
+
+The first disjunct is
+\begin{myverbatim}
+    H1 = [],
+    H2 = Bs,
+    H3 = Bs
+\end{myverbatim}
+Since @H1@ is an input and @[]/0@ is a functor, the first goal @H1 = []@
+must be a deconstruction and can be \emph{scheduled} immediately.
+
+In the second goal, @H2 = Bs@, @H2@ is an input, but @Bs@ has not been
+bound to anything (all local variables start off as free), hence this is
+an assignment and afterwards @Bs@ will also be bound.  We can schedule
+this goal straight away, too.
+
+In the third goal, @Bs@ is now an input while @H3@ is not bound,
+therefore @H3 = Bs@ is an assignment to @H3@.
+
+So in this procedure no reordering is required for the first disjunct
+and @H3@ finishes up bound as required.
+
+The second disjunct is
+\begin{myverbatim}
+    H1 = [X1 | X2],  X1 = A,  X2 = As,
+    H2 = Bs,
+    H3 = [Y1 | Y2],  Y1 = A,  Y2 = Cs
+    append(Z1, Z2, Z3),  Z1 = As,  Z2 = Bs,  Z3 = Cs
+\end{myverbatim}
+Since @H1@ is input, but @X1@ and @X2@ are not bound, @H1 = [X1 | X2]@
+is a deconstruction.  Then @X1 = A@ and @X2 = As@ are assignments to @A@
+and @As@ respectively.
+
+Similarly, @H2@ is an input and @Bs@ is not bound, so @H2 = Bs@ is an
+assignment to @Bs@
+
+The third line needs some reordering.  The goal @H3 = [Y1 | Y2]@
+contains no bound variables at this point, so it will have to be
+scheduled later.  The unification @Y1 = A@ is an assignment to @Y1@,
+since @A@ is now bound, and can be scheduled now.  The unification
+@Y2 = Cs@, on the other hand, also only contains free variables and has
+to be scheduled later.
+
+The fourth line also needs reordering.  Neither @Z1@, @Z2@ nor @Z3@ are
+bound at this point, so the call to @append/3@ cannot be scheduled here.
+However, if we first schedule the assignments @Z1 = As@ and
+@Z2 = Bs@ then we \emph{can} subsequently call @append(Z1, Z2, Z3)@
+via
+\begin{myverbatim}
+:- mode append(in, in, out) is det.
+\end{myverbatim}
+(because @Z1@ and @Z2@ are now bound) and, as @Z3@ will be bound after
+the call, follow this up with the assignment @Z3 = Cs@.
+
+Returning to our two unscheduled goals, since @Cs@ is
+now bound, we can schedule the assignment @Y2 = Cs@ and then the
+construction @H3 = [Y1 | Y2]@.
+
+The mode reordered version of the second disjunct is therefore
+\begin{myverbatim}
+    H1 = [X1 | X2],  X1 = A,  X2 = As,
+    H2 = Bs,
+    Z1 = As,  Z2 = Bs,  append(Z1, Z2, Z3),  Z3 = Cs
+    Y1 = A,   Y2 = Cs,  H3 = [Y1 | Y2]
+\end{myverbatim}
+again leaving @H3@ bound as an output as required (we've moved the goal
+@Y1 = A@ a little later than its earliest possible scheduling in order to
+preserve as much of the structure of the original definition as
+possible; the compiler almost certainly wouldn't bother with such
+niceties!)
+
+Putting our two disjuncts together, we get
+\begin{myverbatim}
+:- mode append(in, in, out) is det.
+
+append(H1, H2, H3) :-
+    (
+        H1 = [],
+        H2 = Bs,
+        H3 = Bs
+    ;
+        H1 = [X1 | X2],  X1 = A,  X2 = As,
+        H2 = Bs,
+        Z1 = As,  Z2 = Bs,  append(Z1, Z2, Z3),  Z3 = Cs
+        Y1 = A,   Y2 = Cs,  H3 = [Y1 | Y2]
+    ).
+\end{myverbatim}
+All that remains is to verify that the @is det@ determinism declaration
+is satisfied.  The @pred@ declaration tells us that @H1@ has type
+@list(T)@, and so must be bound to either @[]@ or @[X1 | X2]@ for some
+@X1@ and @X2@.  The top-level goal is a disjunction and for each of the
+two possible bindings of @H1@ there is a disjunct starting with the
+corresponding deconstruction.  The disjunction is therefore an
+\emph{exhaustive switch} and, since the other goals in each disjunct are
+all deterministic, the switch as a whole must be deterministic.  Hence
+the @is det@ determinism declaration is satisfied.
+
+(You start to see why we get the compiler to do all this hard work for
+us\ldots)
+
+% \subsection{The Second Mode}
+% 
+% OMITTED BECAUSE THE MODE IS INFERRED AS NONDET, BUT IN PRACTICE IS
+% SEMIDET
+% 
+% The second mode is
+% \begin{myverbatim}
+% :- mode append(out, in, in) is nondet.
+% \end{myverbatim}
+% A goal @append(As, Bs, Cs)@ in this mode reads ``given @Bs@ and @Cs@,
+% what @As@ (if any) can be appended with @Bs@ to get @Cs@?''  Hence
+% \begin{myverbatim}
+%     append(As, [3], [1, 2, 3])
+% \end{myverbatim}
+% will compute the solution @As = [1, 2]@ whereas
+% \begin{myverbatim}
+%     append(As, [1], [1, 2, 3])
+% \end{myverbatim}
+% will just fail.
+% 
+% To speed up the process of explanation we'll just present the correctly
+% reordered disjuncts with comments to explain as we go along.
+% 
+% The first disjunct
+% \begin{myverbatim}
+%     H1 = [],
+%     H2 = Bs,
+%     H3 = Bs
+% \end{myverbatim}
+% is ordered as follows:
+% \begin{myverbatim}
+%                         % Start,          binds H2, H3
+%     H1 = [],            % Construction,   binds H1
+%     H2 = Bs,            % Assignment,     binds Bs
+%     H3 = Bs             % Equality test
+% \end{myverbatim}
+% 
+% The second disjunct
+% \begin{myverbatim}
+%     H1 = [X1 | X2],  X1 = A,  X2 = As,
+%     H2 = Bs,
+%     H3 = [Y1 | Y2],  Y1 = A,  Y2 = Cs
+%     append(Z1, Z2, Z3),  Z1 = As,  Z2 = Bs,  Z3 = Cs
+% \end{myverbatim}
+% is reordered thus:
+% \begin{myverbatim}
+%                         % Start,          binds H2, H3
+%     H2 = Bs,            % Assignment,     binds Bs
+%     H3 = [Y1 | Y2],     % Deconstruction, binds Y1, Y2
+%     Y1 = A,             % Assignment,     binds A
+%     Y2 = Cs,            % Assignment,     binds Cs
+%     Z2 = Bs,            % Assignment,     binds Z2
+%     Z3 = Cs,            % Assignment,     binds Z3
+%     append(Z1, Z2, Z3), % Call append(out, in, in) is semidet
+%                         %                 binds Z1
+%     Z1 = As,            % Assignment,     binds As
+%     X1 = A,             % Assignment,     binds X1
+%     X2 = As,            % Assignment,     binds X2
+%     H1 = [X1 | X2]      % Construction,   binds H1
+% \end{myverbatim}
+% 
+% The @is nondet@ determinism is justified because...
+
+\subsection{The Second Mode}
+
+\begin{myverbatim}
+:- mode append(in, out, in) is semidet.
+\end{myverbatim}
+A goal @append(As, Bs, Cs)@ in this mode reads ``given @As@ and @Cs@,
+what @Bs@ (if any) can @As@ be appended with to get @Cs@?''  The goal
+\begin{myverbatim}
+    append([1], Bs, [1, 2, 3])
+\end{myverbatim}
+will compute the solution @Bs = [2, 3]@, but
+\begin{myverbatim}
+    append([2], Bs, [1, 2, 3])
+\end{myverbatim}
+will fail.
+
+To speed up the process of explanation we'll just present the correctly
+reordered disjuncts with comments to explain as we go along.  At each
+point we try to schedule the ``earliest'' goal appearing in the original
+definition that can be scheduled.
+
+The first disjunct
+\begin{myverbatim}
+    H1 = [],
+    H2 = Bs,
+    H3 = Bs
+\end{myverbatim}
+is ordered as follows:
+\begin{myverbatim}
+                        % Start,          binds H1, H3
+    H1 = [],            % Deconstruction
+    H3 = Bs             % Assignment,     binds Bs
+    H2 = Bs,            % Assignment,     binds H2
+\end{myverbatim}
+
+The second disjunct
+\begin{myverbatim}
+    H1 = [X1 | X2],  X1 = A,  X2 = As,
+    H2 = Bs,
+    H3 = [Y1 | Y2],  Y1 = A,  Y2 = Cs
+    append(Z1, Z2, Z3),  Z1 = As,  Z2 = Bs,  Z3 = Cs
+\end{myverbatim}
+is reordered thus:
+\begin{myverbatim}
+                        % Start,          binds H1, H3
+    H1 = [X1 | X2],     % Deconstruction, binds X1, X2
+    X1 = A,             % Assignment,     binds A
+    X2 = As,            % Assignment,     binds As
+    H3 = [Y1 | Y2],     % Deconstruction, binds Y1, Y2
+    Y1 = A,             % Equality test
+    Y2 = Cs             % Assignment,     binds Cs
+    Z1 = As,            % Assignment,     binds Z1
+    Z3 = Cs             % Assignment,     binds Z3
+    append(Z1, Z2, Z3), % Call append(in, out, in) is semidet
+                        %                 binds Z2
+    Z2 = Bs,            % Assignment,     binds Bs
+    H2 = Bs             % Assignment,     binds H2
+\end{myverbatim}
+
+The @is semidet@ determinism declaration is justified by the fact that
+while the disjunction is a switch on @H1@, as before, the second disjunct
+can \emph{fail} because of the deconstruction of @H3@, the equality test
+@Y1 = A@ or the recursive call to the @semidet@ mode of @append/3@.
+
+\subsection{The Third Mode}
+
+\begin{myverbatim}
+:- mode append(out, out, in) is multi.
+\end{myverbatim}
+A goal @append(As, Bs, Cs)@ in this mode reads ``given @Cs@, what @As@
+and @Bs@ can be appended to get @Cs@?''  The goal
+\begin{myverbatim}
+    append(As, Bs, [1, 2, 3])
+\end{myverbatim}
+has the following possible solutions:
+\begin{myverbatim}
+    As = [],        Bs = [1, 2, 3]
+    As = [1],       Bs =    [2, 3]
+    As = [1, 2],    Bs =       [3]
+    AS = [1, 2, 3], Bs =        []
+\end{myverbatim}
+each of which will be computed by Mercury on backtracking.
+Every list can be decomposed in at least one way, so this predicate
+has determinism @multi@, meaning any given call will have at least one
+solution and possibly more.
+
+The first disjunct
+\begin{myverbatim}
+    H1 = [],
+    H2 = Bs,
+    H3 = Bs
+\end{myverbatim}
+is ordered like this:
+\begin{myverbatim}
+                        % Start,          binds H3
+    H1 = [],            % Assignment,     binds H1
+    H3 = Bs,            % Assignment,     binds Bs
+    H2 = Bs             % Assignment,     binds H2
+\end{myverbatim}
+
+The second disjunct
+\begin{myverbatim}
+    H1 = [X1 | X2],  X1 = A,  X2 = As,
+    H2 = Bs,
+    H3 = [Y1 | Y2],  Y1 = A,  Y2 = Cs
+    append(Z1, Z2, Z3),  Z1 = As,  Z2 = Bs,  Z3 = Cs
+\end{myverbatim}
+is reordered this way:
+\begin{myverbatim}
+                        % Start,          binds H3
+    H3 = [Y1 | Y2],     % Deconstruction, binds Y1, Y2
+    Y1 = A,             % Assignment,     binds A
+    Y2 = Cs,            % Assignment,     binds Cs
+    Z3 = Cs,            % Assignment,     binds Z3
+    append(Z1, Z2, Z3), % Call append(out, out, in) is multi
+                        %                 binds Z1, Z2
+    Z1 = As,            % Assignment,     binds As
+    Z2 = Bs,            % Assignment,     binds Bs
+    X1 = A,             % Assignment,     binds X1
+    X2 = As,            % Assignment,     binds X2
+    H1 = [X1 | X2],     % Construction,   binds H1
+    H2 = Bs             % Assignment,     binds H2
+\end{myverbatim}
+
+Every call to this mode of @append/3@ creates a \emph{choice
+point} -- a place where different disjuncts may each lead to a solution.
+The first disjunct always succeeds (it consists entirely of
+assignments.)  The second, however, can fail if the deconstruction of
+@H3@ fails, but otherwise may have many solutions thanks to the
+recursive call to the @is multi@ mode of @append/3@.
+
+\subsection{Nondeterminism}
+
+Since this is such an important point, let's spend a little time seeing
+how nondeterminism works in practice.  Now that we understand mode
+reordering, we can dispense with unfriendly SHNF and work with the
+altogether fluffier original definition.
+\begin{myverbatim}
+:- mode append(out, out, in) is multi.
+
+append([],       Bs, Bs      ).
+append([A | As], Bs, [A | Cs]) :- append(As, Bs, Cs).
+\end{myverbatim}
+Consider the goal
+\begin{myverbatim}
+    append(As, Bs, [1, 2, 3])
+\end{myverbatim}
+For each call to @append/3@, Mercury creates a choice point for the
+disjunction and tries one of the disjuncts.  Failure later on will cause
+Mercury to \emph{backtrack} to the most recent choice point and try the
+other disjunct.
+
+The possible paths to a solution are illustrated in figure
+\XXX{append:fig}
+(local variables have been renamed @As1@, @As2@, @As3@ and so on to
+avoid confusion).
+Each of the coloured arrows on the left hand side leads from an
+@append/3@ choice point to the result of taking one of the two
+clauses.
+The arrows on the right hand side show the data flow
+from the third argument when taking the second clause.
+\begin{figure}[ht]
+\flushleft{\epsfbox{append.eps}}
+\caption{Choice points and nondeterminism.}[append:fig]
+\end{figure}
+
+When execution chooses the first clause for @append(As, Bs, Cs)@
+we get @As = [], Bs = Cs@ as the solution.  When
+execution chooses the second clause we get the deconstruction
+@Cs = [A | Cs1]@, followed by the call @append(As1, Bs, Cs1)@ and the
+construction @As = [A | As1]@.
+
+Following the ``choice point'' arrows in the figure backwards, we see for
+instance that the second-to-last solution generated is
+\begin{myverbatim}
+    Bs  = [3],
+    As2 = [],
+    As1 = [2 | As2],
+    As  = [1 | As1]
+\end{myverbatim}
+which is the same as saying @As = [1, 2], Bs = [3]@.
+
+\subsubsection{An Example of Use}
+
+\XXX{I think this may be rather too complicated.  Any suggestions?}
+
+So how is nondeterminism useful?  Nondeterminism is most commonly used
+to succinctly describe searching problems.  Say we are asked to write a
+predicate that takes a list of integers and succeeds iff the list is in
+ascending order.  We could take the laborious route of writing
+\begin{myverbatim}
+:- pred in_ascending_order(list(int)).
+:- mode in_ascending_order(in       ) is semidet.
+
+in_ascending_order([]).
+in_ascending_order([_]).
+in_ascending_order([A, B | List]) :-
+    A < B,
+    in_ascending_order([B | List]).
+\end{myverbatim}
+But this involves rather too much ``how'' compared to ``what'' and
+requires some analysis on the part of the reader to understand the
+definition.  An alternative approach is to rephrase the specification to
+say a list is in ascending order \emph{if} it contains no consecutive
+members @A@ and @B@ such that @not A < B@.  We can then state the
+solution directly:
+\begin{myverbatim}
+in_ascending_order(List) :-
+    not (has_consecutive_members(List, A, B), not A < B).
+
+:- pred has_consecutive_members(list(T), T,   T  ).
+:- mode has_consecutive_members(in,      out, out) is nondet.
+
+has_consecutive_members(List, A, B) :-
+    append(Prefix, Suffix, List),
+    Suffix = [A, B | _].
+\end{myverbatim}
+(This version is admittedly no shorter; we'll remedy this shortcoming in
+a little while.)
+
+The definition of @has_consecutive_members/3@ says that ``@List@
+contains the consecutive members @A@ and @B@ \emph{if} it can be split
+into @Prefix@ and @Suffix@ where @Suffix@ is a list with at least two
+members, starting with @A@ and @B@.''
+
+@has_consecutive_members/3@ works by exploiting the
+@append(out, out, in)@ @is multi@ procedure.  For example, consider the
+goal
+\begin{myverbatim}
+    has_consecutive_members([1, 2, 3, 4], A, B).
+\end{myverbatim}
+The possible solutions for the body of @has_consecutive_members/3@
+are
+\begin{myverbatim}
+    Prefix = [],     Suffix = [1, 2, 3, 4], A = 1, B = 2
+    Prefix = [1],    Suffix =    [2, 3, 4], A = 2, B = 3
+    Prefix = [1, 2], Suffix =       [3, 4], A = 3, B = 4
+\end{myverbatim}
+(The solutions to the @append/3@ subgoal giving @Suffix = [4]@ and
+@Suffix = []@ cause the deconstruction
+@Suffix = [A, B | _]@ to fail.)
+
+Let's return to the definition of @in_ascending_order/1@.  Since a goal
+of the form @not P@ means ``@P@ has no solutions'', Mercury must try all
+possible ways of finding a solution for @P@ before deciding whether
+@not P@ succeeds or fails.
+
+We'll use a couple of examples to illustrate the principle.
+From the definition, the goal @in_ascending_order([1, 2, 3, 4])@ is
+equivalent to
+\begin{myverbatim}
+    not (
+        has_consecutive_members([1, 2, 3, 4], A, B),
+        not A < B
+    )
+\end{myverbatim}
+As we've just seen, the solutions for the @has_consecutive_members/3@
+subgoal are
+\begin{myverbatim}
+    A = 1, B = 2
+    A = 2, B = 3
+    A = 3, B = 4
+\end{myverbatim}
+Since @not A < B@ is false in each case, the conjunction as a whole has
+no solution and is
+also false.  Therefore the \emph{negated conjunction} is \emph{true}
+and @[1, 2, 3, 4]@ is in ascending order.
+
+What about @in_ascending_order([1, 2, 4, 3])@?  This is equivalent to
+\begin{myverbatim}
+    not (
+        has_consecutive_members([1, 2, 4, 3], A, B),
+        not A < B
+    )
+\end{myverbatim}
+The possible solutions for the @has_consecutive_members/3@ subgoal are
+\begin{myverbatim}
+    A = 1, B = 2
+    A = 2, B = 4
+    A = 4, B = 3
+\end{myverbatim}
+@not A < B@ is false for the first two subgoal solutions, but
+\emph{true} for the third.  Since the conjunction as a whole has a
+solution, its negation is \emph{false}.  Hence @[1, 2, 4, 3]@ is not in
+ascending order.
+
+(Note that for a goal @P, Q@, a Mercury program does not compute all
+the solutions to @P@ \emph{before} considering @Q@.  Rather, it tests
+@Q@ as soon as @P@ succeeds, only backtracking into
+@P@ for a different solution if @Q@ fails.  \XXX{I don't really want to
+get into a discussion of termination semantics etc. here.})
+
+\subsubsection{Tidying Up}
+
+The double negation in the definition of @in_ascending_order/1@ is
+unfortunate.  Another way of stating the predicate specification is that
+a list is in ascending order if every consecutive pair of members @A@
+and @B@ satisfies @A < B@.  Mercury has syntactic sugar to allow us to
+write this directly:
+\begin{myverbatim}
+in_ascending_order(List) :-
+    all [A, B] (has_consecutive_members(List, A, B) => A < B).
+\end{myverbatim}
+This reads as ``@List@ is in ascending order \emph{if} for all @A, B@,
+if @A, B@ are consecutive members of @List@ then @A < B@.''
+
+The goal @all [X, Y, Z] P@ is shorthand for
+@not some [X, Y, Z] (not P)@ -- that is, ``@P@ is true for all
+@X, Y, Z@'' is the same as saying ``there is no @X, Y, Z@ for which @P@
+is not true.''
+
+The goal @some [X, Y, Z] Q@ can be shortened to just @Q@ since Mercury
+assumes that any variables that appear just in @Q@ are existentially
+quantified.  \XXX{Remember to mention quantification in some earlier
+chapter.}
+
+The goal @R => S@ is shorthand for @not (R, not S)@ -- that is,
+``if @R@ is true then @S@ is true'' is the same as saying ``it is not
+the case that @R@ can be true and @S@ false''.
+
+Combining the above we get
+\begin{myverbatim}
+in_ascending_order(List) :-
+    not not not (
+        has_consecutive_members(List, A, B),
+        not A < B
+    ).
+\end{myverbatim}
+Finally, a goal @not not P@ is equivalent to just @P@ -- ``it's not the
+case that P is not true'' is just the same as saying ``P is true'' -- so
+we end up with our original definition,
+\begin{myverbatim}
+in_ascending_order(List) :-
+    not (
+        has_consecutive_members(List, A, B),
+        not A < B
+    ).
+\end{myverbatim}
+
+Next, we turn our attention to @has_consecutive_members/3@.  The
+original definition was
+\begin{myverbatim}
+has_consecutive_members(List, A, B) :-
+    append(Prefix, Suffix, List),
+    Suffix = [A, B | _].
+\end{myverbatim}
+We can shorten this two ways.  First, because @Prefix@ appears only once,
+we can replace it with the ``don't care'' variable, @_@.  Second, @=/2@ in
+mercury really does denote equality which means, this being a declarative
+language where we can always replace equals with equals, we can ``push''
+the unification up into the call to @append/3@, giving
+\begin{myverbatim}
+has_consecutive_members(List, A, B) :-
+    append(_, [A, B | _], List),
+\end{myverbatim}
+
+\section{Modes and Insts}
+
+\XXX{I'm not going to mention uniqueness until a later section.}
+
+So far we have only looked at the @in@ and @out@ modes without
+really saying what they mean.  We've also been somewhat cavalier in our
+use of terminology, using ``mode'' to refer to both possible modes of a
+predicate (its procedures) and to refer to whether an argument in an
+input or an output.  In this section, we use mode in the latter sense.
+
+For the most part, @in@ and @out@ are all that are necessary.  However,
+any program that performs IO, employs higher order programming techniques,
+or uses subtyping will also need some more specialised modes.
 
 \subsection{Modes}
 
-A \emph{mode} describes how a variable's inst changes over the
-course of a call.  In the following, I is an inst
-variable and @(BeforeInst >> AfterInst)@ is a mode, stating
-that before the call the argument must have inst
-@BeforeInst@ and afterwards it will have inst @AfterInst@.  As
-with types, we can give names to modes and even give them
-parameters.
+A \emph{mode} describes the transition between instantiation states, or
+\emph{insts}, for a variable when a unification or procedure call 
+executes successfully.  (A goal that fails has no effect on anything.)
+An \emph{inst} describes the possible bindings for a variable
+at a particular instant in time.
 
-@AfterInst@ must be a refinement of @BeforeInst@ in the sense
-that instantiated (\ie non-@free@) parts of the value in
-question must remain the same, but @free@ parts may become
-bound.  \XXX{This isn't strictly true -- the @laziness@
-module in extras uses a force implementation that changes
-the constructor of the lazy value.  Of course, this means
-lazy values require user-defined equality and so forth,
-but...}
+The two most basic insts are @free@ and @ground@.  A free variable has
+not yet been bound to anything whereas a ground variable \emph{is}
+bound to something, but we don't know what, exactly.
 
-Let's take a look at some examples (these are taken from
-the built-in Mercury definitions):
-\begin{verbatim}
-:- mode in(I)  == (I    >> I).
+The built-in modes @in@ and @out@ are therefore defined like this:
+\begin{myverbatim}
+:- mode out == (free   >> ground).
+:- mode in  == (ground >> ground).
+\end{myverbatim}
+These are mode \emph{definitions} (as opposed to mode \emph{declarations}
+which are associated with procedures.)  The left and right hand sides of
+the @>>@ symbol are the ``before'' and ``after'' insts, respectively.
+
+The mode definition for @out@ says that an @out@ mode argument must be
+free before the goal, but will be ground afterwards (\ie it will
+become bound \emph{if the goal succeeds.})  The definition for @in@ says
+that an @in@ mode argument must be ground before the goal is executed
+and will still be ground afterwards.
+
+\subsubsection{Parametric Modes}
+
+Just as types can have parameters, modes can be generalised over insts.
+For instance, the built-in parametric modes @in/1@ and @out/1@ are defined as
+\begin{myverbatim}
 :- mode out(I) == (free >> I).
+:- mode in(I)  == (I    >> I).
+\end{myverbatim}
+so we could have defined @in/0@ and @out/0@ with
+\begin{myverbatim}
+:- mode out == out(ground).
+:- mode in  == in(ground).
+\end{myverbatim}
 
-:- mode in     == in(ground).
-:- mode out    == out(ground).
+\subsection{Refined Insts}
 
-    % The inst parameter for uo/1 and ui/1 should be
-    % unique.
-    %
-:- mode di(I)  == (I    >> dead).
-:- mode uo(I)  == (free >> I   ).
-:- mode ui(I)  == (I    >> I   ).
+One can define more refined insts than @ground@.  To illustrate,
+consider the following predicate:
+\begin{myverbatim}
+:- pred head_tail(list(T), T,   list(T)).
+:- mode head_tail(in,      out, out    ) is semidet.
 
-:- mode di     == di(unique).
-:- mode uo     == uo(unique).
-:- mode ui     == ui(unique).
-\end{verbatim}
+head_tail([X | Xs], X, Xs).
+\end{myverbatim}
+The goal @head_tail([1, 2, 3], Head, Tail)@ has the solution
+@Head = 1,@ @Tail = [2, 3]@, whereas the goal
+@head_tail([], Head, Tail)@ will fail.
 
-So, a procedure parameter with mode @in(I)@ must have inst @I@
-before the call and will also have inst @I@ afterwards.  The
-most common case of this is the plain in mode, in which
-case the parameter must be ground beforehand and will be
-ground afterwards.
+Now, say that at a particular point in our program we have the goal
+@head_tail(List, Head, Tail)@ and we \emph{know} that @List@ will not be
+empty.  It would be horrible to have to write
+\begin{myverbatim}
+    ( if head_tail(List, Head, Tail) then
+        ...rest of the program...
+      else
+        exception.throw("this wasn't supposed to happen!")
+    )
+\end{myverbatim}
+to make this particular goal deterministic rather than
+semideterministic.
 
-A parameter with with mode @out(I)@ must be free before the
-call and will have inst @I@ after the call.  The common case
-is the plain out mode, in which case the parameter will
-be ground after the call.
+A more elegant solution is to define an inst for non-empty lists:
+\begin{myverbatim}
+:- inst non_empty_list ---> [ground | ground].
+\end{myverbatim}
+This says that a variable with inst @non_empty_list@ will be bound to
+a @[|]/2@ functor, both of whose arguments will be ground.
 
-The three uniqueness modes, @di@, @uo@ and @ui@ (\emph{destructive
-input}, \emph{unique output} and \emph{unique input}, respectively)
-are similar, except that in the di case the parameter is
-dead after the call (hence no further references may be
-made to that variable in the program, even on
-backtracking), @uo@ produces a @unique@ (@ground@) value and @ui@
-preserves the @unique@ (@ground@) inst of the parameter across
-the call.
+Next, we specify another procedure for @head_tail/3@:
+\begin{myverbatim}
+:- mode head_tail(in(non_empty_list), out, out) is det.
+\end{myverbatim}
 
-\section{Determinism Categories}
+The new mode declaration for @head_tail/3@ states
+that if the first argument is a non-empty list input, and the other two
+arguments are outputs, then @head_tail/3@ is guaranteed to succeed.  The
+compiler can verify this because it knows that if the first argument
+(call it @List@) to @head_tail/3@ is non-empty then the deconstruction
+@List = [X | Xs]@ \emph{must} succeed.
 
-Every Mercury procedure has a determinism.  The set of
-possible determinisms and their meanings is given in the
-following table:
+Now the sordid conditional goal wrapper around our
+call to @head_tail/3@ is no longer necessary.  Which is super.
 
-\begin{tabular}{lll}
-\textbf{Determinism} & \multicolumn{2}{l}{\textbf{Number of Solutions}} \\
-                     & \textbf{Min} & \textbf{Max} \\
-\hline \\
-@failure@            & 0            & 0 \\
-@semidet@            & 0            & 1 \\
-@nondet@             & 0            & 1 or more \\
-@det@                & 1            & 1 \\
-@multi@              & 1            & 1 or more \\
-@cc_nondet@          & 0            & 1 \\
-@cc_multi@           & 1            & 1 \\
-@erroneous@          & never returns \\
+\subsection{Parametric Insts}
+
+We can also have parametric insts.  Consider the following:
+\begin{myverbatim}
+:- inst list(I) ---> [] ; [I | list(I)].
+\end{myverbatim}
+This says that a variable with inst @list(I)@ (for some inst @I@) will
+be bound to either @[]@ or to a @[|]/2@ functor whose first argument has
+inst @I@ and whose second argument has inst @list(I)@ (notice the
+similarity to the type definition for lists.)
+
+Now we can write @list(non_empty_list)@, for instance, to refer to any
+list of non-empty lists.
+
+\section{Determinism}
+
+We need to examine the various kinds of determinism in more detail.
+
+Let's start by reviewing the determinism categories we've encountered so
+far, plus one or two others that turn out to be useful:
+
+\begin{tabular}{l|l|l}
+Category    & Failure       & Solutions \\
+\hline \hline
+@failure@   & always fails  & has no solutions \\
+@semidet@   & may fail      & has at most one solution \\
+@det@       & cannot fail   & has exactly one solution \\
+@nondet@    & may fail      & may have several solutions \\
+@multi@     & cannot fail   & may have several solutions \\
+@erroneous@ & \emph{abnormal termination} \\
 \end{tabular}
 
-Each determinism says something about the number of possible
-solutions a procedure can have on backtracking.  This table
-includes a number of categories we haven't seen before.
+We haven't mentioned @failure@ and @erroneous@ before.
 
-@failure@ applies to procedures such as @false@ that have no
-solutions.
+@failure@ is the determinism category for goals that cannot succeed.
+This might seem like an odd thing to have, but it's rather like having
+zero in mathematics: without it there's a gaping hole in the scheme.
+The built-in predicate @false/0@ has determinism @erroneous@ and is
+equivalent to @not true@.
 
-@semidet@ applies to procedures such as @(>)/2@ or @map__search/3@
-that have at most one solution.
+@erroneous@ is the determinism category for goals like
+@exception.throw/1@ which do not exit normally.  @exception.throw/1@
+neither fails nor succeeds.  Instead, an \emph{exception} occurs which
+returns control to the most recent \emph{exception handler} on the call
+stack.  \XXX{Do I need to explain ``call stack''?}  This is explained
+fully in chapter \XXX{} on exceptions.
 
-@nondet@ applies to procedures such as @member/2@ that can have
-any number of solutions, including zero.
+How do we work out the determinism category for a goal (and hence a
+procedure)?  It turns out we only have to understand five cases:
+atomic goals, conjunction and disjunction, negation and conditional
+goals.  From these we can generalise to any goal.
 
-@det@ applies to procedures such as @(+)/2@ that have precisely
-one solution.
+\subsection{Atomic Goals}
 
-@multi@ applies to procedures such as @nat/1@ below that may have
-several solutions, but which always have at least one:
-\begin{verbatim}
-    % nat(N) enumerates the natural numbers in N.
-    %
-:- pred nat(int).
-:- mode nat(out) is multi.
+An atomic goal is either a unification or a procedure call.  The
+determinism of a procedure call is given by the corresponding predicate
+mode declaration.
 
-nat(0).
-nat(N + 1) :- nat(N).
-\end{verbatim}
-@cc_nondet@ and @cc_multi@ are \emph{committed choice} versions of
-@nondet@ and @multi@, respectively.  Committed choice
-non-determinism is described in more detail in the next
-section, suffice to say that these procedures will only
-produce (at most) one solution.
+Unifications come in four flavours:
+\begin{description}
+\item [constructions and assignments] always have exactly one
+solution and hence have determinism category @det@;
+\item [equality tests and deconstructions] either fail or succeed once,
+giving them a determinism category of @semidet@.
+\end{description}
 
-Finally, @erroneous@ applies to predicates that either never
-return and/or always terminate by throwing an exception (we
-will deal with exceptions in a later chapter \XXX{}).
+\subsection{Conjunctions}
 
-Determinisms are useful for three main reasons:
-\begin{enumerate}
-\item determinism declarations act both as useful documentation
-  to the reader of a program and as information for the
-  compiler;
-\item the compiler will check that a procedure does indeed have
-  the declared determinism and can give helpful error messages
-  when this is not the case; and
-\item the compiler needs to know the determinism of
-\end{enumerate}
+Consider the goal @P, Q@.
 
-\subsection{Modes and Determinisms}
+If either @P@ or @Q@ has determinism @failure@ then the conjunction
+as a whole has determinism @failure@.
 
-As one might expect, there is a tight relationship between
-modes and determinisms.  Essentially, for each possible
-set of argument modes, a procedure should have at most one
-possible determinism.
+Similarly, if either @P@ or @Q@ has determinism @erroneous@ then the
+conjunction as a whole has determinism @erroneous@.
 
-\XXX{My brain is too foggy to say more about this right
-now.}
+Otherwise the determinism of the conjunction is worked out as follows:
+if either of @P@ or @Q@ can fail then the conjunction as a whole can
+fail.  If either of @P@ or @Q@ may have several solutions then the
+conjunction as a whole may have several solutions.
 
-\XXX{Clean this up and check it (esp. the cc and e entries):
-There is a partial order on determinisms (copy it from the
-reference manual?).}
+The following table gives the determinism category of a conjunction from
+the determinisms of its conjuncts:
 
-\begin{verbatim}
-Disjunction:
-    min-solns(@P ; Q@) = max(1, min-solns(@P@) (+) min-solns(@Q@))
-    max-solns(@P ; Q@) =        max-solns(@P@) (+) max-solns(@Q@)
+\begin{center}
+\begin{tabular}{l|llll}
+              & @semidet@   & @det@       & @nondet@    & @multi@ \\
+\hline
+@semidet@     & @semidet@   & @semidet@   & @nondet@    & @nondet@ \\
+@det@         & @semidet@   & @det@       & @nondet@    & @multi@ \\
+@nondet@      & @nondet@    & @nondet@    & @nondet@    & @nondet@ \\
+@multi@       & @nondet@    & @multi@     & @nondet@    & @multi@ \\
+\end{tabular}
+\end{center}
 
-where
+\subsection{Disjunctions}
 
-     (+) |   0   |   1   |  > 1
-     ----+----------------------
-      0  |   0   |   1   |  > 1
-      1  |   1   |  > 1  |  > 1
-     > 1 |  > 1  |  > 1  |  > 1
-\end{verbatim}
+Consider the goal @(P ; Q)@.
 
-\begin{verbatim}
-Conjunction:
-    min-solutions(P, Q) = max(1, min-solns(P) (*) min-solns(Q))
-    max-solutions(P, Q) =        max-solns(P) (*) max-solns(Q)
+If @P@ has determinism @failure@ then the disjunction as a whole has
+the same determinsm of @Q@ -- and vice versa.
 
-where
+Similarly, if @P@ has determinism @erroneous@ then the disjunction as a
+whole has the same determinsm of @Q@ -- and vice versa.
 
-     (*) |   0   |   1   |  > 1
-     ----+----------------------
-      0  |   0   |   0   |   0
-      1  |   0   |   1   |  > 1
-     > 1 |   0   |  > 1  |  > 1
-\end{verbatim}
+Otherwise, if both @P@ and @Q@ can fail then the disjunction as a whole
+can fail and if either of @P@ or @Q@ may have several solutions then the
+disjunction as a whole may have several solutions.
 
-[XXX Perhaps an example or two would be better?]
+The following table gives the determinism category of a disjunction from
+the determinsms of its disjuncts:
 
-\section{Committed Choice Non-Determinism}
+\begin{center}
+\begin{tabular}{l|llll}
+            & @semidet@   & @det@       & @nondet@    & @multi@ \\
+\hline
+@semidet@   & @semidet@   & @multi@     & @nondet@    & @nondet@ \\
+@det@       & @multi@     & @det@       & @multi@     & @multi@ \\
+@nondet@    & @nondet@    & @multi@     & @nondet@    & @multi@ \\
+@multi@     & @nondet@    & @multi@     & @multi@     & @multi@ \\
+\end{tabular}
+\end{center}
 
-Committed choice non-determinism is useful when you only
-require a single solution from a predicate that may have many.
-For instance, a theorem prover only needs a single proof
-(among all the possible proofs it could generate) for each
-sub-goal. \XXX{Too abstract an example?}
+\subsection{Negations}
 
-It is also useful for describing the semantics of exceptions
-(we will discuss this in more detail later \XXX{}, but briefly
-since it is impossible in general to decide whether a
-procedure will always throw an exception, an exception handler
-is deemed to be a committed choice goal since the outcome --
-normal return or exception -- is unknown and it can only happen
-once.)
+Consider the goal @not P@.
 
-\XXX{Mention relationship to Hilbert's choice operator and how cc
-declarations add axioms to the program concerning the single
-solution.}
+If @P@ has determinsm @failure@ then the negation has determinsm @det@.
 
-It is an error if a program attempts to backtrack over a
-committed choice goal and the compiler will detect and reject
-such programs.
+If @P@ has determinsm @erroneous@ then the negation has determinsm
+@erroneous@ as well.
 
-\XXX{Examples}
-\XXX{Probably more to say.}
+Otherwise, if @P@ cannot fail then the negation has determinsm
+@failure@, otherwise it has determinsm @semidet@.
 
-\section{* Using Insts for Subtyping}
+The following table gives the determinism category of a negation from
+the determinism of its subgoal:
 
-Insts can be used to define limited subtypes, where a subtype
-takes on a subset of the possible values of the supertype.
+\begin{center}
+\begin{tabular}{l|l}
+@P@           & @not P@ \\
+\hline \hline
+@semidet@     & @semidet@ \\
+@det@         & @failure@ \\
+@nondet@      & @semidet@ \\
+@multi@       & @failure@ \\
+\end{tabular}
+\end{center}
 
-Examples:
-\begin{verbatim}
+\subsection{Conditional Goals}
 
-:- inst sign  ---> -1 ; 0 ; 1.
+Consider the goal @( if P then Q else R )@.
 
-:- func sign(int) = sign.
-:- mode sign(in)  = out(sign) is det.
-
-sign(X) = ( if      X < 0 then -1
-            else if X = 0 then  0
-            else                1 ).
-
-:- inst digit ---> 0 ; 1 ; 2 ; 3 ; 4 ; 5 ; 6 ; 7 ; 8 ; 9.
-
-:- func digit_to_char(int) = char.
-:- mode digit_to_char(in(digit)) = out is det.
-
-digit_to_char(0) = '0'.
-digit_to_char(1) = '1'.
-...
-digit_to_char(9) = '9'.
-
-:- inst non_empty_list(I) ---> [I | list(I)].
-:- inst non_empty_list    ==   non_empty_list(ground).
-
-:- pred head(list(T),            T  ).
-:- mode head(in,                 out) is semidet.
-:- mode head(in(non_empty_list), out) is det.
-
-head([X | _], X).
-
-:- type abc ---> a ; b ; c.
-:- inst ab  ---> a ; b.
-\end{verbatim}
-and so forth\ldots
-
-\XXX{Should probably add some explanation for the above.}
-
-\section{Higher Order Insts and Modes}
-
-
-
-\section{The Standard Function Mode}
-
-\XXX{NB I've already mentioned this one.}
-
-
-
-\section{Higher Order Mode Declarations}
-
-It is possible to specify the mode of a procedure using the
-following syntax:
-\begin{verbatim}
-:- inst test == ( pred(in) is semidet ).
-
-:- pred even(int).
-:- mode even `with_inst` test.
-
-even(X) :- X `mod` 2 = 0.
-\end{verbatim}
-The mode declaration is equivalent to writing
-\begin{verbatim}
-:- mode even(in) is semidet.
-\end{verbatim}
-
-\XXX{This isn't very convincing since the longhand is more concise.}
-
-Judicious use of @with_inst@ declarations can improve the
-readability and maintainability of a program.
-
-\section{* Uniqueness}
-\subsection{Determinism Restrictions}
-
-\XXX{I've said something of this earlier on just before
-Determinism.}
-
-\subsection{* Mostly Unique Insts}
-
-\XXX{This is definitely more advanced stuff.}
-\begin{itemize}
-\item Mostly unique $Leftrightarrow$ destructive update undone on
-  backtracking.
-\item Trailing and cost of trailing.
-\item Possibility of optimizing trailing via FFI and impurity.
-\item Distributed fat: implementation costs everywhere you can
-  backtrack and may slurp up a general purpose register or
-  two.
-\end{itemize}
-
-\section{Higher Order Insts and Modes}
-
-\begin{itemize}
-\item The type system says what values a variable may take on.
-\item The mode system dictates the direction the data flows.
-\item Higher order values are \emph{procedures} (not predicates), hence
-  their modes also need to tell us the direction of data flow
-  and the associated determinism.  \XXX{Fill in how HO insts are
-  described and used.}
-\item For the sake of brevity, the mode @in(pred(...) is <detism>)@
-  can be abbreviated to just @pred(...) is <detism>@
-\end{itemize}
-
-\subsection{The Standard Function Inst}
-
-\XXX{Said something about this earlier.}
-
-\begin{itemize}
-\item The set of insts @func(in, in, ..., in) = out is det@ is
-  subsumed by the inst @ground@.  That is, you do not need to
-  use a complex inst to pass around and use values with this
-  sort of inst.
-\item (Any of the @in@ arg modes may be replaced with an higher
-  order inst.)
-\item Since this is the most common type of higher order inst,
-  higher order programming is thereby simplified.
-\item There is a consequence: it is an error for a program to try
-  to convert an higher order value with a different sort of
-  inst to @ground@ (\eg by passing it to something expecting a
-  @ground@ value).  This is necessary because otherwise there
-  would be no way of knowing whether a ground value with a
-  func type had the standard @func@ inst or not.
-\end{itemize}
+This is semantically equivalent to @(P, Q ; not P, R)@.  We can use this
+form to work out the determinism of the conditional goal as a whole from
+the determinism of @P@, @Q@ and @R@.
 
 \section{Polymorphic Modes}
 
-\XXX{Look this up.}
+\XXX{Do I want to mention this here?  At all?}
 
+\section{Uniqueness}
 
+\XXX{I think this should probably go after the insts section and before
+the determinism section.}
 
+So far, the only unique structure we've seen has been the @io.state@ used by
+IO operations.  Uniqueness, however, is needed by several other structures
+such as arrays and stores that we'll come to in later chapters \XXX{}.
+
+The key characteristic of these structures is that, for reasons of either
+efficiency or correctness, values of these types can only ever have one
+\emph{live} reference at a time.  Liveness, in this case, means that the
+referring variable in question can be used \emph{at most once} in subsequent
+computation (except for one special case that will be explained shortly.) As
+a consequence, a value cannot be unique at a particular point in a program
+if there are two or more live variables that refer to it or if the
+computation can be backtracked over.
+
+There are three main argument modes associated with unique values:
+\begin{itemize}
+\item @di@ -- destructive input arguments must be unique at the start of the
+call and are \emph{dead} (\ie no longer available) afterwards;
+\item @ui@ -- unique input arguments must be unique at the start of the call
+and are still unique afterwards;
+\item @uo@ -- unique output arguments are like ordinary @out@ arguments
+except that they are guaranteed to be unique.
+\end{itemize}
+\XXX{Fix @ui@ modes.}
+
+These built-in modes are defined as follows:
+\begin{verbatim}
+:- mode di == (unique >> dead  ).
+:- mode ui == (unique >> unique).
+:- mode uo == (free   >> unique).
+\end{verbatim}
+
+The inst @unique@ is like @ground@, except that every part of the
+corresponding value (if it has structure) is also required to be unique.
+
+Insts describing values whose top-level functor is unique, but whose
+arguments may not be, are defined as follows:
+\begin{myverbatim}
+:- inst unique_list(I) == unique( [] ; [I | unique_list(I)] ).
+\end{myverbatim}
+This defines a new inst, @unique_list/1@ whose top-level functor is unique
+and bound to either a @[]/0@ or a @[|]/2@ value with arguments of inst @I@
+and @unique_list(I)@ respectively.
+
+\XXX{It's a shame that we don't have a simpler syntax for unique(...)
+in the same was as we do for bound(...).}
+
+\XXX{Add top\_unique inst which only applies to the top-level functor.}
+
+\XXX{The ui mode doesn't yet work.}
+
+\XXX{Nested uniqueness doesn't yet work.}
+
+\XXX{I don't want to say too much here until we've got uniqueness sorted
+out.}
+
+\subsection{Uniqueness and Reuse}
+
+\XXX{Reuse doesn't yet work.}
+
+\section{Higher Order Modes}
+
+\XXX{This will go in the HO chapter.}
+
+\section{Committed Choice} 
+
+\XXX{Do I want to mention this here?  At all?}
+
+\section{Mostly Uniqueness}
+
+\XXX{Do I want to mention this here?  At all?}
+
+\section{Conclusion}
+
+Modes are helpful documentation for the programmer.
+
+Modes can be used to implement subtyping.
+
+Modes allow the compiler to generate efficient code by reordering for
+each procedure.

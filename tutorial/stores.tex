@@ -1,6 +1,220 @@
 % vim: ft=tex ff=unix ts=4 sw=4 et wm=8 tw=0
 
-\chapter{* Stores}
+\chapter{Stores}
+
+Efficient implementation of many algorithms depend upon being able to
+create and traverse edges in a graph in @O(1)@ time.  Imperative
+languages tend to use pointers (references into memory) for this
+purpose, be they explicit as in C and C++ or implicit as in Java.
+
+The only way to make edge addition \emph{and} traversal $O(1)$ in a pure
+declarative language is to require that the graph structure be unique
+(otherwise the best one can do is $O(\log n)$ access and update.)
+Uniqueness means that a strict order of accesses and updates is imposed
+on the graph and that there can never be any references to old versions
+of the graph.  To this end, the Mercury standard library @store@
+provides the @store@ datatype.
+
+A value can be put into a store, and the store will return a
+reference, called a @mutvar@ for \emph{mutable variable}, to the value
+that can be used to retrieve it again at a later date.  Moreover, the
+value that a @mutvar@ refers to can be changed within the store (that
+is, the @mutvar@ can be made to refer to something else; the value in
+the store is not changed in any way.)  We can compose complex graph
+structures by including @mutvar@s in the values placed in the store.
+Indeed, it is even possible to create cyclic systems of @mutvar@s.
+
+Other useful advantage that @stores@ have include
+\begin{itemize}
+\item the fact that @mutvar@s are typed, so one cannot get any
+surprises when derefencing,
+\item there is no notion of the @NULL@ reference, as in C, so one's
+program will never fail when dereferencing, and
+\item @mutvar@s are tied to a particular @store@ -- you cannot
+inadvertently use the @mutvar@ from one @store@ to access data in a
+different @store@.
+\end{itemize}
+
+Stores are also extremely useful for holding data that needs to be
+accessed and updated very quickly.
+
+\section{The Store Type Class}
+
+For pragmatic reasons, it is useful to be able to treat the @io.state@
+also as a @store@ in its own right.  This is achieved by requiring the
+@store@ module predicate arguments to be instances of the @store@
+abstract type class defined in the @store@ module.  Only the @io.state@
+and the abstract @store@ datatype are instances of this type class:
+\begin{verbatim}
+:- typeclass store(S).
+
+:- type store(S).
+
+:- instance store(io.state).
+:- instance store(store(S)).
+\end{verbatim}
+
+\section{Creating Stores}
+
+A @store@ is an abstract data type:
+\begin{verbatim}
+:- type store(S).
+\end{verbatim}
+
+A new store is created via a call to @store.new@:
+\begin{verbatim}
+:- some [S] pred new(store(S)).
+:- mode          new(uo      ) is det.
+\end{verbatim}
+A store is unique and its type includes an existentially quantified type
+parameter.  This is the mechanism by which we ensure that two different
+stores cannot be confused: the compiler cannot prove whether two
+@store@s with types @some [S1] store(S1)@ and @some [S2] store(S2)@
+respectively do in fact have the same type, so it forbids any attempt to
+treat the @store@s interchangably.  (This is an instance of using
+\emph{shadow types} whereby the type of the values of interest includes
+type parameters that do not refer to anything in the values of the type,
+but are used to convey extra information via the type system -- in this
+case, that @mutvar@s from different @store@s are not interchangable.)
+
+\section{Creating References}
+
+When a value is added to a @store@, a new @mutvar@ is returned.  The
+@mutvar@ can then be used to retrieve the value from the @store@ or to
+change the value in the @store@ to which it refers.  In this sense,
+@mutvar@s are to all intents and purposes mutable variables, much like
+variables in imperative programming languages.
+
+Since both @io.state@s and @store@s are in the @store@ type class,
+@mutvar@s are described thus:
+\begin{verbatim}
+:- type generic_mutvar(T, S).
+
+:- type io_mutvar(T)       == generic_mutvar(T, io__state).
+:- type store_mutvar(T, S) == generic_mutvar(T, store(S)).
+\end{verbatim}
+Here we see that each @mutvar@'s type is tied both to its @store@ and to
+the type of values to which it refers.  This means the compiler will
+spot and reject any program that erroneously attempts to use a @mutvar@
+either with the wrong @store@ or to refer to values of the wrong type.
+
+A @mutvar@ is created when a value is added to a @store@:
+\begin{verbatim}
+:- pred new_mutvar(T,  generic_mutvar(T, S), S,  S ) <= store(S).
+:- mode new_mutvar(in, out,                  di, uo) is det.
+\end{verbatim}
+
+We can retrieve the referent of a @mutvar@:
+\begin{verbatim}
+:- pred get_mutvar(generic_mutvar(T, S), T,   S,  S ) <= store(S).
+:- mode get_mutvar(out,                  out, di, uo) is det.
+\end{verbatim}
+
+We can change the referent of a @mutvar@:
+\begin{verbatim}
+:- pred get_mutvar(generic_mutvar(T, S), T,  S,  S ) <= store(S).
+:- mode get_mutvar(out,                  in, di, uo) is det.
+\end{verbatim}
+
+\section{Creating Cyclic References}
+
+Given that the above predicates only create a @mutvar@ when a value is
+added to a @store@, they cannot be used to directly construct cyclic
+structures (one could use something like the @maybe@ type from
+@std_util@ to indicate a field where a @mutvar@ will go, but this would
+be ugly and likely to lead to programs with erroneously
+``uninitialised'' @mutvar@ fields.)
+
+The @new_cyclic_mutvar@ predicate exists to solve this problem:
+\begin{verbatim}
+:- pred new_cyclic_mutvar(
+            func(generic_mutvar(T, S)) = T,
+            generic_mutvar(T, S),
+            S, S
+        ) <= store(S).
+:- mode new_cyclic_mutvar(in, out, di, uo) is det.
+\end{verbatim}
+What happens is this: a new, unitialised @mutvar@ is constructed and
+passed to the function argument, which can take it as a reference to the
+value it is about to construct.  Since the function does not have access
+to the @store@, it cannot dereference the @mutvar@, hence it is safe to
+leave it uninitialised at this point.  Finally, the value returned by
+the function is made the referent of the @mutvar@ which is itself
+returned by @new_cyclic_mutvar@.
+
+\section{Example: Rings}
+
+Perhaps the simplest cyclic structure is the ring.  Here we show how to
+implement singly-linked rings using @store@s.
+
+\begin{verbatim}
+:- type ring(T, S)
+    --->    empty
+    ;       ring(
+                datum   :: T,
+                nextref :: generic_mutvar(ring(T, S), S)
+            ).
 
 
+:- func new_ring = ring(T, S).
 
+new_ring = empty.
+
+
+:- pred next_in_ring(ring(T, S), ring(T, S), S,  S ) <= store(S).
+:- mode next_in_ring(in,         out,        di, uo) is det.
+
+next_in_ring(empty, empty, !S).
+
+next_in_ring(R @ ring(_, _), Next, !S) :-
+    get_mutvar(R ^ nextref, Next, !S).
+
+
+:- pred insert_next(T,  ring(T, S), ring(T, S), S,  S ) <= store(S).
+:- mode insert_next(in, in,         out,        di, uo) is det.
+
+insert_next(X, empty, RB, !S) :-
+    new_cyclic_mutvar(func(M) = ring(X, M), SelfRef, !S),
+    get_mutvar(SelfRef, RB,                          !S).
+
+insert_next(X, RA @ ring(_, _), RB, RefNext), !S) :-
+    get_mutvar(RA ^ nextref, RC, !S),
+    new_mutvar(RCRef,        RC, !S),
+    RB = ring(X, RCRef),
+    set_mutvar(RA ^ nextref, RB, !S).
+
+
+:- pred remove_next(ring(T, S), ring(T, S), S,  S ) <= store(S).
+:- mode remove_next(in,         out,        di, uo) is det.
+
+remove_next(empty, empty, !S).
+
+remove_next(RA @ ring(_, _), RC, !S) :-
+    get_mutvar(RA ^ nextref, RB, !S),
+    (
+        RB = ring(_, _),
+        ( if RA = RB then
+            RC = empty
+          else
+            get_mutvar(RB ^ nextref, RC, !S),
+            set_mutvar(RA ^ nextref, RC, !S)
+        )
+    ;
+        RB = empty,
+        RC = empty
+    ).
+\end{verbatim}
+
+Observe in particular the code for @insert_next@ and @remove_next@.  In
+the latter, if the @ring@ is not empty, we simply change the target of
+@RA ^ nextref@ to be the next @ring@ item after that.
+
+In @insert_next@ we have to obtain a \emph{new} @mutvar@ for the new
+@ring@ item, @RB@.  We cannot simply copy the @nextref@ field for @RA@
+since we subsequently change the target of @RA ^ nextref@ to be @RB@
+itself.  \XXX{Give an example to show the subtle difference in, say, C?}
+
+\section{Stores and Concurrency}
+
+Need to use locks to ensure concurrent access.
+\XXX{Say more.}

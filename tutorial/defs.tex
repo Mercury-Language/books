@@ -4,6 +4,16 @@
 
     % \newenvironment{name}[numargs]{begincmds}{endcmds}
 
+    % The verbatim environment insists on adding \parskip before and
+    % after each verbatim area which really screws with page layout
+    % and is generally one of those incredibly annoying LaTeXisms.
+    % God, I hate this poxy thing sometimes.  You wouldn't believe
+    % how long it took to find this.
+    %
+\newenvironment{myverbatim}
+{\setlength{\topsep}{0pt}\verbatim}%
+{\endverbatim}
+
     % \newcommand{name}[numargs]{definition}
     %                           -- (default numargs 0)
     %                           -- refer to args as #1, #2 etc. in definition
@@ -21,9 +31,9 @@
 \newcommand{\BoxedPar}[1]%
 {{\center{\fbox{\parbox{\linewidth}{#1}}}}}
 
-\newcommand{\True} {\top}
-\newcommand{\False} {\perp}
-\newcommand{\Not}[1] {\neg{}#1}
+\newcommand{\True} {@true@}
+\newcommand{\False} {@false@}
+\newcommand{\Not} {\neg}
 \newcommand{\Conj} {\wedge}
 \newcommand{\Disj} {\vee}
 \newcommand{\Imp} {\Rightarrow}
