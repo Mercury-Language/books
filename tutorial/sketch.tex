@@ -1,0 +1,3495 @@
+%------------------------------------------------------------------------------%
+% sketch.tex
+% Ralph Becket <rafe@cs.mu.oz.au>
+% Mon Jul 15 12:11:53 EST 2002
+% vim: ft=tex ff=unix ts=4 sw=4 et wm=8 tw=0
+%
+%------------------------------------------------------------------------------%
+
+
+
+%- Preamble -------------------------------------------------------------------%
+
+\documentclass[a4paper,11pt,notitlepage,onecolumn]{article}
+    %
+	% [options]
+    %   (10|11|12)pt            -- (default 10pt)
+    %   (a4|letter)paper        -- (default letterpaper)
+    %   fleqn                   -- (default centred) left-align formulae as
+    %   leqno                   -- (default right) number formulae on the left
+    %   [no]titlepage           -- [do not] start new page after the title
+    %   (one|two)column         -- (default onecolumn)
+    %   (one|two)side
+    %   open(right|any)         -- open chapters on (right|any) pages only
+    % {class}
+    %   (article|report|book|slides)
+    %                           -- consider FoilTeX instead of slides
+
+\usepackage{doc}              % -- I want \MakeShortVerb
+
+\pagestyle{headings}
+    %
+    % {style}
+    %   (plain|headings|empty)  -- (default plain)
+    %                           -- use \thispagestyle{} for new styles
+
+% \includeonly{}
+% \include{}
+    %
+    % -- \includeonly takes a list of file names and filters any \includes
+    % -- \include takes a single file name, starts a new page
+    % -- \input does not start a new page
+    % -- omit the .tex suffix from the file names
+
+%- Definitions and Customization ----------------------------------------------%
+
+    % \newcommand{name}[numargs]{definition}
+    %                           -- (default numargs 0)
+    %                           -- refer to args as #1, #2 etc. in definition
+    %                           -- use % at EOL if definition not finished
+    %                           -- space after a cmd is ignored unless
+    %                           --  preceded by {}
+
+\newcommand{\XXX}[1]%
+{{\small\textbf{XXX} \emph{#1}}}
+
+\newcommand{\Aside}[1]%
+{{\small{\begin{description}\item{\textbf{Aside:}} #1\end{description}}}}
+
+\newcommand{\BoxedPar}[1]%
+{{\center{\fbox{\parbox{\linewidth}{#1}}}}}
+
+    % \newenvironment{name}[numargs]{begincmds}{endcmds}
+
+%- Start of Document ----------------------------------------------------------%
+
+\begin{document}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{\baselineskip}
+% \setlength{\hoffset}{}        % -- left margin is this + 1in
+% \setlength{\voffset}{}        % -- top margin is this + 1in
+% \setlength{\textheight}{}
+% \setlength{\textwidth}{}
+% \setlength{\marginparwidth}{}
+    %
+    % -- or can use \addtolength{parameter}{length}
+    % -- or can use \settoheight{parameter}{text}
+    % -- or can use \settodepth{parameter}{text}
+    % -- or can use \settowidth{parameter}{text}
+
+\title{The Art of Mercury}
+\author{Ralph Becket \\ \texttt{\small rafe@cs.mu.oz.au}}
+\date{15 October 2001}
+
+\maketitle
+
+% \begin{abstract}
+%
+% ...
+%
+% \end{abstract}
+
+% \tableofcontents
+
+%- Body -----------------------------------------------------------------------%
+
+\MakeShortVerb{\@}            % -- @...@ is now shorthand for \verb@...@
+
+    % \text(rm|tt|sf|bf|it|sc|sl|up|md|normal){} \emph{}
+
+    % \math(rm|tt|sf|bf|it|sc|sl|up|md|normal){}
+
+    % \tiny \scriptsize \footnotesize \small \normalsize
+    % \large \Large \LARGE \huge \Huge
+    %                           -- also work as environments
+
+    % ~                         -- small, fixed, nonbreaking space
+    % \hspace{size}             -- soft space (may be lost at SOL or EOL)
+    % \hspace*{size}            -- hard space
+    %                           -- size may be \stretch{factor}
+    % \hfill                    -- same as \hspace{\fill}
+
+    % \vspace{size}             -- soft space (may be lost at TOP or BOP)
+    % \vspace*{size}            -- hard space
+    %                           -- size may be \stretch{factor}
+    %                           --  of \smallskip or \bigskip
+
+    % \\                        -- linebreak
+    % \\*                       -- linebreak but prohibit page break
+    % \newpage
+
+    % \rule[lift]{width}{height}
+
+    % \parbox[(c|t|b)]{width}{text}
+    % \begin{minipage}[(c|t|b)]{width} text \end{minipage}
+    % \mbox{text}               -- prevents word breaking
+
+    % \begin{(flushleft|flushright|center|quote|verse)}
+    % text
+    % \end{(flushleft|flushright|center|quote|verse)}
+
+    % \verb@verbatim text@
+    % \begin{verbatim}
+    % verbatim text
+    % \end{verbatim}
+
+    % \begin{tabular}{(l|r|c|p{width}|<bar>|@{colsep})...}
+    % datum & datum & ... \
+    % datum & datum & ... \
+    % \hline
+    % datum & datum & ... \
+    % \cline{1-2}   & ... \
+    % \multicolumn{2}{(l|c|r)}{wide datum} & ... \
+    % \end{tabular}
+
+    % \begin{(figure|table)}[[!](h|t|b|p)...]
+    % ...
+    % \caption{caption text}
+    % \end{(figure|table)}
+
+    % \label{marker}            -- set a marker
+    % \ref{marker}              -- section containing marker
+    % \pageref{marker}          -- page number of marker
+
+    % $ ... $                   -- inline mathematics
+    % \[ ... \]                 -- display mathematics
+    % \begin{equation}          -- equation* suppresses numbering
+    % ...
+    % \end{equation}
+    % \begin{array}{...}        -- as tabular
+    % ...
+    % \end{array}
+    % \begin{eqnarray}          -- as {array}{rcl} but with numbering
+    % ...                       -- use \nonumber to suppress numbering of a row
+    % \end{eqnarray}
+    % \, \; \<spc> \quad \qquad -- math-mode spacing
+    % \(over|under)line{...}
+    % \(over|under)brace{...}_{...}
+    % \wide(tilde|hat)
+    % \overrightarrow
+    % \frac{top}{bottom}
+    % {... \choose ...}         -- adds parentheses
+    % {... \atop ...}           -- no parentheses
+    % \stackrel{topsym}{linesym}
+    % \left<brasym> ... \right<ketsym>
+    %                           -- use \right. for no <keysym>
+    %                           -- empty lines etc. forbidden in math mode
+
+
+
+\section{Introduction}
+
+\Aside{This is intended as a brief sketch of the book, to be used as a guide
+for writing the real text.}
+
+\XXX{Check consistency of hyphenation for non- sub- etc.}
+
+
+
+\section{Hello, World!}
+
+Because it's traditional...  Type the following into a file called
+``hello.m''.
+\begin{verbatim}
+:- module hello.
+
+:- interface.
+:- import_module io.
+
+:- pred main(io, io).
+:- mode main(di, uo) is det.
+
+:- implementation.
+:- import_module string.
+
+    % The show starts here.
+    %
+main(IO0, IO) :-
+    io__print("Hello, world!\n", IO0, IO).
+\end{verbatim}
+Compile and run the program with
+\begin{verbatim}
+$ mmc --make hello
+$ ./hello
+Hello, world!
+\end{verbatim}
+We'll start by just listing some of the salient points illustrated
+by the ``Hello, world!'' program.
+\begin{itemize}
+\item Modules live in files with the same name (with a @.m@ suffix).
+\item Every module starts with a declaration giving its name.
+\item Non-code directives and declarations are introduced with @:-@.
+\item Every declaration ends with a full stop.
+\item Modules are divided into interface and implementation sections.
+\item The interface section lists the things that are exported by the
+  module.  The top-level module in a Mercury program must export a
+  predicate @main/2@ (functors are conventionally referred to with
+  @name/arity@).
+\item The implementation section provides the code for the functions
+  and predicates exported in interface section.
+\item A module has to be imported before the things it defines can be
+  used.  Hence @io__print@ refers to the print predicate defined in
+  the io module.
+\item The basic computational device in Mercury is the predicate.
+  Predicates have type signatures and mode signatures -- the latter
+  specifying which arguments are inputs and which are outputs.
+\item Comments start with a @%@ sign and extend to the end of the line.
+\end{itemize}
+
+(IO is handled in Mercury by explicitly passing around the ``state
+of the world''" -- each IO operation takes the current state and
+produces a new one; the old state becoming unavailable for use
+thereafter.  This might sound odd, but is a necessary part of
+keeping Mercury a pure language.  \XXX{This will be explained in
+more detail in the section on declaration IO.})
+
+Special syntax exists to simplify passing state variable pairs
+around; for ``Hello, world!'' this becomes
+\begin{verbatim}
+main(!IO) :-
+    io__print("Hello, world!\n", !IO).
+\end{verbatim}
+
+
+
+\section{Declarative vs Imperative Programming}
+
+\subsection{Definitions}
+
+\begin{description}
+\item{Imperative:} a sequence of instructions for transforming state.
+\item{Declarative:} a specification of \emph{what} is to be computed.
+\end{description}
+
+Declarative languages typically have a simple translation into
+conventional mathematical logic, which is how the meaning of a program
+is defined.
+
+Purely declarative programming languages exhibit referential
+transparency.  In a nutshell, this means that anywhere you see a
+reference to a name, you can replace it with the body of the
+definition of the name and it will make no difference.
+
+In more formal language,
+\[
+(\mathrm{let}\ x = e\ \mathrm{in}\ M)  \equiv  M[e/x]
+\]
+This is clearly not true of imperative languages.  Consider
+the following C program:
+
+\begin{verbatim}
+int g = 0;
+
+int f(int x)
+{
+    g = g + 1;
+    return x + g;
+}
+
+void main(int argc, char **argv)
+{
+    int tmp = f(1);
+    int a   = tmp  + tmp;
+    int b   = f(1) + f(1);
+
+    if(a == b)
+        printf("equivalent\n");
+    else
+        printf("not equivalent\n");
+}
+\end{verbatim}
+
+According to C semantics, this program should print out "not
+equivalent", proving that the expression @f(1)@ is not equal to
+itself!  This sort of thing is great for writing buggy, hard to
+maintain code.\footnote{One can give a reasonably simple
+operational semantics to C whereby we repeatedly substitute the
+body of @f(1)@ into a sequence of \emph{instructions}, but as we
+see here, this does not necessarily support the more intuitive,
+declarative reading one might hope for.}
+
+Since referential transparency means no side-effects, you can't have
+variables that change their state as the program evolves.  Instead, the
+term \emph{variable} in a declarative programming language refers to a
+label given to a value or the result of a computation.
+
+The nearest Mercury equivalent to the function @f()@ in the C
+program above is
+
+\begin{verbatim}
+:- pred f(int, int, int, int).
+:- mode f(in,  out, in,  out) is det.
+
+f(X, Result, Old_Value_of_G, New_Value_of_G) :-
+    New_Value_of_G = Old_Value_of_G + 1,
+    Result         = New_Value_of_G + X.
+\end{verbatim}
+
+Since there are no variables in Mercury (and hence no global
+variables), any ``global'' state has to be explicitly passed
+around wherever it is needed.  In this case @f/4@ takes the old
+``state'' as its third argument and returns the new ``state'' in
+its fourth argument.
+
+\subsection{Benefits Of Declarative Style}
+
+While the lack of mutable state might seem like a serious
+drawback to programmers raised on imperative languages, in
+practice it turns out to be something of a boon.  Experienced
+imperative programmers acknowledge that fewer globals and less
+state means clearer, more maintainable, more reusable code
+with fewer bugs.
+
+The philosophy underlying declarative languages is to simplify the
+\emph{writing} of bug free programs and to leave the tedious
+business of identifying programming errors, run-time book
+keeping such as memory management, and non-algorithmic
+optimization to the compiler.  Referential transparency means
+that more optimizations can be applied in more places in a
+program than is the case with imperative programs, simply
+because proving that it is safe to apply a particular
+optimization is so much easier in the absence of side effects.
+
+Mercury was designed as a purely declarative, industrial
+strength programming language aimed at the rapid development
+of medium and large scale systems with the emphasis on
+producing fast, correct programs.
+
+To this end, Mercury doesn't support a corner-cutting
+programming style: you \emph{have} to get the types right, check
+return codes and so forth -- the quick-and-dirty fix is rarely
+an option.\footnote{Mercury does have support for impure code
+via calls to another language, but one has to label each such
+call explicitly; in the end it is often easier just to do the
+right thing.}  Very often, Mercury programmers find that once
+a program is accepted by the compiler, it also does exactly
+what was intended; in the author's long experience this almost
+never happens with imperative languages, even for small
+programs.
+
+\XXX{Place to mention types, garbage collection, polymorphism,
+pattern matching, etc etc?}
+
+\subsection{Pragmatism}
+
+\begin{quote}
+``A foolish consistency is the hobgoblin of small minds.'' \\
+\hfill --- Ralph Waldo Emmerson
+\end{quote}
+
+Purity is all very well, but the fact remains that
+occasionally one has to interoperate with code written in
+impure languages and that (very rarely and usually when that
+last drop of speed is required) some low-level algorithms may
+be best expressed as impure constructs.
+
+For the former, Mercury has a simple and well developed
+foreign language interface allowing the programmer to write
+foreign code in-line with the Mercury program (provided the
+Mercury compiler has an appropriate back-end for the foreign
+language in question -- the alternative is to use C as the
+lingua franca in the traditional style.)  It is the
+programmer's responsiblility to supply the appropriate purity
+declarations for predicates defined in terms of foreign code.
+
+The latter is handled using purity annotations.  Impure code
+(written in a foreign language) must be labelled as such.
+These labels also have to be applied to all predicates that
+use the impure code.  At some point we hope that a pure
+interface can be presented to the programmer, in which case
+the program must include a \emph{promise} to the compiler that
+impurity annotations are not required for users of the
+top-level predicate with an impure definition.
+
+\subsection{Mercury Philosophy}
+
+\XXX{I think I've already covered this one.  Tyson suggests an
+implementation philosophy section (e.g. no distributed fat) in
+a much later section.}
+
+
+
+\section{Types}
+
+Mercury is strongly typed.  Every value has a type and every
+predicate associates a particular type with each argument.
+
+\subsection{PRIMITIVE}
+
+The primitive Mercury types are @int@, @float@, @char@ and @string@ --
+examples are @123@, @3.141@, @('x')@, and @"foo"@, respectively.\footnote{Mercury also includes tuples, such as @\{"Route", 66\}@,
+and higher order values, namely predicates and functions, among
+its primitive types; however, we can ignore these for now.}
+
+While primitive types are recognised by the compiler, no
+operations are.  Operations on the primitive types are defined in
+modules of the same name in the Mercury standard library.
+
+\subsection{Algebraic Types}
+
+You can define new types in Mercury:
+\begin{verbatim}
+:- type primary_colour
+    --->    red
+    ;       green
+    ;       blue.
+
+:- type rgb_colour
+    --->    rgb(float, float, float).   % red, green, blue.
+\end{verbatim}
+
+Here @primary_colour@ is the name of the new type and its
+\emph{data constructors} (possible values) are @red@, @green@ and @blue@.
+
+Similarly @rgb_colour@ is a type with only one constructor,
+@rgb/3@, which in this case takes three float arguments.\footnote{Some languages require you to add empty parentheses
+after function symbols, such as @red@, @green@, and @blue@ above,
+that have no arguments; Mercury, on the other hand, requires
+that the parentheses be omitted alltogether if the functor has
+no arguments.}
+
+You can define parametric types
+\begin{verbatim}
+:- type binary_tree(T)
+    --->    leaf
+    ;       branch(T, binary_tree(T), binary_tree(T)).
+\end{verbatim}
+
+@T@ is a \emph{type variable} that can stand for any type at all.
+The type @binary_tree(T)@ has two constructors: @leaf/0@ and
+@branch/3@ which takes a value of type @T@ (for any choice of
+type), a @binary_tree(T)@ and a @binary_tree(T)@ as arguments
+respectively.
+
+We can have instances of @binary_tree(T)@ for any type @T@ -- for
+example, @binary_tree(int)@, @binary_tree(string)@ or even
+@binary_tree(binary_tree(...))@.
+
+\begin{itemize}
+\item T here is said to be a type variable.
+\item Variables of any kind in Mercury are distinguished by
+  starting with a capital letter.
+\item A type may have several type parameters.
+\item Any variables that appear in the constructor definitions
+  must also appear in the head of the type declaration.
+\item All type variables in the head must be distinct.
+\end{itemize}
+
+You can use other types in your definitions.  For example, we
+could define a more general tree type with
+\begin{verbatim}
+:- type tree(T)
+    --->    tree(T, list(tree(T))).
+\end{verbatim}
+So the type @tree(T)@ has a single constructor @tree/2@ which
+takes a @T@ and a @list(tree(T))@ as arguments, respectively
+(@list(T)@ is defined in the @list@ module in the standard
+library.)
+
+(Note that Mercury doesn't get confused if you use the same
+name for both type and data constructor.)
+
+\XXX{Tyson suggests that diagrams would make this section
+easier to understand.}
+
+\subsection{Pattern Matching}
+
+Pattern matching is the primary means of identifying which
+constructor is used for a particular type value.  The
+following function definition illustrates:\footnote{Functions are a useful shorthand for predicates
+that have a single output and can therefore appear as
+sub-expressions.}
+\begin{verbatim}
+:- func insert(binary_tree(T), T) = tree(T).
+:- mode insert(in, in) = out is det.
+
+insert(leaf, X) =
+    branch(X, leaf, leaf).
+
+insert(branch(A, L, R), X) =
+    ( if      X < A then branch(A, insert(L, X), R)
+      else if A < X then branch(A, L, insert(R, X))
+      else               branch(X, L, R)
+    ).
+\end{verbatim}
+\XXX{This is wrong -- we should either use @compare/3@ (ugh) or make @<@
+etc. synonyms for @compare/2@ closures in the language.}
+
+The first clause matches when the first argument is a @leaf/0@
+and the second clause matches when the first argument is a
+@branch/3@, unifying @A@, @L@, and @R@ respectively with the
+corresponding arguments of the @branch/3@ value.
+
+(Here we using if-then-else expressions where what follows the
+@then@ or @else@ is the result of the whole if-then-else
+expression.)
+
+Note that all function clauses must compute results of the
+same type.  Similarly, the results of the then- and else-arms
+of an if-then-else expression must have the same type.
+
+Another way of writing @insert/2@ is to use explicit unification
+to find out what data constructor was used for a particular
+argument:
+\begin{verbatim}
+:- func insert(binary_tree(T), T) = tree(T).
+:- mode insert(in, in) = out is det.
+
+insert(T0, X) = T :-
+    (
+        T0 = leaf,           T  = branch(X, leaf, leaf)
+    ;
+        T0 = branch(A, L, R),
+        ( if      X < A then T = branch(A, insert(L, X), R)
+          else if A < X then T = branch(A, L, insert(R, X))
+          else               T = branch(X, L, R)
+        )
+    ).
+\end{verbatim}
+Here we follow the function head with a @:-@ and a \emph{goal} that
+computes the result.  (In fact, this is exactly how the
+compiler would see the original implementation of @insert/2@.)
+
+The goal in this case is a special kind of disjunction
+(``choice'') called a \emph{switch}.  In this case, the argument @T0@
+is unified with @leaf/0@ in the first disjunct and @branch/3@ in
+the second.  Since @T0@ is an @in@ mode argument, the compiler
+knows that only one of these disjuncts will succeed (if two or
+more disjuncts could succeed at the same time then this
+wouldn't be a switch.)  Switches are also very common choice
+structures in Mercury.\footnote{The convention is to name a sequence of related
+values as @X0@, @X1@, @X2@, \ldots, @X@.}
+
+(Note that in this version we are using if-then-else \emph{goals},
+as opposed to if-then-else \emph{expressions}.)
+
+The third way we could implement insert/2 is to use an
+if-then-else to decide what to do:
+\begin{verbatim}
+:- func insert(binary_tree(T), T) = tree(T).
+:- mode insert(in, in) = out is det.
+
+insert(T0, X) = T :-
+    ( if T0 = branch(A, L, R) then
+        ( if      X < A then T = branch(A, insert(L, X), R)
+          else if A < X then T = branch(A, L, insert(R, X))
+          else               T = branch(X, L, R)
+        )
+      else                   T = branch(X, leaf, leaf)
+    ).
+\end{verbatim}
+This is also fine, although where possible it is often a
+better idea to use pattern matching or switches, since then
+the compiler generally has better scope for optimisation.
+
+\subsection{Algebraic Types with Fields}
+Just as with many languages, it is possible to give names to
+the fields in data constructors, which can be used to access
+just those fields.\footnote{Not all fields have to be named, although one has
+to use pattern matching or unification to access unnamed
+fields.}
+\begin{verbatim}
+:- type rgb_colour
+    --->    rgb(
+                red   :: float,
+                green :: float,
+                blue  :: float
+            ).
+\end{verbatim}
+Now, say @X@ is a value of type @rgb_colour@.  Then @X ^ red@,
+@X ^ green@ and @X ^ blue@ are expressions that return the values
+of the corresponding fields.  If we have
+\begin{verbatim}
+    X = rgb(0.1, 0.2, 0.3)
+\end{verbatim}
+then
+\begin{verbatim}
+    X ^ red   = 0.1,
+    X ^ green = 0.2,
+    X ^ blue  = 0.3
+\end{verbatim}
+A field can be ``updated'' in the following way:
+\begin{verbatim}
+    Y = ( X ^ red := 0.4 )
+\end{verbatim}
+results in
+\begin{verbatim}
+    Y = rgb(0.4, 0.2, 0.3)
+\end{verbatim}
+What we're actually doing here is applying a substitution to
+a field and obtaining a new value -- @X@ is unaffected by the
+substitution.
+
+We can chain several substitutions together like this:
+\begin{verbatim}
+    Y = ((( X ^ red   := 0.4 )
+              ^ green := 0.5 )
+              ^ blue  := 0.6 )
+\end{verbatim}
+Fields can also nest:
+\begin{verbatim}
+:- type rgb_point
+    --->    xyrgb(
+                x   :: float,
+                y   :: float,
+                rgb :: rgb_colour
+            ).
+\end{verbatim}
+Now, if we have
+\begin{verbatim}
+    X = xyrgb(3.0, 2.0, rgb(0.1, 0.2, 0.3))
+\end{verbatim}
+then
+\begin{verbatim}
+    X ^ rgb ^ red = 0.1
+\end{verbatim}
+and
+\begin{verbatim}
+    Y = ( X ^ rgb ^ red := 0.4 )
+\end{verbatim}
+results in
+\begin{verbatim}
+    Y = xyrgb(3.0, 2.0, rgb(0.4, 0.2, 0.3))
+\end{verbatim}
+Note that it is an error for the same field name to be used in
+data constructors for different \emph{types} defined in the same
+module.  However, different \emph{constructors} of a type may have
+fields with the same name.  For example:\footnote{@foo@, @bar@, @baz@ and @quux@ are traditional programming
+names used in much the same way as Tom, Dick and Harry are often
+used to name arbitrary individuals.}
+\begin{verbatim}
+:- type foo ---> foo(a :: int).
+
+:- type bar ---> bar(a :: int).
+\end{verbatim}
+would lead to the compiler flagging an error since the types
+@foo@ and @bar@ are both defined in the same scope and both have
+constructors with a common field name.  The following is
+acceptable, however, since all the data constructors with the
+same field name belong to the same type:
+\begin{verbatim}
+:- type baz
+    --->    constructor1(a :: int, ...)
+    ;       constructor2(a :: int, ...)
+    ;       constructor3(a :: int, ...).
+\end{verbatim}
+Field access syntax is just syntactic sugar for functions that
+are automatically created by the compiler.  It is also
+possible to write your own functions that can be used as field
+names (for example, if you wanted to compute a value rather
+than storing it in the data constructor, but make it look like
+a field.)  We will go into this in more detail later on \XXX{}.\footnote{\emph{Syntactic sugar}: syntax that makes life easier,
+without otherwise adding anything new to the language.}
+
+\subsection{Equivalence Types}
+
+For documentation and brevity it is also useful to be able to
+declare type synonyms:
+\begin{verbatim}
+    :- type int_tree == tree(int).
+\end{verbatim}
+Mercury makes no distinction between @int_tree@ and
+@tree(int)@.
+
+Equivalence types can also take parameters:
+\begin{verbatim}
+            :- type list_tree(T) == tree(list(T)).
+            :- type ints_tree    == list_tree(int).
+\end{verbatim}
+
+\subsection{Abstract Types}
+
+Often one wants to export a type from a module, but hide its
+definition so that users of the module can only manipulate
+values of the type in question via the predicates exported by
+the module interface.
+
+Abstract types are used for this purpose:\footnote{Mercury supports \emph{overloading}, where the same name can
+be used for several different things; the compiler uses type and
+contextual information to work out which is really meant.  This is how
+we can use the functor @(+)/2@ for addition for @int@s, @float@s,
+complex numbers etc., despite the fact that these operations have
+different implementations.}
+\begin{verbatim}
+:- module complex.
+:- interface.
+:- import_module float.
+
+:- type complex.                        % Abstract type.
+
+    % Constructor functions for complex numbers.
+    %
+:- func rect(float, float) = complex.   % re, im.
+:- func polar(float, float) = complex.  % r, theta.
+
+    % Operations on complex numbers.
+    %
+:- func complex + complex = complex.
+:- func complex * complex = complex.
+...
+
+:- implementation.
+
+    % This implementation uses a single, rectangular
+    % representation.
+    %
+:- type complex                         % Concrete type.
+    --->    re_im(float, float).
+...
+\end{verbatim}
+The abstract type declaration in the module interface must be
+matched by a concrete type definition (an algebraic or
+equivalence type) in the implementation section.
+
+The definition of the abstract type is hidden from users of
+the complex module.
+
+Finally, abstract types may also take parameters:
+\begin{verbatim}
+:- module set.
+:- interface.
+
+:- type set(T).                     % Abstract type.
+
+:- func empty = set(T).
+:- func union(set(T), set(T)) = set(T).
+...
+
+:- implementation.
+:- import_module list.
+
+    % This implementation uses lists to represent sets.
+    %
+:- type set(T) == list(T).          % Concrete type.
+
+empty       = [].
+union(A, B) = A ++ B.
+...
+\end{verbatim}
+
+\subsection{* Types with Programmer-Defined Equality}
+
+\XXX{Defer explanation until later.}
+
+\subsection{Explicit Type Constraints}
+
+Occasionally the compiler needs the programmer to specify what the type
+of a particular variable is in order to resolve an ambiguous situation.
+For example, the predicate @io__print/3@ endeavours to write out a human
+readable form of its first argument, regardless of its type (this is
+made possible through the magic of run-time type information, or
+\emph{RTTI}, which we will discuss later \XXX{}.) Normally the compiler
+has no problem working out the type of the argument, but occasionally
+the programmer has to state the type explicitly.
+\begin{verbatim}
+main(!IO) :-
+    io__print(123, !IO),
+    io__print(length("abcd"), !IO).
+\end{verbatim}
+The compiler complains about the second call to @io__print/3@
+with
+\begin{verbatim}
+foo.m:028: In clause for predicate `foo:main/2':
+foo.m:028:   error: ambiguous overloading causes type ambiguity.
+foo.m:028:   Possible type assignments include:
+foo.m:028: V_6 :: (pred int) or int
+\end{verbatim}
+where @V_6@ is the type of the variable that the compiler has
+introduced to unify with @length("abcd")@ and then pass to
+@io__print/3@.
+
+The problem is that (for hysterical raisins \XXX{}) the Mercury
+standard library @string@ module includes both a function of
+arity one and a predicate with the same name of arity two:
+\begin{verbatim}
+:- func length(string) = int.
+
+:- pred length(string, int).
+:- mode length(in,     out) is det.
+\end{verbatim}
+Both perform the same task, but are called in different ways.
+The problem that the expression @length("abcd")@ presents the
+compiler, in the absence of other typing information, is that
+it could be either the result of function application, in
+which case the type of @V_6@ would be int, or the closure formed
+by applying the predicate @length/2@ to a single argument (this
+is called \emph{currying} and happens all the time in higher order
+programming; higher order programming is discussed later
+\XXX{}), in which case @V_6@ would have the higher-order type
+@pred(int)@.
+
+One way to solve the problem is to add an explicit type
+constraint to the program:
+\begin{verbatim}
+main(!IO) :-
+    io__print(123, !IO),
+    io__print(length("abcd") `with_type` int, !IO).
+\end{verbatim}
+The compiler can now deduce that the programmer means
+@length("abcd")@ to be a function application rather than a
+closure and can compile this program without further
+assistance.
+
+%\XXX{I'd like to have @with_type@ replaced with @:@ in the language
+%before this goes to print...}
+
+
+
+\section{Predicates}
+
+The key computational unit in Mercury is the predicate.  A
+predicate describes a relationship between its arguments; it is
+also possible to provide a procedural view of Mercury predicates,
+which is how they can be used in a programming language.
+
+Predicates cover not only tests and functions, as found in other
+languages, but also procedures with multiple return values and
+even non-deterministic relationships, in which there may be
+several different solutions for a given set of input arguments.
+
+\subsection{Introduction}
+
+A predicate is defined by a set of \emph{clauses}, where each
+clause takes the form
+\begin{verbatim}
+Head :- Body.
+\end{verbatim}
+This should be read as saying ``@Head@ is true if @Body@ is true'' with
+the set of clauses forming an exhaustive specification of the
+predicate.
+
+If the body of a predicate is empty (taken to mean just @true@), one can
+just write
+\begin{verbatim}
+    Head.
+\end{verbatim}
+Clauses like this are called \emph{facts}.
+
+The body of a predicate clause is a \emph{goal} -- a logical formula
+that must be satisfied in order for the head to hold.
+
+A very simple example of a predicate is
+\begin{verbatim}
+:- pred max(int, int, int).         % A, B, Max.
+:- mode max(in,  in,  out) is det.
+
+max(A, B, Max) :-
+    ( if B < A then Max = A else Max = B ).
+\end{verbatim}
+This predicate takes two integers, @A@ and @B@, and succeeds
+binding @Max@ to @A@ if @A@ is greater than @B@ or binding @Max@ to @B@
+otherwise.  The part of the mode declaration @is det@ means
+that this is a deterministic predicate: it will always succeed
+and has just one solution for any given pair of inputs.
+
+(This sort of deterministic predicate with a single output is
+called a \emph{function}.  Functions are so common that Mercury
+includes special syntax and conventions to simplify working
+with them.  More of this in a later section \XXX{}.)
+
+For a more interesting example, consider the following small
+genealogical database of people defined by the @person@ type:
+\begin{verbatim}
+:- type person
+    --->    arthur  ; bill      ; carl
+    ;       alice   ; betty     ; cissy.
+\end{verbatim}
+We start by defining predicates that we can use to decide if a
+particular person is male or female.  These predicates are
+labelled semidet because they have at most one solution
+(success) for a given argument, but might also fail.
+\begin{verbatim}
+:- pred male(person).
+:- mode male(in) is semidet.
+
+male(arthur).
+male(bill).
+male(carl).
+
+:- pred female(person).
+:- mode female(in) is semidet.
+
+female(Person) :- not male(Person).
+\end{verbatim}
+The definition for @female/1@ states that @female(Person)@ succeeds
+iff\footnote{\emph{Iff}: if and only if} @male(Person)@ fails.  (Recall
+that variables in Mercury are distinguished by starting with a capital
+letter.)
+\begin{verbatim}
+:- pred father(person, person).     % Child, Father.
+:- mode father(in,     out) is semidet.
+
+father(betty, arthur).
+father(carl,  bill).
+father(cissy, bill).
+
+:- pred mother(person, person).     % Child, Mother.
+:- mode mother(in,     out) is semidet.
+
+mother(bill,  alice).
+mother(carl,  betty).
+mother(cissy, betty).
+\end{verbatim}
+The predicates @father/2@ and @mother/2@ take their first argument
+as an input and return a result in the second.  The
+determinism is semidet again because they are not exhaustive:
+some inputs can cause them to fail (e.g. there is no solution
+for @father(arthur, X)@.)
+\begin{verbatim}
+:- pred parent(person, person).     % Child, Parent.
+:- mode parent(in,     out) is nondet.
+
+parent(Child, Parent) :- father(Child, Parent).
+parent(Child, Parent) :- mother(Child, Parent).
+\end{verbatim}
+This simply says that the parent of a child is either the
+father or the mother.  The determinism is nondet because for a
+given @Child@ argument this predicate may fail or may have more
+than one solution:
+\begin{itemize}
+\item both @father/2@ and @mother/2@ can fail
+(e.g. if @Child = arthur@);
+\item just one of @father/2@ or @mother/2@ could succeed
+(e.g. if @Child = bill@);
+\item both @father/2@ and @mother/2@ could succeed
+(e.g. if @Child = cissy@).
+\end{itemize}
+
+(How failure and multiple solutions affect the execution of a
+Mercury program will be explained below.)
+\begin{verbatim}
+:- pred ancestor(person, person).   % Person, Ancestor.
+:- mode ancestor(in,     out) is nondet.
+
+ancestor(Person, Ancestor) :-
+    parent(Person, Ancestor).
+
+ancestor(Person, Ancestor) :-
+    parent(Person, Parent),
+    ancestor(Parent, Ancestor).
+\end{verbatim}
+We can now define an ancestor of a Person as being either
+\begin{itemize}
+\item a parent of that Person or
+\item an ancestor of a parent of that Person.
+\end{itemize}
+
+Since @parent/2@ is nondet, so is @ancestor/2@.
+
+This table explains the difference between the number of
+solutions a predicate can have for a given determinism:
+
+\begin{tabular}{lll}
+\textbf{Determinism}       & \multicolumn{2}{l}{\textbf{Number of Solutions}} \\
+            & \textbf{Min} & \textbf{Max} \\
+\hline \\
+@semidet@   & 0            & 1 \\
+@nondet@    & 0            & 1 or more \\
+@det@       & 1            & 1 \\
+@multi@     & 1            & 1 or more \\
+\end{tabular}
+
+(There are a few other determinisms, but we don't need to
+consider them just yet \XXX{}.)
+
+The compiler will check that your determinism declarations are
+correct.
+
+One interesting thing about this database is that there's no
+reason why it shouldn't be run in ``reverse''.  That is, for any
+father or mother, we should be able to deduce who their
+children are and for any ancestor we should be able to work
+out who their descendants are.
+
+To gain this extra functionality we have only to add the
+required extra mode declarations; there is no need to touch
+the definitions themselves!  The extra mode declarations are
+\begin{verbatim}
+:- mode father(out, in) is nondet.   % Infer Child from Father.
+:- mode mother(out, in) is nondet.   % Infer Child from Mother.
+:- mode parent(out, in) is nondet.   % Infer Child from Parent.
+:- mode ancestor(out, in) is nondet. % Infer Person from Ancestor.
+\end{verbatim}
+Notice that @father/2@ and @mother/2@ are nondet in this mode
+rather than semidet: looking at the definitions we see that
+@father(Child, bill)@ has multiple solutions @Child = carl@ and
+@Child = sissy@, while @mother(Child, betty)@ also has solutions
+@Child = carl@ and @Child = sissy@.
+
+There is no reason why a predicate cannot have several output
+arguments or even no input arguments.  For example, we
+might go on to add
+\begin{verbatim}
+:- pred parents(person, person, person).    % Child, Mother, Father.
+:- mode parents(in,     out,    out   ) is semidet.
+:- mode parents(out,    in,     in    ) is nondet.
+
+parents(Child, Mother, Father) :-
+    mother(Child, Mother),
+    father(Child, Father).
+\end{verbatim}
+The first mode of @parents/3@ is semidet because both @mother/2@
+and @father/2@ are semidet when called with @Child@ as an input
+and both must succeed for @parents/3@ to succeed.
+
+The second mode is nondet for similar reasons, but exhibits an
+interesting property.  At first glance you might think that
+something will go wrong here: when @parents/3@ is called in the
+second mode, initially @Mother@ and @Father@ are inputs and @Child@
+is an output.  However, if the call to @mother/2@ succeeds, then
+@Child@ will end up being bound to the identifier for some
+person.  This appears that we would then be trying to call
+@father/2@ with \emph{both} arguments as inputs, but there is no such
+mode declaration for @father/2@.  There is no need to worry,
+however -- the compiler will recognise the situation and treat
+the definition of @parents/3@ like this as far as the second
+mode is concerned:\footnote{The compiler isn't doing any special analysis here;
+this is just a natural consequence of conversion to
+super-homogeneous normal form, which will be explained later
+on \XXX{}.}
+\begin{verbatim}
+:- mode parents(out, in, in) is nondet.
+
+parents(Child, Mother, Father) :-
+    mother(Child, Mother),
+    father(X,     Father),
+    X = Child.
+\end{verbatim}
+So here @father/2@ is being called in mode @(out, in) is nondet@ and
+@parents/3@ succeeds if the result @X@ is bound to the same value
+as @Child@.
+
+In effect the compiler has deduced that @father/2@ has the
+implied mode
+\begin{verbatim}
+:- mode father(in, in) is semidet.
+\end{verbatim}
+In general, Mercury will reorder each clause body for each mode
+declaration so that results are generated before they are needed -- each
+mode of a predicate is referred to as a \emph{procedure}.
+
+\subsection{Execution}
+This subsection explains Mercury's execution model in more
+detail.  In particular, the notions of failure, backtracking
+and non-determinism are addressed.
+
+Let's start by looking at some of the code for our
+genealogical database again -- this time we're going to label
+the clauses to help us see how programs execute in Mercury.
+\begin{verbatim}
+
+    :- pred father(person, person).     % Child, Father.
+    :- mode father(in,     out   ) is semidet.
+    :- mode father(out,    in    ) is nondet.
+
+f1  father(betty, arthur).
+f2  father(carl,  bill).
+f3  father(cissy, bill).
+
+    :- pred mother(person, person).     % Child, Mother.
+    :- mode mother(in,     out   ) is semidet.
+    :- mode mother(out,    in    ) is nondet.
+
+m1  mother(bill,  alice).
+m2  mother(carl,  betty).
+m3  mother(cissy, betty).
+
+    :- pred parent(person, person).     % Child, Parent.
+    :- mode parent(in,     out   ) is nondet.
+    :- mode parent(out,    in    ) is nondet.
+
+p1  parent(Child, Parent) :- father(Child, Parent).
+p2  parent(Child, Parent) :- mother(Child, Parent).
+
+    :- pred ancestor(person, person).   % Person, Ancestor.
+    :- mode ancestor(in,     out   ) is nondet.
+
+a1  ancestor(Person, Ancestor) :-
+        parent(Person, Ancestor).
+
+a2  ancestor(Person, Ancestor) :-
+        parent(Person, Parent),
+        ancestor(Parent, Ancestor).
+
+    :- pred parents(person, person, person).    % Child, Mother, Father.
+    :- mode parents(in,     out,    out   ) is semidet.
+    :- mode parents(out,    in,     in    ) is nondet.
+
+s1  parents(Child, Mother, Father) :-
+        mother(Child, Mother),
+        father(Child, Father).
+\end{verbatim}
+First off, we'll consider the goal @parent(cissy, Parent)@.
+Every time we see a goal we try expanding it according to each
+clause definition in turn (this is what being referentially
+transparent is all about).  If we get to a dead end we have to
+\emph{backtrack} to the last point where we had a choice and try a
+different clause (when we backtrack we also forget any
+variable bindings we might have made one the way from the
+/choice point/.)
+\begin{verbatim}
+    parent(cissy, Parent)
+    p1 =>
+        father(cissy, Parent)
+        f1 => FAIL because betty \= cissy
+        f2 => FAIL because carl  \= cissy
+        f3 =>
+            Parent = bill
+\end{verbatim}
+So one solution to @parent(cissy, Parent)@ is @Parent = bill@.  We
+obtained this by first expanding the goal according to p1 and
+then expanding the resulting goal @father(cissy, Parent)@
+according to each of @f1@, @f2@ and @f3@ until we found one that
+succeeded.
+
+If the program later has to backtrack over this goal then we
+have to forget the binding @Parent = bill@ and try the next
+clause for @parent/2@ (since there are no more clauses for
+@father/2@):
+\begin{verbatim}
+    parent(cissy, Parent)
+    p2 =>
+        mother(cissy, Parent)
+        m1 => FAIL because bill \= cissy
+        m2 => FAIL because carl \= cissy
+        m3 => Parent = betty
+\end{verbatim}
+Now, say we wanted to ask the question ``which ancestor of
+@carl@, if any, is also a parent of @bill@?''  Here's how things
+would proceed:\footnote{We have to supply fresh local vars in each
+ expansion -- for instance, @Ancestor@ in the expansion of @a2@ has
+ been replaced with a new variable @Z@.}
+\begin{verbatim}
+    ancestor(carl, X), parent(bill, Y), X = Y
+    a1 =>
+        parent(carl, X), parent(bill, Y), X = Y
+        p1 =>
+            father(carl, X), parent(bill, Y), X = Y
+            f1 => FAIL because betty \= carl
+            f2 =>
+                X = bill, parent(bill, Y), X = Y
+               =>
+                parent(bill, Y), bill = Y
+                p1 =>
+                    father(bill, Y), bill = Y
+                    f1 => FAIL because betty \= bill
+                    f2 => FAIL because carl  \= bill
+                    f3 => FAIL because cissy \= bill
+                p2 =>
+                    mother(bill, Y), bill = Y
+                    m1 =>
+                        Y = alice, bill = Y
+                       =>
+                        bill = alice
+                       => FAIL because bill  \= alice
+                    m2 => FAIL because carl  \= bill
+                    m3 => FAIL because cissy \= bill
+        p2 =>
+            mother(carl, X), parent(bill, Y), X = Y
+            m1 => FAIL because bill \= carl
+            m2 =>
+                X = betty, parent(bill, Y), X = Y
+               =>
+                parent(bill, Y), betty = Y
+                p1 =>
+                    father(bill, Y), betty = Y
+                    f1 => FAIL because betty \= bill
+                    f2 => FAIL because carl  \= bill
+                    f3 => FAIL because cissy \= bill
+                p2 =>
+                    mother(bill, Y), betty = Y
+                    m1 =>
+                        Y = alice, betty = Y
+                       =>
+                        betty = alice
+                       => FAIL because betty \= alice
+                    m2 => FAIL because carl  \= bill
+                    m3 => FAIL because cissy \= bill
+    a2 =>
+        parent(carl, Z), ancestor(Z, X), parent(bill, Y), X = Y
+        p1 =>
+            father(carl, Z), ancestor(Z, X), parent(bill, Y), X = Y
+            f1 => FAIL because betty \= carl
+            f2 =>
+                Z = bill, ancestor(Z, X), parent(bill, Y), X = Y
+               =>
+                ancestor(bill, X), parent(bill, Y), X = Y
+                a1 =>
+                    parent(bill, X), parent(bill, Y), X = Y
+                    p1 =>
+                        father(bill, X), parent(bill, Y), X = Y
+                        f1 => FAIL because betty \= bill
+                        f2 => FAIL because carl  \= bill
+                        f3 => FAIL because cissy \= bill
+                    p2 =>
+                        mother(bill, X), parent(bill, Y), X = Y
+                        m1 =>
+                            X = alice, parent(bill, Y), X = Y
+                           =>
+                            parent(bill, Y), alice = Y
+                            p1 =>
+                                father(bill, Y), alice = Y
+                                f1 => FAIL because betty \= bill
+                                f2 => FAIL because carl  \= bill
+                                f3 => FAIL because cissy \= bill
+                            p2 =>
+                                mother(bill, Y), alice = Y
+                                m1 =>
+                                    Y = alice, alice = Y
+                                   =>
+                                    alice = alice
+                                   => TRUE
+\end{verbatim}
+So our program concludes that a solution to
+\begin{verbatim}
+    ancestor(carl, X), parent(bill, Y), X = Y
+\end{verbatim}
+is
+\begin{verbatim}
+    X = alice, Y = alice
+\end{verbatim}
+As we indicated earlier in the definition of @parents/3@, in
+practice we'd be more likely to write the goal as just
+\begin{verbatim}
+    ancestor(carl, X), parent(bill, X)
+\end{verbatim}
+and let Mercury work out where the implicit unification should
+go.
+
+\Aside{The above example might give the impression that Mercury is a term
+rewriting system.  This is not true (although conceivably a very
+slow Mercury implementation might use such a technique\ldots)  What
+happens behind the scenes is much more efficient, albeit
+computationally equivalent.}
+
+In practice, ninety per cent or so of the code one writes is
+deterministic.  However, there are times (as in the example above) when
+non-determinism can be used to write very clear, concise programs.
+Support for backtracking and unification is what distinguishes Mercury
+from purely functional languages.
+
+\subsection{Recursion}
+
+Imperative languages like C and Java provide a whole slew of
+mechanisms for supporting iterative (looping) control flow --
+while loops, repeat-until loops, for loops and so forth.
+
+Declarative languages typically provide but one mechanism for
+such things: \emph{recursion}.  A recursive predicate is simply one
+defined in terms of itself \XXX{Don't forget to mention mutual
+recursion}.  (Later on we will discover \emph{higher order} predicates
+and observe that the standard library supplies predicates that stand in
+for the common iterative mechanisms found in imperative languages.)
+
+Some simple examples:
+\begin{verbatim}
+:- func factorial(int) = int.
+
+factorial(N) =
+    ( if N  = 0 then 1 else N * factorial(N - 1) ).
+
+
+:- func fibonacci(int) = int.
+
+fibonacci(N) =
+    ( if N =< 2 then 1 else fibonacci(N - 1) + fibonacci(N - 2) ).
+\end{verbatim}
+These are examples of what is sometimes called ``middle
+recursion'' where the recursive call is \emph{not} the last thing
+that the predicate (or function) does when looping.  Here,
+calls to @factorial/1@ finishes with a multiplication and calls
+to @fibonacci/1@ finish with an addition.
+
+Although middle recursion is easy to read, it incurrs some
+performance penalty in that each iteration has to record
+something extra on the stack in order to finish up the
+computation.\footnote{That said, the compiler can in fact turn some
+middle recursive predicates into equivalent tail recursive
+predicates that do not incurr a stack overhead \XXX{}.}
+
+\XXX{Include a side-bar or something explaining stack frames.}
+
+\emph{Tail recursion} describes the situation where the last thing a
+predicate does is call itself.  Since there is nothing left to
+do after the call, the compiler can reuse the current call's
+stack frame for the recursive call, allowing the predicate to
+execute using only a fixed amount of stack space.  For
+example, tail recursive implementations of the above
+functions are
+\begin{verbatim}
+factorial(N) = fac(N, 1).
+
+fac(N, X) =
+    ( if N = 0 then X     else fac(N - 1, N * X) ).
+
+
+fibonacci(N) = fib(1, 1, N).
+
+fib(FN_2, FN_1, N) =
+    ( if N =< 2 then FN_1 else fib(FN_1, FN_1 + FN_2, N - 1) ).
+\end{verbatim}
+Tail recursive code like this should execute just as quickly
+and efficiently as a for or while loop in an imperative
+language.
+
+\subsection{Unifications}
+
+Mercury has but two basic atomic (i.e. indivisible) types of
+goal: unifications and calls.
+
+A unification is written @X = Y@.  A unification can fail if @X@
+and @Y@ are not unifiable.
+
+Two values are unifiable if they are ``structurally similar'' --
+that is, where you see a data constructor in one, you either
+see the same data constructor in the other (and the
+corresponding arguments are also structurally similar) or a
+variable, which will end up being bound to the corresponding
+term on the other side if the unification is successful.\footnote{Unlike Prolog, Mercury forbids the aliasing of
+variables whereby a partially instantiated data structure
+may contain the same unbound variable in two different places.
+This will be explained fully in a later chapter.  \XXX{}}
+
+Unifications, therefore, can be used to bind variables to
+values, test to see if a variable is bound to a particular
+constructor, unpack the arguments of a constructor or all of
+the above.
+
+In the following examples we assume that variables are
+initially unbound:
+
+\begin{tabular}{rcll}
+         @123@ & @=@ & @123@ &
+                -- Succeeds \\
+           @X@ & @=@ & @123@ &
+                -- Binds @X = 123@ \\
+         @123@ & @=@ & @234@ &
+                -- Fails \\
+           @X@ & @=@ & @foo(1, 2, 3)@ &
+                -- Binds @X = foo(1, 2, 3)@ \\
+@foo(X, Y, Z)@ & @=@ & @foo(1, 2, 3)@ &
+                -- Binds @X = 1@, @Y = 2@, @Z = 3@ \\
+@foo(X, Y, 4)@ & @=@ & @foo(1, 2, 3)@ &
+                -- Fails (@4 \= 3@) \\
+@foo(X, 2, 3)@ & @=@ & @foo(1, 2, Z)@ &
+                -- Binds @X = 1@, @Z = 3@ \\
+\end{tabular}
+
+The complex unifications are most easily understood by first
+converting them into \emph{super homogeneous normal form} (which is
+what the compiler does.)  In SHNF, the left hand side of each
+unification is a variable and the right hand side is either
+another variable or a functor \XXX{have I explained this term?}, all of
+whose arguments are variables.  For example
+
+\begin{verbatim}
+    foo(X, 2, 3) = foo(1, 2, Z)
+\end{verbatim}
+becomes
+\begin{verbatim}
+    V_1 = X, V_2 = 2, V_3 = 3, V4 = foo(V_1, V_2, V_3),
+    V_5 = 1, V_6 = 2, V_7 = Z, V8 = foo(V_5, V_6, V_7),
+    V_4 = V_8
+\end{verbatim}
+where @V_1@\ldots@V_8@ are all temporary variables
+introduced in the conversion to SHNF.
+
+\subsection{Calls}
+The other kind of primitive goal supported by Mercury is the
+predicate call, @p(X1, ..., Xn)@, which we have already seen in
+the examples above.
+
+One way to picture the evaluation of a call is to think of it
+as expanding into the different clause bodies for the
+predicate definition while looking for solutions.
+
+Two relatively important built-in predicates are @true@ and
+@false@ \XXX{}.  @true@ always succeeds and @false@ always fails.\footnote{@false@ is often written as @fail@, which is a hangover
+from Mercury's Prolog roots where it was sometimes more useful
+to think in procedural terms.}
+
+\subsection{Conjunction}
+
+A goal of the form @G1, G2, ..., Gn@ is called a \emph{conjunction}
+with the separating commas read as ``and''.  A conjunction
+succeeds iff a consistent solution to each of the sub-goals @G1@,
+@G2@, \ldots, @Gn@ can be found by the program.
+
+(The compiler may have to reorder the sequence of goals in a
+clause in order to satisfy the mode constraints.  Although one
+can set a flag to force the compiler to do no more reordering
+than is necessary, in general this will mean that certain
+optimizations will not be possible.  The upshot of this is
+that one should avoid writing code that assumes a particular
+evaluation order other than that dictated by the mode
+constraints.)
+
+A conjunction executes by trying each of the goals in order.
+If a goal fails then the program backtracks to the nearest
+preceding choice-point (i.e. non-deterministic goal that may
+have other solutions).
+
+\subsection{Negation}
+
+A goal of the form not @G@ succeeds iff @G@ has no solutions.  @G@
+may be a compound goal, in which case it should be enclosed in
+parentheses to avoid syntactic precedence problems.
+
+The sub-goal @G@ is said to be in a \emph{negated context} and as
+such cannot bind any variables visible outside the negation
+(since the only way not @G@ can succeed is if @G@ fails, in which
+case it will not produce any variable bindings.)
+
+Note that not not @G@ is equivalent to @G@ and hence may bind
+variables if it succeeds (while not not @G@ would be an odd
+thing to write, some of the code transformations the compiler
+performs can generate such things; getting the modes right for
+such things requires that the compiler observe this
+simplification rule.)
+
+\subsection{If-Then-Else Goals}
+
+Mercury's if-then-else construct looks like this:
+\begin{verbatim}
+    ( if ConditionGoal then YesGoal else NoGoal )
+\end{verbatim}
+Note that the else part is \emph{not} optional.  \XXX{Except in DCG
+code...  But we probably don't need to mention this.}
+
+You may also see if-then-elses written as
+\begin{verbatim}
+    ( ConditionGoal -> YesGoal ; NoGoal )
+\end{verbatim}
+although the author finds this style less appealing.
+
+While the parentheses are not always required, it is a very
+good idea to include them in order to avoid confusing
+syntactic precedence errors.  One common exception is a chain
+of if-then-elses where only the top level of parentheses are
+necessary:
+\begin{verbatim}
+    ( if      ConditionGoal1 then YesGoal1
+      else if ConditionGoal2 then YesGoal2
+      else if ConditionGoal3 then YesGoal3
+      ...
+      else                        NoGoal
+    )
+\end{verbatim}
+Extra parentheses are not required even if any of the @ConditionGoal@s,
+@YesGoal@s or the @NoGoal@ are compound goals.
+
+The if-then-else goal
+\begin{verbatim}
+    ( if ConditionGoal then YesGoal else NoGoal )
+\end{verbatim}
+is semantically equivalent to the disjunction
+\begin{verbatim}
+    ( ConditionGoal, YesGoal ; not ConditionGoal, NoGoal )
+\end{verbatim}
+but will be implemented more efficiently by the compiler (if
+@ConditionGoal@ produces no solutions in the first disjunct then
+there's no point in checking again that it has none in the
+second disjunct.)
+
+It's worth looking at a few examples to really understand how
+if-then-else goals work.  Again, we assume that all variables
+are initially unbound:
+\begin{verbatim}
+    ( if ( X = 1 ; X = 2 ) then ( X = 2 ; X = 4 ) else X = 5 )
+\end{verbatim}
+The above goal is @nondet@ (the condition is @multi@
+and the then-goal is @nondet@, since @X@ will be bound at this point),
+but has the single solution @X = 2@.
+\begin{verbatim}
+    ( if ( X = 1 ; X = 2 ) then ( X = 3 ; X = 4 ) else X = 5 )
+\end{verbatim}
+The above goal is also @nondet@ for the same reason, but in fact has no
+solutions (the compiler can only be expected to perform a certain amount
+of program analysis and will sometimes not be completely precise --
+mode inference is actually undecidable in general, although this is not
+a problem in practice.  \XXX{Check this is true!})
+\begin{verbatim}
+    ( if 1 = 2 then ( X = 3 ; X = 4 ) else ( X = 5 ; X = 6 ) )
+\end{verbatim}
+The above goal is @nondet@ because the condition is @semidet@ and the
+then- and else-goals are
+@multi@.  (Since the condition will fail, the
+else-goal is evaluated, with solutions @X = 5@ and @X = 6@.)
+\begin{verbatim}
+    ( if 1 = 1 then ( X = 3 ; X = 4 ) else ( X = 5 ; X = 6 ) )
+\end{verbatim}
+Similary, the above goal is @nondet@ because the condition is @semidet@
+and the then- and else-goals are
+@multi@.  (Since the condition will succeed, the
+else-goal is evaluated, with solutions @X = 3@ and @X = 4@.)
+
+That said, in the vast majority of cases where the
+condition-goal is semidet and the then- and else-goals are
+deterministic, if-then-else goals will act in very much the
+same way as similar structures in other programming languages.
+
+Since the condition-goal is in a negated context in the else-arm
+of the disjunctive form of an if-then-else, it cannot
+produce any outputs that would be used in @NoGoal@ or anything
+outside the if-then-else as a whole.  It can, however, produce
+outputs that are only used in the @YesGoal@.  (The reason for
+this restriction is slightly subtle and will be explained in
+more detail later.  \XXX{It's to do with having mode
+independent semantics.})
+
+For example, the following somewhat contrived code violates
+the constraint because @S@ is bound inside the condition and is
+also visible outside the if-then-else goal.
+\begin{verbatim}
+
+:- pred prime_divisor(int, int).
+:- mode prime_divisor(in,  out) is nondet.
+...
+
+:- pred prime_divisor_or_zero(int, int).
+:- mode prime_divisor_or_zero(in,  out) is multi.
+
+prime_divisor_or_zero(N, S) :-
+    ( if   prime_divisor(N, S)
+      then true
+      else S = 0
+    ).
+
+\end{verbatim}
+The correct way to write @prime_divisor_or_zero/2@ is
+\begin{verbatim}
+prime_divisor_or_zero(N, S) :-
+    ( if   prime_divisor(N, D)
+      then S = D
+      else S = 0
+    ).
+\end{verbatim}
+Note that if-then-else \emph{expressions} are slightly different;
+the following is perfectly legal:
+\begin{verbatim}
+prime_divisor_or_zero(N, S) :-
+    S = ( if prime_divisor(N, D) then D else 0 ).
+\end{verbatim}
+
+\subsection{Disjunction}
+
+Just as conjunction lets you use ``and'' to construct goals,
+disjunction lets you use ``or''.  A \emph{disjunctive} goal takes the
+form @(G1 ; G2 ; ... ; Gn)@ with the separating semicolons being
+read as ``or''.
+
+A disjunction succeeds iff any of its disjunct sub-goals
+succeeds.  A disjunction has as many solutions as all of its
+disjuncts put together: if one disjunct fails or backtracking
+exhausts all the solutions for one disjunct then execution
+proceeds with another disjunct.  Again, the compiler is
+generally free to reorder disjuncts, although this should not
+have a visible impact on programs.  Disjunctions are typically
+non-deterministic, although switches, mentioned earlier, are a
+special case.
+
+\XXX{Need examples?}
+
+The clausal notation we have been using in the examples above
+is in fact convenient syntactic sugar for writing top-level
+disjunctions.  For example, the @ancestor/2@ predicate we
+defined earlier
+\begin{verbatim}
+
+ancestor(Person, Ancestor) :-
+    parent(Person, Ancestor).
+
+ancestor(Person, Ancestor) :-
+    parent(Person, Parent),
+    ancestor(Parent, Ancestor).
+\end{verbatim}
+could equivalently be written as
+\begin{verbatim}
+ancestor(Person, Ancestor) :-
+    (
+        parent(Person, Ancestor)
+    ;
+        parent(Person, Parent),
+        ancestor(Parent, Ancestor)
+    ).
+\end{verbatim}
+(Indeed, this is how the compiler sees multi-clause
+definitions.)
+
+In general it is better style to use clausal form for
+top-level disjunctions.
+
+\subsection{Switches}
+Mercury recognises particular forms of (@semi-@)@det@
+disjunction which it can compile very efficiently.
+
+The @string@ library module defines the following type:
+\begin{verbatim}
+:- type poly_type
+    --->    f(float)
+    ;       i(int)
+    ;       s(string)
+    ;       c(char).
+\end{verbatim}
+which can be used to form heterogeneous collections of the
+primitive types (this is useful, amongst other things, for
+supplying argument lists for formatted output.)
+
+Say we wanted to write a predicate that would convert any
+@poly_type@ value into a @string@.  Here's how we might write the
+code (in practice we would use a function; here we use a
+predicate for the purposes of illustration):
+\begin{verbatim}
+:- pred poly_type_to_string(poly_type, string).
+:- mode poly_type_to_string(in, out) is det.
+
+poly_type_to_string(f(F), S) :- float_to_string(F, S)
+poly_type_to_string(i(I), S) :- int_to_string(I, S)
+poly_type_to_string(s(S), S).
+poly_type_to_string(c(C), S) :- char_to_string(C, S)
+\end{verbatim}
+this is equivalent to the single clause definition
+\begin{verbatim}
+poly_type_to_string(Poly, S) :-
+    (   Poly = f(F), float_to_string(F, S)
+    ;   Poly = i(I), int_to_string(I, S)
+    ;   Poly = s(S)
+    ;   Poly = c(C), char_to_string(C, S)
+    ).
+\end{verbatim}
+
+The compiler knows that since @Poly@ is an input variable it
+must be bound when the disjunction is evaluated.  The compiler
+also sees that each arm of the disjunction unifies @Poly@
+against a different data constructor.  The compiler therefore
+deduces that at most one disjunct can succeed on a particular
+call (and, since all @poly_type@ data constructors are tested
+for, \emph{exactly} one must succeed.)  The compiler generates very
+efficient code for so-called \emph{switch} constructs such as this.\footnote{The name \emph{switch} is used because of its similarity
+to the C language construct of the same name.}
+
+Switches are an elegant way of describing conditions based on
+unification tests and are typically more efficient than the
+equivalent if-then-else chains.
+
+\subsection{Existential Quantification}
+
+Sometimes we only need to know whether a solution exists, but
+are not interested in the result.  For this we use existential
+quantification, which looks like this:
+\begin{verbatim}
+    (some [X, Y, Z] G)
+\end{verbatim}
+A goal of this form will succeed iff there is a solution to @G@,
+but any bindings for @X@, @Y@ and @Z@ will not be visible outside
+the quantification -- it's rather like saying that @X@, @Y@ and @Z@ 
+are local variables for the goal @G@.
+
+Mercury has an rule that any variables in a clause that do not
+also appear in the head are implicitly existentially
+quantified, which means you never actually need to use
+explicit existential quantification in your programs.
+
+\subsection{Universal Quantification}
+
+On the other hand, we may wish to know whether a particular
+property holds for all solutions to a particular goal.  This
+is where universal quantification is useful.
+
+The goal
+\begin{verbatim}
+    (all [X, Y, Z] G)
+\end{verbatim}
+is equivalent to writing
+\begin{verbatim}
+    not (some [X, Y, Z] not G)
+\end{verbatim}
+
+\subsection{Implication}
+
+Mercury has three types of goal for describing implicative
+relationships between goals.\footnote{The translations are given by de Morgan's laws.}
+\begin{itemize}
+\item @(G1 => G2)@ is shorthand for @(not G1 ; G2)@;
+\item @(G1 <= G2)@ is shorthand for @(G2 => G1)@; and
+\item @(G1 <=> G2)@ is shorthand for @((G1 => G2), (G1 <= G2))@.
+\end{itemize}
+
+Note that parentheses are required around @G1@ and @G2@ if they
+are not atomic goals; it is a good idea to also put
+parentheses around the implication as a whole to avoid
+ambiguity in the scope of the implication.)
+
+Implication is most often used with universal quantification
+to test for some general property.
+
+\subsubsection{Examples}
+
+This example uses the predicate @member(X, Xs)@ to non-deterministically
+project members @X@ from the @list@ @Xs@ and the semidet predicate
+@even(X)@ which succeeds iff @X@ is even.\footnote{The convention is to
+name a @list@ of items, @X@, as @Xs@.}
+\begin{verbatim}
+:- pred all_even(list(int)).
+:- mode all_even(in) is semidet.
+
+all_even(Xs) :-
+    all [X] ( member(X, Xs) => even(X) ).
+
+\end{verbatim}
+
+\begin{verbatim}
+
+    % Two list can be interpreted as equivalent sets if
+    % each contains the same members as the other.
+    %
+:- pred equivalent_sets(list(T), list(T)).
+:- mode equivalent_sets(in, in) is semidet.
+
+equivalent_sets(Xs, Ys) :-
+    all [Z] ( member(Z, Xs) <=> member(Z, Ys) ).
+\end{verbatim}
+The auxiliary predicates @member/2@ and @even/1@ are defined as\footnote{The Mercury parser views anything in @`@backquotes@`@
+as an infix operator.  This is the same as the rule used in Haskell.}
+\begin{verbatim}
+:- pred member(T, list(T)).
+:- mode member(out, in) is nondet.
+
+    % X is a member of a list if it is either the head of
+    % that list or a member of the tail.
+    %
+member(X, [X | _ ]).
+member(X, [_ | Xs]) :- member(X, Xs).
+
+
+:- pred even(int).
+:- mode even(in) is semidet.
+
+even(X) :- X `mod` 2 = 0.
+\end{verbatim}
+
+\subsection{Higher Order Application}
+
+\XXX{I'll talk about this later.}
+
+\subsection{Anonymous and Singleton Variables}
+
+Often one is not interested in a particular output variable
+from a call or unification.  In these cases you can use the
+special variable named @_@ (a single underscore) which stands
+for a different anonymous or ``don't care'' variable every time
+it appears.
+
+Sometimes, however, it makes programs easier to read if you do
+name don't care variables.  Since variables that only appear
+once in a clause are usually the result of typographical
+error, the compiler will issue a warning when it sees such
+things.  To get around this problem, giving a variable a
+name that starts with an underscore (e.g. @_X@) tells the compiler that
+you know this is a named don't care variable and that there's
+no need to issue a warning.
+
+
+
+\section{Functions}
+
+Functions are @det@ (or @semidet@) relations with (at least) one output.
+
+Essentially, a function is any relation with a single solution for
+a given set of inputs.
+
+Functions with single output values are so common that Mercury provides
+special syntax to make working with them easier.  One of the key
+advantages of functions is that they can be used as parts of
+expressions, rather than having to have a separate goal computing each
+subexpression in turn.  That is, one can use an expression as in
+\begin{verbatim}
+    X = (B + sqrt(B*B - 4*A*C)) / (2*A)
+\end{verbatim}
+rather than the somewhat verbose
+\begin{verbatim}
+    square(B, BSquared),
+    multiply(4, A, FourA),
+    multiply(FourA, C, FourAC),
+    subtract(BSquared, FourAC, Diff),
+    sqrt(Diff, Sqrt),
+    add(B, Sqrt, Numerator),
+    multiply(2, A, Denominator),
+    divide(Numerator, Denominator, X)
+\end{verbatim}
+
+\subsection{Definition}
+
+This example illustrates how functions are defined:
+\begin{verbatim}
+:- func length(list(T)) = int.
+:- mode length(in) = out is det.
+
+    % The length of an empty list is 0.
+    % The length of a non-empty list is 1 for the head
+    % plus the length of the tail.
+    %
+length([]      ) = 0.
+length([_ | Xs]) = 1 + length(Xs).
+\end{verbatim}
+Like predicates, functions may be defined using several clauses
+and make use of pattern matching.
+
+Functions can be computed from goals, where the head and goal
+are separated by @:-@ in the definition:
+\begin{verbatim}
+        % take(N, Xs) is the length min(N, length(Xs))
+        % prefix of Xs.
+        %
+    :- func take(int, list(T)) = list(T).
+    :- func take(in, in) = out is det.
+
+    take(N, Xs) = Ys :-
+        split(N, Xs, Ys, _).
+
+        % drop(N, Xs) is the length max(0, length(Xs) - N)
+        % suffix of Xs.
+        %
+    :- func drop(int, list(T)) = list(T).
+    :- func drop(in, in) = out is det.
+
+    drop(N, Xs) = Zs :-
+        split(N, Xs, _, Zs).
+
+        % split(N, Xs, Prefix, Suffix)
+        %
+    :- pred split(int, list(T), list(T), list(T)).
+    :- mode split(in,  in,      out,     out    ) is det.
+
+    split(N, Xs, Ys, Zs) :-
+        ( if N > 0, Xs = [X | Xs0] then
+            Ys = [X | Ys0],
+            split(N - 1, Xs0, Ys0, Zs)
+          else
+            Ys = [],
+            Zs = Xs
+        ).
+\end{verbatim}
+By far the most common mode for a function is
+\begin{verbatim}
+:- mode f(in, in, ..., in) = out is det.
+\end{verbatim}
+
+If a function has (just) this sort of mode, then the mode
+declaration can be ommitted and the compiler will simply assume
+this mode is what is intended.  Hereafter we will omit unnecessary
+mode declarations for functions.
+
+\XXX{What exactly are the constraints on function
+determinisms?  Remember to point out (somewhere) that
+functions may also have multiple procedures.  See the ref.
+manual section on Determinism.}
+
+\subsection{PATTERN MATCHING}
+
+\XXX{Dealt with above.}
+
+\subsection{RECURSION}
+
+\XXX{Dealt with above.}
+
+\subsection{CONDITIONAL EXPRESSIONS}
+
+Conditional (if-then-else) expressions look like this:
+\begin{verbatim}
+    ( if ConditionGoal then YesExpr else NoExpr )
+\end{verbatim}
+where the usual rules for if-then-elses apply (in particular,
+@ConditionGoal@ may bind output variables that are used in
+YesExpr, but not elsewhere), except that the then and else
+arms are \emph{expressions}, rather than goals.
+
+Note that as with if-then-else goals, the else clause is \emph{not}
+optional in a conditional expression (it would make no sense
+not to have one.)
+
+\subsection{* Partial (Semi-Deterministic) Functions}
+
+\XXX{Leave for later.}
+
+\subsection{Overview of Semidet Predicates}
+
+\XXX{Deal with this in a later section.  It's sort-of advanced
+stuff.}
+
+\subsection{Polymorphism}
+
+\XXX{Dealt with in section on types.}
+
+\subsection{Infix Notation}
+
+Mercury syntax supports a number of prefix, infix and postfix
+operators, including all the usual arithmetic operators.  This
+is just syntactic sugar, however, and there is no difference
+between @X + Y@ and @+(X, Y)@ as far as the compiler is concerned.
+
+If you want to use another name as an infix operator, you can
+simply place it in @`@backquotes@`@:
+\begin{verbatim}
+    X `union` Y `union` Z
+\end{verbatim}
+is seen by the compiler as
+\begin{verbatim}
+    union(X, union(Y, Z))
+\end{verbatim}
+Backquoted symbols bind more tightly than anything else and
+associate to the right.
+
+
+
+\section{Input and Output}
+
+One unfortunate consequence of being a pure declarative language
+is that IO becomes somewhat more complex than is the case for
+imperative languages.
+
+\subsection{IO \emph{is} a Side-Effect}
+
+One problem is that performing IO necessarily has an effect on the
+outside world that cannot be backtracked over or undone -- there is
+no returning to an earlier state of the world!  This is in
+contrast to the mathematically pure world that Mercury inhabits,
+where there is no concept of a value (such as the state of the
+world) ``changing'', only one of new such values being computed.
+
+\subsection{Order is Important}
+
+Another problem is that since logically there is no difference
+between the goal @(G1, G2)@ and the goal @(G2, G1)@, we also need to
+find some mechanism for ensuring that IO operations happen in the
+intended order and are not mixed up as a consequence of the
+compiler reordering goals for optimization purposes and so forth.
+
+\subsection{Uniqueness}
+
+A number of solutions to the IO problem have been adopted by
+the pure, declarative languages, the main contenders being the
+monadic approach (as exemplified by Haskell) and the
+uniqueness approach (as exemplified by Clean and Mercury.)
+
+The uniqueness approach works like this: we view a Mercury
+program as a function from world states to world states.  The
+top-level @main/2@ predicate of a Mercury program takes the
+current world state as an input and computes a new world state
+as its result.  Every IO operation does the same thing: takes
+a world state as input and produces a new world state as
+output -- notionally updated with the effects of the IO
+operation (and the actions of the world at large between IO
+operations).  The so-called IO state is opaque to the Mercury
+program; it can only be queried via the operations defined in
+the io module.\footnote{Of course, the Mercury program doesn't actually
+pass the state of the world around in fact -- the IO state
+abstraction serves both to ensure the properties we require
+and to give a semantics to IO in Mercury.}
+
+Example (we eschew state variable notation here for clarity of
+exposition):
+\begin{verbatim}
+:- pred main(io, io).
+:- mode main(di, uo) is det.
+
+main(IO0, IO) :-
+    io__write_string("pi = ", IO0, IO1),
+    io__write_float(math__pi, IO1, IO2),
+    io__nl(                   IO2, IO ).
+\end{verbatim}
+The type of the IO state is called just io and is defined
+as an abstract type in the @io@ library module.  The
+top-level predicate @main/2@ takes the initial IO state as a
+@di@ mode argument (\emph{destructive input}), and produces another as a
+@uo@ mode result (\emph{unique output}).  The three IO operations in the body
+show how the initial IO state, @IO0@, is transformed into
+the final IO state, @IO@.  So, @io__write_string/3@ destroys
+@IO0@ and produces @IO1@ as a unique output.  Next,
+@io__write_float/3@ destroys @IO1@ and produces @IO2@ as a
+unique output.  Finally, @io__nl@ (which writes out a
+newline) destroys @IO2@ and produces @IO@ as a unique output.
+
+In order to ensure that old versions of the world state cannot
+be accessed after an IO operation, the IO state is \emph{unique} --
+this means that there can only ever be one live reference to
+it.\footnote{A live reference is one that will be used
+later on in computation.}  The old version of the IO state
+is said to be clobbered by an IO operation -- the compiler will
+report an error if the old version is still live after the IO
+operation in question.  Similarly, it is impossible to make a
+copy the IO state.\footnote{It is possible to ``fork'' the IO
+state, this is necessary to support concurrency.  Concurrency
+is dealt with in a later chapter. \XXX{}}
+
+Example:
+\begin{verbatim}
+:- pred main(io, io).
+:- mode main(di, uo) is det.
+
+main(IO0, IO) :-
+    io__write_string("Hello, ",  IO0, IO1),
+    io__write_string("world!\n", IO0, IO ).
+\end{verbatim}
+Here @IO0@ is used twice; the compiler spots the bug and
+rejects the program with
+\begin{verbatim}
+In clause for `main(di, uo)':
+  in argument 2 of call to predicate `io:write_string/3':
+  unique-mode error: the called procedure would clobber
+  its argument, but variable `IO0' is still live.
+\end{verbatim}
+The uniqueness constraint is sufficient to ensure that IO
+operations happen in a strict order, specified by the
+programmer, and that it is impossible to backtrack over IO or
+refer to a dead IO state.
+
+Note that uniqueness is not a property reserved for IO states:
+it is used to implement destructively updated arrays, the
+store data type which allows the construction of arbitrary
+pointer graphs, hash tables and so forth.  Uniqueness allows
+the compiler to use a safe form of destructive update of data
+structures: there is no reason why a dead unique object cannot
+be reused to create a new live unique object (since the old
+value can never be accessed), which is exactly what happens
+for the data types just mentioned.
+
+\subsection{Stylistic Considerations}
+
+Since passing the IO state around everywhere is a little
+cumbersome and also quite restrictive (it can only be passed
+into det predicates), Mercury programmers naturally find
+themselves separating applications into two parts: the part
+that handles all the IO and the part that handles all the
+interesting processing.  This is good style in general, and
+although one might find it slightly annoying not to be able to
+insert print statements willy-nilly as is the case with impure
+languages, one soon finds that the discipline imposed pays
+real dividends in terms of reusability, maintainability, ease
+of debugging and so forth.
+
+\subsection{* Determinism Restrictions}
+
+Since IO operations cannot be backtracked across, the IO state
+(and, indeed, unique objects in general) cannot be passed to
+non-deterministic predicates -- that is, only deterministic
+predicates can take unique IO states as arguments.\footnote{This is not strictly true; there is another
+determinism, cc-multi, which is compatible with uniqueness.}
+
+\subsection{* State Variable Syntax}
+
+Having to name and pass two variables around for every IO
+operation quickly becomes tiresome.  Mercury has a special
+\emph{state variable} syntax for just this purpose.  The idea is to
+write code that looks a little more like what one would write
+in an imperative language, but which is transformed by the
+compiler into pure Mercury.  A state variable argument @!X@
+stands for two real arguments, @!.X@ and @!:X@, which in turn
+stand for the ``current'' and ``next'' values of the state variable
+@X@, respectively.  Occurrences of @!.X@ and @!:X@ are converted by
+the compiler into appropriately numbered variables.
+
+For example, the following code
+\begin{verbatim}
+    % Writes out a list of strings, separated by
+    % commas.
+    %
+:- pred write_strings(list(string), io, io).
+:- mode write_strings(in,           di, uo) is det.
+
+write_strings([],            !IO).
+
+write_strings([S1],          !IO) :-
+    io__write_string(S1,     !IO).
+
+write_strings([S1, S2 | Ss], !IO) :-
+    io__write_string(S1,     !IO),
+    io__write_string(", ",   !IO),
+    write_strings(Ss,        !IO).
+\end{verbatim}
+is transformed by the compiler into\footnote{Note that the pred and mode declarations reflect
+the fact that @!IO@ is actually two arguments, not one.}
+\begin{verbatim}
+    % Writes out a list of strings, separated by
+    % commas.
+    %
+:- pred write_strings(list(string), io, io).
+:- mode write_strings(in,           di, uo) is det.
+
+write_strings([],            IO0, IO) :-
+    IO = IO0.
+
+write_strings([S1],          IO0, IO) :-
+    io__write_string(S1,     IO0, IO).
+
+write_strings([S1, S2 | Ss], IO0, IO) :-
+    io__write_string(S1,     IO0, IO1),
+    io__write_string(", ",   IO1, IO2),
+    write_strings(Ss,        IO2, IO ),
+\end{verbatim}
+Henceforth we will use state variable syntax rather than
+explicitly numbered IO states.
+
+\subsection{Common IO Operations}
+
+The @io@ library module defines a plethora of useful IO
+operations and as usual with libraries, the reader is
+encouraged to take some time to peruse the interface section.
+Here we will present some basic IO operations to help get the
+ball rolling.
+
+\subsubsection{Output}
+
+Output is generally simpler to deal with than input,
+because, by and large, there are no error codes to deal
+with.
+
+The @io@ library module includes predicates for the output
+of the basic types:
+\begin{verbatim}
+:- pred io__write_string(string, io, io).
+:- mode io__write_string(in,     di, uo) is det.
+
+:- pred io__write_char(char, io, io).
+:- mode io__write_char(in,   di, uo) is det.
+
+:- pred io__write_int(int, io, io).
+:- mode io__write_int(in,  di, uo) is det.
+
+:- pred io__write_float(float, io, io).
+:- mode io__write_float(in,    di, uo) is det.
+\end{verbatim}
+However, it's typically easier to use the more general
+formatted output predicate:
+\begin{verbatim}
+:- pred io__format(string, list(poly_type), io, io).
+:- mode io__format(in,     in,              di, uo) is det.
+\end{verbatim}
+The @string@ argument describes how the output is to be formatted, very
+similar in spirit and detail to what one would pass to C's @printf()@.
+The @list@ argument is a type safe means of passing the parameters to be
+formatted.
+
+Using @io__format/4@ one might write
+\begin{verbatim}
+:- pred write_record(string, int, float, io, io).
+:- mode write_record(in,     in,  in,    di, uo) is det.
+
+write_record(Name, Age, Children, !IO) :-
+    io__format("%s is %d years old and has %f children.\n",
+               [s(Name), i(Age), f(Children)], !IO).
+\end{verbatim}
+and then we could call
+\begin{verbatim}
+    write_record("Joe Bloggs", 43, 2.4, !IO)
+\end{verbatim}
+and the program would write out
+\begin{verbatim}
+Joe Bloggs is 43 years old and has 2.4 children.
+\end{verbatim}
+The implementation of @write_record/5@ is much simpler than the
+functionally equivalent
+\begin{verbatim}
+:- pred write_record(string, int, float, io, io).
+:- mode write_record(in,     in,  in,    di, uo) is det.
+
+write_record(Name, Age, Children,           !IO) :-
+    io__write_string(Name,                  !IO),
+    io__write_string(" is ",                !IO),
+    io__write_int(Age,                      !IO),
+    io__write_string(" years old and has ", !IO),
+    io__write_float(Children,               !IO),
+    io__write_string(" children.\n",        !IO).
+\end{verbatim}
+
+In fact, @io__format/4@ is quite a bit more powerful, in
+that the @%@ formatting specifications can include
+details as to the style of formatting, precision,
+justification and so forth.
+
+\XXX{I'm not sure I should mention @io\_\_print/3@ this early.}
+Another useful predicate the @io@ library module provides is
+\begin{verbatim}
+:- pred io__print(T,  io, io).
+:- mode io__print(in, di, uo) is det.
+\end{verbatim}
+@io__print/3@ is used to print a representation of arbitrary
+Mercury values.  Be aware, though, that if you try to
+print the results of expressions, the compiler may ask you
+to supply more type information to help resolve what
+exactly it is you are printing (i.e. the expression or the
+value of the expression.)  This is subtle stuff and will
+be dealt with in a later chapter. \XXX{}
+
+\subsubsection{Input}
+
+Input is marginally more complex than output since
+typically on of three things can happen:
+\begin{enumerate}
+\item we successfully read a value of the required type from
+  the input stream;
+\item we hit the end-of-file;
+\item an error of some kind occurs (e.g. the input is
+  malformed or the input source has gone away unexpectedly.)
+\end{enumerate}
+
+To this end the @io@ library module defines the following
+type to report the results of input operations:
+\begin{verbatim}
+:- type io__result(T) ---> ok(T)
+                      ;    eof
+                      ;    error(io__error).
+\end{verbatim}
+In order, @ok(X)@ is returned if the input operation
+succeeded, reading @X@; @eof@ is returned if the end of file
+has been reached; and @error(ErrorCode)@ is returned if
+something went wrong (the function @io__error_message/1@ can
+be used to turn @ErrorCode@ into a printable error message.)
+
+This arrangement forces the programmer to handle the error
+cases.  There is still lively debate over whether error
+codes or throwing exceptions is the best way to handle
+errors for things like this.  A genuine advantage of the
+error code approach is that you have to consider the error
+cases from the outset, which, while requiring a little
+more initial thought from the programmer, usually pays
+real dividends later on.
+\XXX{is this the right place to say this?  Should I
+enlarge on the debate?  Probably no and yes
+respectively...}
+
+Two very basic input predicates are
+\begin{verbatim}
+:- pred io__read_char(io__result(char), io, io).
+:- mode io__read_char(in,               di, uo) is det.
+
+:- pred io__read_line_as_string(io__result(string), io, io).
+:- mode io__read_line_as_string(in,                 di, uo)
+            is det.
+\end{verbatim}
+
+The input predicates are also less comprehensive in the
+sense that there are no predicates @io__read_int/3@,
+@io__read_float/3@ or @io__read_string/3@.  The problem is
+that it's not clear exactly what should be allowed to
+terminate the input stream for an @int@, @float@ or @string@.
+Instead, the library leaves issues of parsing up to
+applications (there are several programs in the Mercury
+extras distribution to help, including a lexer and parser
+generators.)
+
+Here's a simple program echoes the capitalised version of
+letters in the input stream:
+\begin{verbatim}
+:- module capitalise.
+:- interface.
+:- import_module io.
+
+:- pred main(io, io).
+:- mode main(di, uo) is det.
+
+:- implementation.
+:- import_module char, exception.
+
+main(!IO) :-
+    io__read_char(R, !IO),
+    (
+        R = ok(C),
+        io__write_char(char__to_upper(C), !IO),
+        main(!IO)
+    ;
+        R = eof
+    ;
+        R = error(E),
+        exception__throw(E)
+    ).
+\end{verbatim}
+
+
+
+\section{The Mode and Determinism Systems}
+
+One of the things that distinguishes Mercury from other languages
+is its strong mode system.  In casual use, the term \emph{mode}
+encompasses both direction of data flow and determinism.
+
+\subsection{Direction of Data Flow}
+
+In logic, there is no difference between the goal @(A, B)@ and
+the goal @(B, A)@.  However, the compiler must convert the
+logical specification that is a Mercury program into an
+imperative language that can be executed on a computer.  This
+constraint means that it matters very much for efficiency and,
+in some cases, correctness, if @A@ ``produces'' values that
+are ``consumed'' by @B@, or vice versa.
+
+The mode system is what allows Mercury to compile logic
+programs so efficiently.  The body of each procedure of a
+predicate is reordered so that the producer of a value is
+guaranteed to be executed before any consumers.
+
+This scheme also allows the compiler to identify programming
+errors such as using an unbound variable as an argument to a
+procedure expecting an input value.
+
+Before we can discuss modes properly, however, we must first
+examine the notion of \emph{insts}.
+
+\subsubsection{Insts}
+
+An \emph{inst} describes the instantiation state of a variable
+at any point in a Mercury program.  Broadly speaking, a
+variable's inst will be one of the following:
+\begin{description}
+\item[@free@] where the variable has not been bound to anything yet;
+\item[@bound@] to a value (the top-level
+  data constructor of the value is fixed, but each argument has its own
+  inst);
+  \XXX{should the tutorial mention partially instantiated
+  values at all?}
+\item[@unique@] where the variable is the only live (i.e. non-@dead@)
+  reference to its binding;
+\item[@dead@] where the value bound to the variable will never be
+  examined again, even on backtracking.
+\end{description}
+
+A variable's inst tells us which possible states it can be
+in at some point in the program.
+
+The need for higher order insts (which we will come to)
+and the potential for manipulating partially instantiated
+values means that insts cannot be restricted to the set
+@{free, ground, unique, dead}@.  However, it is sufficient
+to restrict ourselves to the @{free, ground}@ subset of
+possible insts in order to understand the basic ideas.
+
+\XXX{Need to include the syntax etc. for inst
+declarations.  Also mention parametric insts.}
+
+On top of the built-in insts (@free@, @ground@, @unique@, @dead@
+and the higher order insts), it is possible to define your
+own insts.  \XXX{Finish this off...}
+
+\subsubsection{Modes}
+
+A \emph{mode} describes how a variable's inst changes over the
+course of a call.  In the following, I is an inst
+variable and @(BeforeInst >> AfterInst)@ is a mode, stating
+that before the call the argument must have inst
+@BeforeInst@ and afterwards it will have inst @AfterInst@.  As
+with types, we can give names to modes and even give them
+parameters.
+
+@AfterInst@ must be a refinement of @BeforeInst@ in the sense
+that instantiated (i.e. non-@free@) parts of the value in
+question must remain the same, but @free@ parts may become
+bound.  \XXX{This isn't strictly true -- the @laziness@
+module in extras uses a force implementation that changes
+the constructor of the lazy value.  Of course, this means
+lazy values require user-defined equality and so forth,
+but...}
+
+Let's take a look at some examples (these are taken from
+the built-in Mercury definitions):
+\begin{verbatim}
+:- mode in(I)  == (I    >> I).
+:- mode out(I) == (free >> I).
+
+:- mode in     == in(ground).
+:- mode out    == out(ground).
+
+    % The inst parameter for uo/1 and ui/1 should be
+    % unique.
+    %
+:- mode di(I)  == (I    >> dead).
+:- mode uo(I)  == (free >> I   ).
+:- mode ui(I)  == (I    >> I   ).
+
+:- mode di     == di(unique).
+:- mode uo     == uo(unique).
+:- mode ui     == ui(unique).
+\end{verbatim}
+
+So, a procedure parameter with mode @in(I)@ must have inst @I@
+before the call and will also have inst @I@ afterwards.  The
+most common case of this is the plain in mode, in which
+case the parameter must be ground beforehand and will be
+ground afterwards.
+
+A parameter with with mode @out(I)@ must be free before the
+call and will have inst @I@ after the call.  The common case
+is the plain out mode, in which case the parameter will
+be ground after the call.
+
+The three uniqueness modes, @di@, @uo@ and @ui@ (\emph{destructive
+input}, \emph{unique output} and \emph{unique input}, respectively)
+are similar, except that in the di case the parameter is
+dead after the call (hence no further references may be
+made to that variable in the program, even on
+backtracking), @uo@ produces a @unique@ (@ground@) value and @ui@
+preserves the @unique@ (@ground@) inst of the parameter across
+the call.
+
+\subsection{Determinism Categories}
+
+Every Mercury procedure has a determinism.  The set of
+possible determinisms and their meanings is given in the
+following table:
+
+\begin{tabular}{lll}
+\textbf{Determinism} & \multicolumn{2}{l}{\textbf{Number of Solutions}} \\
+                     & \textbf{Min} & \textbf{Max} \\
+\hline \\
+@failure@            & 0            & 0 \\
+@semidet@            & 0            & 1 \\
+@nondet@             & 0            & 1 or more \\
+@det@                & 1            & 1 \\
+@multi@              & 1            & 1 or more \\
+@cc_nondet@          & 0            & 1 \\
+@cc_multi@           & 1            & 1 \\
+@erroneous@          & never returns \\
+\end{tabular}
+
+Each determinism says something about the number of possible
+solutions a procedure can have on backtracking.  This table
+includes a number of categories we haven't seen before.
+
+@failure@ applies to procedures such as @false@ that have no
+solutions.
+
+@semidet@ applies to procedures such as @(>)/2@ or @map__search/3@
+that have at most one solution.
+
+@nondet@ applies to procedures such as @member/2@ that can have
+any number of solutions, including zero.
+
+@det@ applies to procedures such as @(+)/2@ that have precisely
+one solution.
+
+@multi@ applies to procedures such as @nat/1@ below that may have
+several solutions, but which always have at least one:
+\begin{verbatim}
+    % nat(N) enumerates the natural numbers in N.
+    %
+:- pred nat(int).
+:- mode nat(out) is multi.
+
+nat(0).
+nat(N + 1) :- nat(N).
+\end{verbatim}
+@cc_nondet@ and @cc_multi@ are \emph{committed choice} versions of
+@nondet@ and @multi@, respectively.  Committed choice
+non-determinism is described in more detail in the next
+section, suffice to say that these procedures will only
+produce (at most) one solution.
+
+Finally, @erroneous@ applies to predicates that either never
+return and/or always terminate by throwing an exception (we
+will deal with exceptions in a later chapter \XXX{}).
+
+Determinisms are useful for three main reasons:
+\begin{enumerate}
+\item determinism declarations act both as useful documentation
+  to the reader of a program and as information for the
+  compiler;
+\item the compiler will check that a procedure does indeed have
+  the declared determinism and can give helpful error messages
+  when this is not the case; and
+\item the compiler needs to know the determinism of
+\end{enumerate}
+
+\subsubsection{Modes and Determinisms}
+
+As one might expect, there is a tight relationship between
+modes and determinisms.  Essentially, for each possible
+set of argument modes, a procedure should have at most one
+possible determinism.
+
+\XXX{My brain is too foggy to say more about this right
+now.}
+
+\XXX{Clean this up and check it (esp. the cc and e entries):
+There is a partial order on determinisms (copy it from the
+reference manual?).}
+
+\begin{verbatim}
+Disjunction:
+    min-solns(@P ; Q@) = max(1, min-solns(@P@) (+) min-solns(@Q@))
+    max-solns(@P ; Q@) =        max-solns(@P@) (+) max-solns(@Q@)
+
+where
+
+     (+) |   0   |   1   |  > 1
+     ----+----------------------
+      0  |   0   |   1   |  > 1
+      1  |   1   |  > 1  |  > 1
+     > 1 |  > 1  |  > 1  |  > 1
+\end{verbatim}
+
+\begin{verbatim}
+Conjunction:
+    min-solutions(P, Q) = max(1, min-solns(P) (*) min-solns(Q))
+    max-solutions(P, Q) =        max-solns(P) (*) max-solns(Q)
+
+where
+
+     (*) |   0   |   1   |  > 1
+     ----+----------------------
+      0  |   0   |   0   |   0
+      1  |   0   |   1   |  > 1
+     > 1 |   0   |  > 1  |  > 1
+\end{verbatim}
+
+[XXX Perhaps an example or two would be better?]
+
+\subsection{Committed Choice Non-Determinism}
+
+Committed choice non-determinism is useful when you only
+require a single solution from a predicate that may have many.
+For instance, a theorem prover only needs a single proof
+(among all the possible proofs it could generate) for each
+sub-goal. \XXX{Too abstract an example?}
+
+It is also useful for describing the semantics of exceptions
+(we will discuss this in more detail later \XXX{}, but briefly
+since it is impossible in general to decide whether a
+procedure will always throw an exception, an exception handler
+is deemed to be a committed choice goal since the outcome --
+normal return or exception -- is unknown and it can only happen
+once.)
+
+\XXX{Mention relationship to Hilbert's choice operator and how cc
+declarations add axioms to the program concerning the single
+solution.}
+
+It is an error if a program attempts to backtrack over a
+committed choice goal and the compiler will detect and reject
+such programs.
+
+\XXX{Examples}
+\XXX{Probably more to say.}
+
+\subsection{* Using Insts for Subtyping}
+
+Insts can be used to define limited subtypes, where a subtype
+takes on a subset of the possible values of the supertype.
+
+Examples:
+\begin{verbatim}
+
+:- inst sign  ---> -1 ; 0 ; 1.
+
+:- func sign(int) = sign.
+:- mode sign(in)  = out(sign) is det.
+
+sign(X) = ( if      X < 0 then -1
+            else if X = 0 then  0
+            else                1 ).
+
+:- inst digit ---> 0 ; 1 ; 2 ; 3 ; 4 ; 5 ; 6 ; 7 ; 8 ; 9.
+
+:- func digit_to_char(int) = char.
+:- mode digit_to_char(in(digit)) = out is det.
+
+digit_to_char(0) = '0'.
+digit_to_char(1) = '1'.
+...
+digit_to_char(9) = '9'.
+
+:- inst non_empty_list(I) ---> [I | list(I)].
+:- inst non_empty_list    ==   non_empty_list(ground).
+
+:- pred head(list(T),            T  ).
+:- mode head(in,                 out) is semidet.
+:- mode head(in(non_empty_list), out) is det.
+
+head([X | _], X).
+
+:- type abc ---> a ; b ; c.
+:- inst ab  ---> a ; b.
+\end{verbatim}
+and so forth\ldots
+
+\XXX{Should probably add some explanation for the above.}
+
+\subsection{Higher Order Insts and Modes}
+
+
+
+\subsection{The Standard Function Mode}
+
+\XXX{NB I've already mentioned this one.}
+
+
+
+\subsection{Higher Order Mode Declarations}
+
+It is possible to specify the mode of a procedure using the
+following syntax:
+\begin{verbatim}
+:- inst test == ( pred(in) is semidet ).
+
+:- pred even(int).
+:- mode even `with_inst` test.
+
+even(X) :- X `mod` 2 = 0.
+\end{verbatim}
+The mode declaration is equivalent to writing
+\begin{verbatim}
+:- mode even(in) is semidet.
+\end{verbatim}
+
+\XXX{This isn't very convincing since the longhand is more concise.}
+
+Judicious use of @with_inst@ declarations can improve the
+readability and maintainability of a program.
+
+\subsection{* Uniqueness}
+\subsubsection{Determinism Restrictions}
+
+\XXX{I've said something of this earlier on just before
+Determinism.}
+
+\subsubsection{* Mostly Unique Insts}
+
+\XXX{This is definitely more advanced stuff.}
+\begin{itemize}
+\item Mostly unique $Leftrightarrow$ destructive update undone on
+  backtracking.
+\item Trailing and cost of trailing.
+\item Possibility of optimizing trailing via FFI and impurity.
+\item Distributed fat: implementation costs everywhere you can
+  backtrack and may slurp up a general purpose register or
+  two.
+\end{itemize}
+
+\subsection{Higher Order Insts and Modes}
+
+\begin{itemize}
+\item The type system says what values a variable may take on.
+\item The mode system dictates the direction the data flows.
+\item Higher order values are \emph{procedures} (not predicates), hence
+  their modes also need to tell us the direction of data flow
+  and the associated determinism.  \XXX{Fill in how HO insts are
+  described and used.}
+\item For the sake of brevity, the mode @in(pred(...) is <detism>)@
+  can be abbreviated to just @pred(...) is <detism>@
+\end{itemize}
+
+\subsubsection{The Standard Function Inst}
+
+\XXX{Said something about this earlier.}
+
+\begin{itemize}
+\item The set of insts @func(in, in, ..., in) = out is det@ is
+  subsumed by the inst @ground@.  That is, you do not need to
+  use a complex inst to pass around and use values with this
+  sort of inst.
+\item (Any of the @in@ arg modes may be replaced with an higher
+  order inst.)
+\item Since this is the most common type of higher order inst,
+  higher order programming is thereby simplified.
+\item There is a consequence: it is an error for a program to try
+  to convert an higher order value with a different sort of
+  inst to @ground@ (e.g. by passing it to something expecting a
+  @ground@ value).  This is necessary because otherwise there
+  would be no way of knowing whether a ground value with a
+  func type had the standard @func@ inst or not.
+\end{itemize}
+
+\subsection{Polymorphic Modes}
+
+\XXX{Look this up.}
+
+
+
+\section{Modules}
+
+The Mercury unit of compilation is the module.  Modules
+are compiled separately and the resulting object files linked
+together to make a program or aggregated to form libraries.
+
+A module has two parts, the interface and the implementation sections.
+
+The interface section describes the types, insts, preds and funcs and so
+forth that are said to be exported or externally visible.
+
+The implementation section supplies all the code that defines the
+behaviour of the exported preds and funcs and defines any abstract
+types or type class instances exported by the module (we will come
+across type classes later on \XXX{}.)  Declarations and definitions in
+the implementation section are not externally visible.
+
+\subsection{Names and Namespaces}
+
+It would be unreasonable to insist that no two preds (or types
+or \ldots) share the same name in any Mercury program.  To this
+end, the Mercury module system makes use of two mechanisms:
+restrictions on the visiblity of names and a module qualified
+naming scheme.
+
+In this section we will use the term \emph{name} to refer to the
+name of any type, func, pred, inst, mode, type class and so
+forth that one might find in a Mercury program.
+
+\subsection{Visibility}
+
+In order to use a name, it must be visible at each point in
+a module where it appears.
+
+\XXX{This stuff needs illustrating with examples.}
+
+\subsubsection{In the Interface Section}
+
+A name is visible in an interface section if it is
+\begin{itemize}
+\item declared or defined there;
+\item is exported by a module which is imported in this
+  module's interface section;
+\item is declared or defined in a parent module (we will come
+  to submodules shortly \XXX{}.)
+\end{itemize}
+
+Any name defined or declared in the interface section is
+said to be \emph{public} or \emph{exported} by that module.
+
+\subsubsection{In the Implementation Section}
+
+A name is visible in an implementation section if it is
+\begin{itemize}
+\item declared or defined there;
+\item is exported by a module which is imported in this
+  module's interface or implementation section;
+\item is declared or defined in a parent module.
+\end{itemize}
+
+Any name declared or defined in the implementation section
+that is not exported by the module is said to be \emph{private}
+or \emph{local} to the module.
+
+\subsection{Qualification}
+
+Name qualification allows us to avoid abiguity where one
+module imports two other modules which export different things
+under the same ``base'' name.
+
+A fully qualified name takes the form @<modulename>__<thingname>@
+(or, for submodules, @<modulename>__<submodulename>__...__<thingname>@)
+where the double-underscore @__@ is the module name separator symbol.
+
+Using fully qualified names throughout a program quickly
+becomes tedious and can distract from the readability of the
+source code.  Mercury therefore allows one to omit qualifiers
+(or partial prefixes in the case of submodules) where there is
+no ambiguity.
+
+The compiler will not confuse names of different sorts of
+things -- for instance, there is never ambiguity between a type
+and an inst with the same name since the types and insts
+always appear in separate contexts.
+
+Potential ambiguity arises with funcs, preds and data
+constructors since all three can appear in unifications.
+Ambiguity can still be resolved by the compiler if the
+possible ways of resolving the name in question each have
+different types or arities (\XXX{Need to go over some examples
+a la @io\_\_print@.  And be more precise.})
+
+A convention worth adopting is to explicitly qualify
+predicates, but not types, constructors and functions.
+
+(Mercury also provides @use_module@, an alternative to @import_module@,
+which does much the same thing, except that names imported via
+@use_module@ \emph{must} be fully qualified.)
+
+\subsection{SUBMODULES AND HIERARCHICAL NAMESPACES}
+
+The module namespace may be structured rather than flat.  Modules can
+also have submodules to form a tree-like namespace.
+
+Submodules come in two flavours, nested and separate.
+
+\subsubsection{NESTED SUBMODULES}
+
+Nested submodules appear in the same source file as the parent module.
+
+For example,
+\begin{verbatim}
+:- module vector3.
+:- interface.
+:- import_module float.
+
+:- type vector3 == {float, float, float}.
+
+:- func vector3 + vector3 = vector3.
+:- func vector3 `dot` vector3 = float.
+
+:- module scalar_vector3.
+:- interface.
+
+    :- func float * vector3 = vector3.
+
+:- end_module scalar_vector3.
+
+:- module vector3_scalar.
+:- interface.
+
+    :- func vector3 * scalar = vector3.
+
+:- end_module vector3_scalar.
+    
+:- implementation.
+
+{Xa, Ya, Za} + {Xb, Yb, Zb} = {Xa + Xb, Ya + Yb, Za + Zb}.
+
+{Xa, Ya, Za} `dot` {Xb, Yb, Zb} = Xa * Xb + Ya * Yb + Za * Zb.
+
+:- module scalar_vector3.
+:- implementation.
+
+    A * {X, Y, Z} = {A * X, A * Y, A * Z}.
+
+:- end_module scalar_vector3.
+
+:- module vector3_scalar.
+:- implementation.
+
+    {X, Y, Z} * A = {A * X, A * Y, A * Z}.
+
+:- end_module vector3_scalar.
+\end{verbatim}
+Nested submodules are used in the example above to avoid overloading
+problems for the functions such as @*@ that have both @float * vector3@
+and @vector3 * float@ varieties (recall that overloaded functions with
+the same arity cannot be defined directly in the same module.)
+
+The submodules do not have to import the @float@ module separately
+because all names visible in the parent module are also visible in the
+submodules.
+
+A client of this module would have to import each submodule to have
+access to those particular names.  For example,
+\begin{verbatim}
+:- module foo.
+:- interface.
+:- import_module io.
+
+:- pred main(io::di, io::uo) is det.
+
+:- implementation.
+:- import_module vector3, vector3_scalar, scalar_vector3.
+
+main(!IO) :-
+    R = {1.0, 1.5, 2.0},
+    io__print(2.0 * R),
+    io__nl,
+    io__print(R * 3.0),
+    io__nl.
+\end{verbatim}
+should write out
+\begin{verbatim}
+{2.0, 3.0, 4.0}
+{3.0, 4.5, 6.0}
+\end{verbatim}
+when run.  The compiler understands that the multiplication @2.0 * R@
+is referring to the function defined in @scalar_vector3@ and that the
+multiplication @R * 3.0@ is referring to the function defined in the
+@vector3_scalar@.
+
+\subsubsection{SEPARATE SUBMODULES}
+
+Separate submodules are defined in separate files and must be explicitly
+listed in the parent module in @include_module@ declarations, but are 
+otherwise indistinguishable from nested submodules as far as the
+programmer is concerned.  The advantage of separate submodules is that
+they can be compiled separately \XXX{verify this is correct} and, for
+large submodules, splitting them into separate files can simplify code
+maintenance.
+
+\XXX{What about @import\_hierarchy@ and chums?}
+
+\XXX{We really want to just have @.@ as the module separator by the time
+this goes to print rather than the current mixture of @\_\_@ and @:@ and
+@.@ in separate submodule file names.}
+
+The vector example above could be recoded to use separate submodules as
+\begin{verbatim}
+:- module vector3.
+:- interface.
+
+:- import_module float.
+
+:- include_module vector3__scalar_vector3, vector3__vector3_scalar.
+
+:- type vector3 == {float, float, float}.
+
+:- func vector3 + vector3 = vector3.
+:- func vector3 `dot` vector3 = float.
+    
+:- implementation.
+
+{Xa, Ya, Za} + {Xb, Yb, Zb} = {Xa + Xb, Ya + Yb, Za + Zb}.
+
+{Xa, Ya, Za} `dot` {Xb, Yb, Zb} = Xa * Xb + Ya * Yb + Za * Zb.
+\end{verbatim}
+and in a file named @vector3.scalar_vector3.m@
+\begin{verbatim}
+:- module vector3__scalar_vector3.
+:- interface.
+
+:- func float * vector3 = vector3.
+
+:- implementation.
+
+A * {X, Y, Z} = {A * X, A * Y, A * Z}.
+\end{verbatim}
+and in a file named @vector3.vector3_scalar.m@
+\begin{verbatim}
+:- module vector3__vector3_scalar.
+:- interface.
+
+:- func vector3 * scalar = vector3.
+
+:- implementation.
+
+{X, Y, Z} * A = {A * X, A * Y, A * Z}.
+\end{verbatim}
+Note the @include_module@ declaration in the interface section for
+@vector3@ (making @scalar_vector3@ and @vector3_scalar@ accessible to
+clients of @vector3@\footnote{Their fully qualified names being
+@vector3\_\_scalar\_vector3@ and @vector3\_\_vector3\_scalar@
+respectively.}).  A declaration of this kind is required for every
+separate submodule.
+
+Use of @vector3@, @scalar_vector3@ and @vector3_scalar@ is exactly the
+same as if they had been written as nested submodules.
+
+\XXX{Is this the right place to mention the file name mapping option to
+@mmake@?}
+
+\subsubsection{VISIBILITY AND SUBMODULES}
+
+\XXX{Need to check this one out carefully.}
+
+
+
+\section{HIGHER ORDER PROGRAMMING}
+
+Predicates and functions are first class values, just like values of
+type @int@, @string@, @list(char)@ and so forth.  They can be
+passed around and constructed just like any other kind of value.  Code
+that manipulates predicate values is said to be \emph{higher order}.
+
+\XXX{Should say somewhere that equality and ordering are undefined on
+higher order values.}
+
+What is special about predicate values is that they can be
+\emph{applied} to arguments in order to carry out tests or compute other
+values.
+
+This turns out to be a surprisingly useful and flexible way to program.
+Indeed, it is one of the key reasons why one should consider a typical
+declarative programming language in preference to the more common
+imperative languages.
+
+\subsection{EXAMPLE: THE MAP FUNCTION}
+
+It is very common to want to apply a function to each member of a @list@
+to obtain the @list@ of transformed values.  That is, given a function
+@F@ and a @list@ @[X1, X2, X3, ...]@, we want to compute the @list@
+@[F(X1), F(X2), F(X3), ...]@.
+
+We can achieve this with the higher order function @map@:
+\begin{verbatim}
+:- func map(func(T1) = T2, list(T1)) = list(T2).
+
+map(_, []      ) = [].
+map(F, [X | Xs]) = [F(X) | map(F, Xs)].
+\end{verbatim}
+The first argument @F@ is declared to be a function itself computing
+values of type @T2@ from values of type @T1@, where @T1@ and @T2@ can be
+anything.  The second argument is declared to be a @list(T1)@ and the
+result of the @map@ operation is a @list(T2)@.
+
+The first clause states that if the second argument is the empty list
+@[]@, then so is the result.
+
+The second clause states that if the second argument is a @list@ with head
+@X@ and tail @Xs@, then the result is the @list@ whose head is computed by
+applying @F@ to @X@, namely as @F(X)@, and whose tail is computed by
+@map(F, Xs)@.
+
+It follows that
+\begin{verbatim}
+map(F, [X1, X2, X2, ...]) = [F(X1), F(X2), F(X3), ...]
+\end{verbatim}
+as required.  Since @map/2@ is polymorphic, it will work for any @F@
+with the appropriate signature -- there is no need to recode it for each
+particular function we wish to map over a @list@.
+
+\subsection{EXAMPLE: THE FOLDR FUNCTION}
+
+\XXX{Should probably reference ``Why Functional Programming Matters''.}
+
+Say we need to write a function @sum@ that will compute the sum of a
+@list@ of @int@s.  We could reason as follows: the sum of a list whose
+head is @X@ and whose tail is @Xs@ is just @X@ plus the sum of the @Xs@.
+Since we would like @sum(Xs ++ Ys) = sum(Xs) + sum(Ys)@, for any @Xs@
+and @Ys@, we would conclude that the sum of the empty list must be @0@.
+Hence
+\begin{verbatim}
+:- func sum(list(int)) = int.
+
+sum([]      ) = 0.
+sum([X | Xs]) = X + sum(Xs).
+\end{verbatim}
+Observe that @sum([X1, X2, X3]) = X1 + (X2 + (X3 + 0))@.
+
+By a similar process we could arrive at a function @prod@ that computed
+the product of a @list@ of @int@s:
+\begin{verbatim}
+:- func prod(list(int)) = int.
+
+prod([]      ) = 1.
+prod([X | Xs]) = X * prod(Xs).
+\end{verbatim}
+Observe this time that @prod([X1, X2, X3]) = X1 * (X2 * (X3 * 1))@.
+
+At this point we see that the definitions of @sum@ and @prod@ are almost
+identical, the only difference being the result for the empty list and
+the function used to combine the head of the list with the result of
+processing the tail.
+
+What would be most useful would be an higher order function that
+generalised this pattern so that we only have to get it right once and
+can reuse it thereafter for @list@ processing functions with a similar
+pattern to @sum@ and @prod@.  We call this function @foldr@ and it takes
+two arguments: @A@ is the value returned when the @list@ in question is
+empty and @F@ is the function that computes the combination of the head
+of the @list@ with the result of processing its tail.
+\begin{verbatim}
+:- func foldr(func(T1, T2) = T2, T2, list(T1)) = T2.
+
+foldr(_, A, []      ) = A.
+foldr(F, A, [X | Xs]) = F(X, foldr(F, A, Xs)).
+\end{verbatim}
+(The type signature for @foldr@ might look a little intimidating, but a
+little careful consideration should make it obvious what's going on.)
+
+\XXX{By the way, the standard library gets the argument order wrong as
+far as Currying is concerned.  Can we fix it for v2 or are we stuck with
+the current ordering?}
+
+Now, with the aid of a couple of auxiliary functions,
+\begin{verbatim}
+:- func plus(int, int) = int.
+
+plus(X, Y) = X + Y.
+
+:- func times(int, int) = int.
+
+times(X, Y) = X * Y.
+\end{verbatim}
+we can go on to define @sum@ and @prod@ in terms of @foldr@:
+\begin{verbatim}
+sum(Xs) = foldr(plus, 0, Xs).
+
+prod(Xs) = foldr(times, 1, Xs).
+\end{verbatim}
+(The reason we had to define @plus@ is that the standard @int@ library
+function @+@ has more than one mode -- given any two arguments to the
+equation @X + Y = Z@ one can obtain the third, although this is not true
+of integer multiplication (we define @times@ merely for symmetry) -- and
+Mercury currently has no syntax for specifying a particular procedure of
+a function or predicate nor the means to identify from context, in
+higher order code in general, which is otherwise intended.) \XXX{This is
+a complicated paragraph.}
+
+@foldr@ is surprisingly general.  For instance, consider the definition
+of the @list@ concatenation function, whose name is the infix operator
+@++@:
+\begin{verbatim}
+:- func list(T) ++ list(T) = list(T).
+
+[]       ++ Ys = Ys.
+[X | Xs] ++ Ys = [X | Xs ++ Ys].
+\end{verbatim}
+Once we have @foldr@, there's no need for us to have to think about the
+recursion any more.  We can instead write
+\begin{verbatim}
+Xs ++ Ys = foldr(cons, Ys, Xs).
+
+:- func cons(T, list(T)) = list(T).
+
+cons(X, Xs) = [X | Xs].
+\end{verbatim}
+(we have to define @cons@ because data constructors such as @[|]@ are
+\emph{not} functions, not least because they can also be used as
+``deconstructors'' in unifications and pattern matching.)
+
+It is worth spending the time to become familiar with higher order
+functions such as @foldr@.  Such functions enable you to solve the
+general case once and then never have to expend mental or physical
+effort duplicating the scheme for each specific application.
+
+\subsection{LAMBDAS}
+
+Sometimes it is a little painful to have to name each and every small
+auxiliary function when writing higher order code.  Lambdas are
+auxiliary predicate or function procedures that can be constructed on an
+as-needs basis in a program and passed around just as if they had been
+defined as separate predicates or functions in their own right.  The
+main difference is that lambdas do not have names (they are sometimes
+described as `anonymous') and therefore cannot be recursive.
+
+We illustrate lambdas by recoding @sum@, @prod@ and @++@:
+\begin{verbatim}
+sum(Xs)  = foldr((func(A, B)  = A + B   ), 0, Xs).
+
+prod(Xs) = foldr((func(A, B)  = A + B   ), 1, Xs).
+
+Xs ++ Ys = foldr((func(A, As) = [A | As]), Ys, Xs).
+\end{verbatim}
+As with most coding short-cuts, lambdas can make code both more and less
+legible.  As a general rule, lambdas are best kept brief and used in
+situations where their purpose is obvious, or, in other words, if you
+think an explanatory comment is justified, then avoid using a lambda.
+Their use is justified in the above cases.
+
+\XXX{Talk about lambdas with bodies.  They only get one clause.}
+
+\XXX{Talk about predicate lambdas, including nondeterminism etc.}
+
+\XXX{Say that it's fine to unify lambdas with variables etc.}
+
+\XXX{Don't forget the scope rules.}
+
+\subsection{PARTIAL APPLICATION (CURRYING)}
+
+Looking at the definition of @map@ once more,
+\begin{verbatim}
+map(_, []      ) = [].
+map(F, [X | Xs]) = [F(X) | map(F, Xs)].
+\end{verbatim}
+we see exactly the same pattern of recursion captured by @foldr@, hence
+we can recode it as
+\begin{verbatim}
+map(F, Xs) = foldr(apply_cons(F), [], Xs).
+
+:- func apply_cons(func(T1) = T2, T1, list(T2)) = list(T2).
+
+apply_cons(F, X, Ys) = [F(X) | Ys].
+\end{verbatim}
+using the auxiliary function @apply_cons@.  
+
+At this point one may be prompted to ask, ``What is this strange
+@apply_cons(F)@ appearing in the definition of @++@?  And besides,
+@apply_cons@ takes three arguments.''
+
+The expression @apply_cons(F)@ is a \emph{partial application} of
+@apply_cons/3@, resulting in a \emph{closure} which is equivalent to
+writing @func(A, Bs) = apply_cons(F, A, Bs)@.
+
+\XXX{Are lambdas implemented any more efficiently than this behind the
+scenese?}
+
+(Note that in practice we would probably have just written
+\begin{verbatim}
+map(F, Xs) = foldr((func(X, Ys) = [F(X) | Ys]), [], Xs).
+\end{verbatim}
+and avoided the need for a named auxiliary function at all.)
+
+\XXX{Watch out for procedure ambiguity using closures.}
+
+\XXX{Mention that a fully applied func expression is applied whereas a
+pred expression may not be.}
+
+\XXX{Mention @call@ and @apply@.}
+
+\XXX{What about restrictions on partial application?}
+
+\subsection{MODES}
+\subsection{* MONOMORPHISM RESTRICTION}
+\subsection{* MONOMODING RESTRICTION}
+\subsection{* EFFICIENCY}
+
+
+
+\section{* TYPE CLASSES}
+\subsection{OO PROGRAMMING}
+\subsection{TYPE CLASS DECLARATIONS}
+\subsubsection{METHOD SIGNATURES}
+\subsubsection{TYPE CLASS CONSTRAINTS}
+\subsection{INSTANCE DECLARATIONS}
+\subsubsection{METHOD IMPLEMENTATIONS}
+\subsubsection{TYPE CLASS CONSTRAINTS}
+\subsection{EXISTENTIALLY QUANTIFIED TYPES}
+\subsubsection{USE}
+\subsubsection{WHY OUTPUT ONLY}
+\subsection{...CONSTRUCTOR CLASSES}
+\subsection{...FUNCTIONAL DEPENDENCIES}
+\subsection{RESTRICTIONS AND EXPLANATIONS THEREOF}
+\subsubsection{ON TYPE CLASS DEFINITIONS}
+\subsubsection{ON INSTANCE DEFINITIONS}
+
+
+
+\section{LISTS}
+
+Lists are perhaps the single most useful data structure in the
+programmer's armoury.
+
+The @list@ module in the Mercury standard library defines lists as
+follows:
+\begin{verbatim}
+:- type list(T) ---> []
+                ;    [T | list(T)].
+\end{verbatim}
+The notation @[A | B]@ is special syntactic sugar recognised by the
+Mercury parser for @[|](A, B)@ -- that is, @[|]/2@ is the basic list
+data constructor, with @[]@ standing for the empty list.
+
+Moreover, an expression of the form @[A, B, C]@ is syntactic sugar for
+@[A | [B | [C | []]]]@ which, of course, is identical to
+@[|](A, [|](B, [|](C, [])))@.
+
+Also, an expression of the form @[A, B, C | Xs]@ is syntactic sugar for
+@[A | [B | [C | Xs]]]@ which, of course, is identical to
+@[|](A, [|](B, [|](C, Xs)))@.
+
+These are obviously singly linked lists.  \XXX{Discussion of the pros
+and cons of the various list ADTs out there.}
+
+\subsection{THE MAIN LIST OPERATIONS}
+
+The higher order functions @map@, @foldl@ and @foldr@ provide easy ways
+of iterating over lists, either transforming them member by member or
+somehow accumulating the result of processing each member in turn.
+
+The section on higher order programming \XXX{} has already dealt with
+@map@, @foldl@ and @foldr@ in some detail, so we merely summarise that
+discussion here and concentrate on operations we have not previously
+examined.
+
+\subsubsection{MISCELLANY}
+
+\begin{verbatim}
+    % length([X1, X2, X3, ..., XN]) = N
+    %
+:- func length(list(T)) = int.
+
+length(Xs) = foldl((func(_, N) = N + 1), Xs, 0).
+
+    % reverse([X1, X2, X3, ..., XN]) = [XN, ..., X3, X2, X1]
+    %
+:- func reverse(list(T)) = list(T).
+
+reverse(Xs) = foldl((func(X, Ys) = [X | Ys]), Xs, []).
+\end{verbatim}
+
+\subsubsection{MEMBERSHIP}
+
+\XXX{Should have a section on equality and @compare@ and so forth.}
+
+@member@ is used to decide membership of a @list@ under equality and to
+non-deterministically project members from a @list@ (the argument ordering
+is arguably unfortunate for higher order programming, but this is
+historically how things have been done):
+\begin{verbatim}
+    % member(X, Xs) iff X is a member of Xs.
+    %
+:- pred member(T,   list(T)).
+:- mode member(in,  in     ) is semidet.
+:- mode member(out, in     ) is nondet.
+
+member(X, [X | _ ]).
+member(X, [_ | Xs]) :- member(X, Xs).
+\end{verbatim}
+From time to time one wants to access members of a @list@ by their index
+(i.e. distance from the start of the @list@).  There are two sets of
+operations for doing so, depending upon whether it is most convenient to
+give the head of the list an index of 1 or 0:
+\begin{verbatim}
+    % index0(Xs, I, X) iff 0 =< I < length(Xs) and
+    % X is the I+1th member of Xs.  That is,
+    % index0([X1, X2, X3], 1, X2) while
+    % index0([X1, X2, X3], 3, _ ) fails.
+    %
+:- pred index0(list(T), int, T  ).
+:- mode index0(in,      in,  out) is semidet.
+
+    % index1(Xs, I, X) iff 1 =< I =< length(Xs) and
+    % X is the Ith member of Xs.  That is
+    % index1([X1, X2, X3], 1, X1) while
+    % index1([X1, X2, X3], 3, _ ) fails.
+    %
+:- pred index1(list(T), int, T  ).
+:- mode index1(in,      in,  out) is semidet.
+
+    % These functions correspond to the predicates above, but differ
+    % in that an exception is thrown if the index is out of range.
+    %
+:- func index0(list(T), int) = T.
+:- func index1(list(T), int) = T.
+\end{verbatim}
+
+\subsubsection{MAPPING}
+
+@map@ applies its function argument to each member of its @list@ argument
+and returns the corresponding @list@ of results.
+\begin{verbatim}
+    % map(F, [X1, X2, X3, ...]) = [F(X1), F(X2), F(X3), ...]
+    %
+:- func map(func(T1) = T2, list(T1)) = list(T2).
+
+map(_, []      ) = [].
+map(F, [X | Xs]) = [F(X) | map(F, Xs)].
+\end{verbatim}
+
+A related function is @map_corresponding@ which is used to map a
+function combining the corresponding members of \emph{two} lists
+(@map_corresponding@ will throw an exception if the lists are of
+different lengths.)
+\begin{verbatim}
+    % map_corresponding(F, [X1, X2, X3, ...], [Y1, Y2, Y3, ...]) =
+    %       [F(X1, Y1), F(X2, Y2), F(X3, Y3), ...]
+    %
+:- func map_corresponding(func(T1, T2) = T3, list(T1), list(T2)) =
+            list(T3).
+
+map_corresponding(_, [],       []      ) = [].
+map_corresponding(_, [],       [_ | _ ]) = <<throw exception>>.
+map_corresponding(_, [_ | _ ], []      ) = <<throw exception>>.
+map_corresponding(F, [X | Xs], [Y | Ys]) =
+    [F(X, Y) | map_corresponding(F, Xs, Ys)].
+\end{verbatim}
+
+There is also a @map_corresponding3@ which works for functions of three
+arguments:
+\begin{verbatim}
+:- func map_corresponding3(func(T1, T2, T3) = T4,
+            list(T1), list(T2), list(T3)) = list(T4).
+\end{verbatim}
+
+\XXX{Should probably include a subsubsection on zipping and
+interleaving.}
+
+\subsubsection{FOLDING}
+
+The two main folding operations are @foldl@ and @foldr@.  We have
+already seen a definition of @foldr@ (the version supplied in the
+Mercury standard library unfortunately uses a slightly different
+argument ordering):
+\begin{verbatim}
+    % foldr(F, [X1, X2, X3], A) = F(X1, F(X2, F(X3, A)))
+    %
+:- func foldr(func(T1, T2) = T2, list(T1), T2) = T2.
+
+foldr(_, [], A) = A.
+foldr(F, [X | Xs], A) = F(X, foldr(Xs, A)).
+\end{verbatim}
+In many situations the function @F@ will be commutative or we will want
+to process the @list@ starting with the leftmost member, in which case
+it is more efficient to use the tail recursive @foldl@:
+\begin{verbatim}
+    % foldl(F, [X1, X2, X3], A) = F(X3, F(X2, F(X1, A)))
+    %
+:- func foldl(func(T1, T2) = T2, list(T1), T2) = T2.
+
+foldl(_, [],       A) = A.
+foldl(F, [X | Xs], A) = foldl(F, Xs, F(X, A))).
+\end{verbatim}
+As an example, here's how we could define the @reverse@ function, as
+well as more efficient versions of the @sum@ and @prod@ functions
+introduced in the section on higher order programming \XXX{}:
+\begin{verbatim}
+reverse(Xs) = foldl((func(X, Ys) = [X | Ys]), Xs, []).
+sum(Xs)     = foldl((func(X, A ) = X + A   ), Xs, 0 ).
+prod(Xs)    = foldl((func(X, A ) = X * A   ), Xs, 1 ).
+\end{verbatim}
+
+\subsubsection{XXX MORE TO COME}
+
+\subsection{GENERAL ADVICE}
+
+\XXX{This probably deserves its own top-level section.}
+
+While lists are easy to understand and work with, most programmers show
+an unfortunate tendency to use lists when another data structure may be
+more appropriate.  It is worth spending some time looking at the various
+types provided by the Mercury standard library to see what is available.
+The decision as to which data structure is best for a given situation is
+one that can only be made in the light of experience, although as a rule
+of thumb you cannot go far wrong by picking the data structure with the
+most useful set of support functions for the problem in hand
+(occasionally an @assoc_list@ may be preferable to a @map@, but in most
+situations it won't be.)
+
+\section{MAPS}
+
+
+
+\section{ARRAYS}
+
+
+
+\section{COMPILING PROGRAMS}
+\subsection{MMAKE}
+\subsection{COMPILER FLAGS}
+\subsection{COMPILATION GRADES}
+
+
+
+\section{* STORES}
+
+
+
+\section{* EXCEPTIONS}
+\subsection{THROWING}
+\subsection{CATCHING}
+\subsubsection{EFFECT ON DETERMINISM}
+\subsubsection{RESTORING (PLAIN) DETERMINISM (PROMISE\_ONLY\_SOLUTION)}
+
+
+
+\section{* FOREIGN LANGUAGE INTERFACE}
+\subsection{DECLARATIONS}
+\subsection{DATA TYPES}
+
+
+
+\section{* IMPURE CODE}
+\subsection{LEVELS OF PURITY}
+\subsection{EFFECT OF IMPURITY ANNOTATIONS}
+\subsection{PROMISING PURITY (PRAGMA PROMISE\_PURE)}
+
+
+
+\section{* PRAGMAS}
+\subsection{INLINING}
+\subsection{TYPE SPECIALIZATION}
+\subsection{OBSOLESCENCE}
+\subsection{MEMOING}
+\subsection{...PROMISES}
+
+
+
+\section{* DEBUGGING}
+\subsection{COMPILING FOR DEBUGGING}
+\subsection{BASIC TOUR OF THE DEBUGGER}
+\subsection{DECLARATIVE DEBUGGING}
+
+
+
+\section{* OPTIMIZATION}
+\subsection{WHEN TO DO IT AND WHEN TO AVOID IT}
+\subsection{PROFILING}
+\subsection{VARIOUS CONSIDERATIONS}
+\subsection{AN OVERVIEW OF CONTEMPORARY OPTIMIZER TECHNOLOGY}
+
+
+
+\section{* RTTI}
+
+\end{document}
