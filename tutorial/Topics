@@ -1,0 +1,147 @@
+Topics
+Ralph Becket <rafe@cs.mu.oz.au>
+Mon Oct 15 13:05:39 EST 2001
+ vim: ft=txt wm=10
+
+[Draft]
+
+List of topics to conver in the book.  I currently envision the book
+in two sections: section 1 should be a tutorial sacrificing depth in
+order to give a more general feeling for the language; section 2 will
+cover each key topic separately and in some depth.
+
+I have put stars beside topics and sub-topics that I believe should be
+addressed only in section 2.
+
+
+
+Hello, World!
+
+Declarative vs Imperative Programming
+	Definitions
+	Benefits of declarative style
+	Pragmatism
+	Mercury philosophy
+
+Types
+	Primitive
+	Algebraic
+	Equivalence
+	Algebraic types with fields
+		Definition
+		Access
+		Update
+	* Types with user-defined equality
+
+Functions
+	Definition
+	Pattern matching
+	Recursion
+	Conditional expressions
+		Overview to semidet predicates
+	Polymorphism
+	* Partial (semidet) functions
+	Infix notation and syntactic sugar in general
+
+Predicates
+	Definition
+	Recursion
+	If-then-else
+	Disjunction
+	Switches
+	Backtracking
+
+IO
+	Uniqueness
+	* Determinism restrictions
+	* DCG notation in detail
+
+Modes
+	Direction of data flow
+	Determinism categories
+	Committed choice
+	* Subtyping
+	* Unique modes
+		Determinism restrictions
+		Mostly unique modes
+	Higher order modes
+		The standard func mode
+		Standard funcs and the ground inst
+
+Modules
+	Namespaces
+	Overloading and name resolution
+	Submodules
+		Nested
+		Separate
+
+Higher Order Programming
+	Higher order application
+	Pred and func modes
+	* Monomorphism restriction
+
+* Type Classes
+	OO Programming
+	Type class declarations
+		Method signatures
+		Type class constraints
+	Instance declarations
+		Method implementations
+		Type class constraints
+	Existentially quantified types
+		Use
+		Why output only
+	...Constructor classes
+	...Functional dependencies
+	Restrictions and explanations thereof
+		On type class definitions
+		On instance definitions
+
+Lists
+	Description
+	Map, fold & member
+
+Maps
+
+Arrays
+
+Compiling Programs
+	Mmake
+	Compiler flags
+	Compilation grades
+
+* Stores
+
+* Exceptions
+	Throwing
+	Catching
+		Effect on determinism
+		Restoring (plain) determinism (promise_only_solution)
+
+* Foreign Language Interface
+	Declarations
+	Data types
+
+* Impure code
+	Levels of purity
+	Effect of impurity annotations
+	Promising purity (pragma promise_pure)
+
+* Pragmas
+	Inlining
+	Type specialization
+	Obsolescence
+	Memoing
+	...Promises
+
+* Debugging
+	Compiling for debugging
+	Basic tour of the debugger
+	Declarative debugging
+
+* Optimization
+	When to do it and when to avoid it
+	Profiling
+	Various considerations
+	An overview of contemporary optimizer technology
+

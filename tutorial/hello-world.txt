@@ -1,0 +1,112 @@
+hello-world.txt
+(C) 2001 Ralph Becket <rafe@cs.mu.oz.au>
+Fri Nov  9 16:47:37 EST 2001
+ vim: ft=txt ts=4 sw=4 et
+
+
+
+HELLO WORLD
+
+In traditional style, we open with the "Hello, world!" program written
+in Mercury:
+
+    % File: hello.m
+
+    :- module hello.
+
+    :- interface.
+
+    :- import_module io.
+
+    :- pred main(io::di, io::uo) is det.
+
+    :- implementation.
+
+    main --> print("Hello, world!").
+
+hello.m illustrates a number of things common to all Mercury
+programs.
+
+First of all, comments begin with "%" and extend to the end of the
+line.  Comments are ignored by the compiler.
+
+Secondly, every declaration or definition ends with a full stop.
+
+Thirdly, all declarations start with ":-".
+
+Every Mercury program file starts with a ":- module" declaration
+giving its name (the compiler expects a module called "hello" to come
+from a file called "hello.m").
+
+Every module also has an interface section which is introduced with a
+":- interface" declaration.  This section of the file extends up to
+the ":- implementation" declaration and specifies everything about the
+module that should be visible to observers.
+
+In this case the interface includes a line ":- import_module io" which
+states that the interface section of the module makes use of the "io"
+module, which is part of Mercury's standard library and handles
+communication between a Mercury program and the outside world.
+
+The last line in the implementation section is ":- pred main(io::di,
+io::uo) is det".  This states that the module implements a predicate -
+think of it as a procedure for now - called "main" that takes two
+arguments, the first is a /destructive input/ mode argument of type
+"io" and the second is a /unique output/ mode argument, also of type
+"io".  The "io" type is defined by the "io" module - this is an
+example of name overloading\footnote{Overloading means using the
+same name for two or more different things; what is meant is usually
+obvious from context.} - and represents the "state of the world"; the
+declaration here says that "main/2", as a Mercury programmer would
+call it, has the effect of transforming the state of the world.  Any
+predicate that performs IO is going to have a declaration that looks
+something like this one.  The final part of the declaration, "is det",
+means that "main/2" is /deterministic/, or that it will never fail and
+succeed exactly once.
+
+(Don't worry if some of the notions above sound slightly odd; the
+reader should gloss over them for now as all will be fully explained
+in REF later chapters.)
+
+Every Mercury program needs one top-level module that exports a
+"main/2" predicate with a similar signature (C and Java programmers
+will be familiar with this requirement.)  This is the predicate that
+gets called to start the whole show; it is also the only place where a
+program can acquire an "io" state object, which is provided by the
+Mercury run-time system.
+
+Next, the ":- implementation" line starts the implementation section.
+Everything below this line is private to the module and therefore not
+visible to outsiders.
+
+This is where local declarations and definitions should go, along with
+the definitions for any predicates described in the interface section.
+In this case we only have the definition for main/2:
+
+    main --> print("Hello, world!").
+
+It's fairly obvious what's going on here: to the left of the "-->" we
+have the name of the predicate we are defining and on the right of it
+we find the /goals/ that constitute the definition for "main/2"
+("print" is a predicate exported from the "io" module that we imported
+in the interface section.)
+
+You might be wondering what happened to the two "io" arguments to
+"main/2" (indeed, "print" also needs them).  Since it would be tedious
+to have to write these arguments in by hand everywhere we perform IO,
+the "-->" used in the definition essentially does the job for us.  The
+definition for "main/2" is just syntactic sugar for
+
+    main(IO0, IO) :- print("Hello, world!", IO0, IO).
+
+where ":-" is the usual symbol separating a predicate's /head/ from
+its definition.
+
+It is perhaps unfortunate that the "Hello, world!" program in Mercury
+contains so much strangeness for the newcomer, but that is what
+happens when declarative programming (which is notionally side-effect
+free) has to perform imperative operations that necessarily have side
+effects (printing words on the screen, in this case.)  Later chapters
+REF will hopefully cause much of the feeling of strangeness to
+evapourate!
+

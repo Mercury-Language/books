@@ -1,0 +1,50 @@
+types.txt
+(C) 2001 Ralph Becket <rafe@cs.mu.oz.au>
+Fri Nov  9 16:47:37 EST 2001
+ vim: ft=txt ts=4 sw=4 et
+
+
+
+TYPES
+
+Every value has a type.  For example: the numbers ... -2, -1, 0, 1, 2,
+... are all of type "int"; 3.141, 2.718, and 3.0e8 are all numbers of
+type "float"; 'a', 'b', 'c' are characters of type "char"; and so
+forth.
+
+The notion of type is pervasive throughout Mercury - it is a /strongly
+typed/ language after all - and serves as a powerful tool, both for
+debugging (Mercury just won't let you put a square peg in a round
+hole), for reliability (a Mercury program will never crash because an
+argument of the wrong type was passed undetected), for documentation
+purposes, and last, but not least, allows the compiler to apply
+powerful optimization techniques.  [XXX REF why weakly typed languages
+suck?]
+
+Mercury comes with a number of built-in primitive types and provides a
+mechanism for the programmer to construct more complex types.
+
+
+
+MERCURY'S PRIMITVE TYPES
+
+-   The "int" type contains all the integers that can be represented
+    in a word of data on the target machine architecture.  On a 32-bit
+    machine, therefore, "int" spans the integers from -2^31 to
+    2^31 - 1.
+
+-   The "float" type contains all the real numbers that can be
+    represented using a double-precision floating point value on the
+    target machine architecture.
+
+-   The "char" type contains all 256 ASCII characters.  "char"s are
+    normally quoted, such as 'a', 'b', 'c' et cetera, but in some
+    cases parentheses may also be required since the character in
+    question may also be used as the name of an operator - so ('+'),
+    ('-'), ('*') and ('\\')\footnote{"\" acts as an escape character
+    inside quotes, just like in C strings, hence '\\' corresponds to a
+    single quote character.} remove all ambiguity.
+
+-   The "string" type contains all sequences of "char"s.  Strings are
+    written enclosed in "quotes".
+
