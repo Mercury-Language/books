@@ -1,19 +1,691 @@
-\section{* Type Classes}
-\subsection{OO Programming}
-\subsection{Type Class Declarations}
-\subsubsection{Method Signatures}
-\subsubsection{Type Class Constraints}
-\subsection{Instance Declarations}
-\subsubsection{Method Implementations}
-\subsubsection{Type Class Constraints}
-\subsection{Existentially Quantified Types}
-\subsubsection{Use}
-\subsubsection{Why Output Only}
-\subsection{...Constructor Classes}
-\subsection{...Functional Dependencies}
-\subsection{Restrictions and Explanations Thereof}
-\subsubsection{On Type Class Definitions}
-\subsubsection{On Instance Definitions}
+% vim: ft=tex ff=unix ts=4 sw=4 et wm=8 tw=0
 
+\chapter{* Type Classes}
 
+Polymorphism allows us to define predicates that range over values of
+any type.  This is very useful, but polymorphism places some
+restrictions on what can be done with a polymorphically typed argument.
+In fact, such arguments may only be compared, be interrogated about
+their type (see the chapter on RTTI \XXX{}), and unified.
 
+In some situations, one would like to do something different depending
+upon the type of a polymorphic argument, without actually knowing what
+that type is.  For instance, say we were writing a graphics package
+which needed to manipulate various different representations of images,
+from curves and polyhedra to textured surfaces.  Each such object may
+well have a different representation in the program, but we would
+like to be able to do such things as rotate and scale them regardless of
+their type.  This is where type classes come in.
+
+\section{Object Orientated Programming}
+
+The last decade or so has seen a revolution in programming style towards
+the near-universal adoption of object orientated programming languages.
+The three reasons most often attributed to the success of OO techniques
+are encapsulation, data hiding, and inheritance.
+
+Encapsulation refers to the practice of keeping the representation of
+data and the definitions of operations on that data together in one
+place.
+
+Data hiding refers to the fact that only some parts of the data
+representation are made visible outside an object (or \emph{class
+instance} in the vernacular); all other manipulation must be via the
+suite of \emph{methods} (operations) that are associated with the
+object.
+
+Finally, inheritance usually includes both type inheritance and
+implementation inheritance.
+
+Type inheritance (sometimes known as \emph{interface} inheritance) is
+where one \emph{class} of objects may be a \emph{subclass} of another
+(the \emph{superclass}), meaning that an instance of the subclass will
+also have data fields with the same names and types as those of the
+superclass as well as including methods with the same names and
+signatures of the superclass.  An instance of a subclass can always be
+passed to an operation expecting an instance of a superclass (since all
+the right bits and pieces will be in place and the operation in question
+won't be any the wiser.)
+
+Implementation inheritance is where the \emph{definitions} of methods
+are also inherited from the superclass.
+
+Of all these things, a strong case can be made for interface inheritance
+being the real reason why OO techniques work \XXX{find a ref?}.
+Certainly, there are many cases where implementation inheritance leads
+to real maintenance problems, and the conflation of the different issues
+can often compromise system design \XXX{refs}.
+
+In Mercury, as with most declarative languages that support type
+classes, we separate out these concerns.
+
+Encapsulation is handled by using ADTs and type classes.
+
+Data hiding is handled by using ADTs.
+
+Interface inheritance is handled via type classes and existentially
+quantified types.
+
+Implementation inheritance is not supported as it is generally felt to
+be a Bad Thing amongst the language design cognoscenti.
+
+\section{An Example}
+
+Say we wished to generalise over the class of numbers, so that we could
+write code that would work on @int@s, @float@s, complex numbers,
+rationals, arbitrary precision integers, Church numerals and so forth.
+We would start by defining a type class that supported the basic set of
+operations (or methods) we require:
+\begin{verbatim}
+:- typeclass number(T) where [
+	func zero          = T,
+	func one           = T,
+	func from_int(int) = T,
+	func    -T         = T,
+	func T + T         = T,
+	func T - T         = T,
+	func T * T         = T,
+	func T / T         = T
+\end{verbatim}
+We include the nullary methods @zero@ and @one@ because they are so
+useful and will have different representations in each \emph{instance}
+of @number@.
+
+We can now define functions that will work on any kind of @number@:
+\begin{verbatim}
+:- func cube(T) = T <= number(T).
+
+cube(X) = X * X * X.
+\end{verbatim}
+A function's type signature may have one or more \emph{type class
+constraints} after a trailing @<=@.  In this case we can read the type
+declaration of @cube@ as ``the function @cube@ takes an argument of type
+@T@ and returns an argument of type @T@, provided @T@ is an instance of
+the type class @number@.''
+\XXX{This example sucks.  There must be some interesting non-trivial
+mathematical function that we want for all kinds of number.  Hmm, maybe
+an example using rectangular and/or polar coordinates would be better.
+Or how about a hash table or pretty printer?}
+
+The actual @*@ operation used in an application of @cube@ will, of
+course, depend upon the \emph{type} of its argument.
+
+Essentially, an instance declaration defines the \emph{method
+dictionary} for a type with respect to a given type class.  A type
+class constraint on a function signature says that the function also
+takes a `hidden' argument which is an appropriate method dictionary.
+The method invocations @*@ in the body are resolved by looking up
+the corresponding method definition in the hidden method dictionary
+argument.
+
+Next, let's look at how we define @int@ as an instance of @number@:
+\begin{verbatim}
+:- instance number(int) where [
+	zero        = 0,
+    one         = 1,
+    from_int(X) = X,
+    -X          = 'int__-'(X),
+    X + Y       = X `'int__+'` Y,
+    X - Y       = X `'int__-'` Y,
+    X * Y       = X `'int__*'` Y,
+    X / Y       = X `'int__/'` Y
+].
+\end{verbatim}
+(Recall that @`name`@ allows us to use @name@ as an infix operator and
+that we have to @'@quote@'@ names that contain so-called graphical
+characters; so @`'int__+'`@ means ``using the @+@ operator defined in
+the @int@ module as an infix operator.'')
+
+If we wanted to, we could instead have written
+\begin{verbatim}
+:- instance number(int) where [
+    ...
+    func(+) is 'int__+'
+    func(-) is 'int__-'
+    func(*) is 'int__*'
+    func(/) is 'int__/'
+].
+\end{verbatim}
+simply using the @int@ module implementations directly, rather than
+supplying in-line definitions for the methods.  There is no problem
+with mixing in-line definitions with @is@ definitions in an @instance@
+declaration.
+
+Making @float@ an instance of @number@ is very similar:
+\begin{verbatim}
+:- instance number(float) where [
+	zero        = 0.0,
+    one         = 1.0,
+    from_int(X) = X,
+    -X          = 'float__-'(X),
+    X + Y       = X `'float__+'` Y,
+    X - Y       = X `'float__-'` Y,
+    X * Y       = X `'float__*'` Y,
+    X / Y       = X `'float__/'` Y
+].
+\end{verbatim}
+
+\subsection{Instance Definition Parameters}
+
+Instance definition parameters must take the form @t(T1, T2, ..., Tn)@
+(or just @t@ if the type @t@ is not parametric.)  Each of @T1@, @T2@,
+\ldots, @Tn@ must be distinct type variables.
+
+The reason for not allowing instance declarations on types like
+@list(char)@ (as opposed to @list(T)@) is that defining instances of the
+former would deny the possibility of more the latter, more general,
+instance in the program.
+\XXX{This sounds weak.  Is there a convincing explanation?}
+
+Each type parameter must be distinct for much the same reason.
+\XXX{Ditto.}
+
+\subsection{Caveat OO Programmer}
+
+\XXX{What's this in Latin?}
+
+If you come from an OO background you may be tempted to use type
+classes all over the place.  This is not, in general, a good idea.
+There is a performance penalty associated with using type classes (if
+the compiler cannot work out the type of an argument at a particular
+call method site then it cannot optimize away the dictionary look-up
+step) as well as a coding burden in that one has to supply type class
+constraints wherever one wants that functionality available.
+
+In many cases, an algebraic data type is a better option.
+
+You have been warned.
+
+\section{Another Example}
+
+We want to code up an hash table implementation that will work for all
+types of keys and values.  Moreover, we don't want to provide a
+universal hash function (which we could do using Mercury's \XXX{RTTI}
+facility) since different hash functions may be better depending upon
+each application.  The solution is to use type classes.
+
+This type class simply specifies that instances have an associated
+@hash@ method which converts values into (hopefully good) @int@ hashes.
+\begin{verbatim}
+:- typeclass hashable(T) where [
+    func hash(T) = int
+].
+\end{verbatim}
+Now we define our hash table to be an (@int@ indexed) @array@ of
+buckets:
+\begin{verbatim}
+:- import_module array, int.
+
+:- type hash_table(K, V) == array(assoc_list(K, V)).
+:- mode hash_table_di == array_di.
+:- mode hash_table_ui == array_ui.
+:- mode hash_table_uo == array_uo.
+
+:- func set(K,  V,  hash_table(K, V)) = hash_table(K, V)
+            <= hashable(K).
+:- mode set(in, in, hash_table_di   ) = hash_table_uo is det.
+
+set(K, V, HT) = ( HT ^ elem(index(K, HT)) := [K - V | HT ^ elem(H)] ).
+
+:- func lookup(K,  hash_table(K, V)) = V
+            <= hashable(K).
+:- mode lookup(in, hash_table_ui   ) = out is semidet.
+
+lookup(K, HT) = HT ^ elem(index(K, HT)) ^ elem(K).
+
+:- func index(K,  hash_table(K, V)) = int
+            <= hashable(K).
+:- mode index(in, hash_table_ui   ) = out is det.
+
+index(K, HT) = hash(K) `mod` size(HT).
+\end{verbatim}
+\XXX{Make sure we add @elem@ and @det_elem@ to @assoc_list@.}
+
+We can construct hash functions for all our favourite types:
+\begin{verbatim}
+:- import_module int, char, string.
+
+:- instance hashable(int) where [
+    hash(X) = X
+].
+
+:- instance hashable(string) where [
+    hash(S) =
+        foldl(
+            func(C, H) = (H >> 28) `xor` ((H << 5) \/ to_int(C)),
+            S,
+            0
+        )
+].
+\end{verbatim}
+and so forth.
+
+Hash tables of type @hash_table(int, T)@ will use the @int@ @hash@
+method and hash tables of type @hash_table(string, T)@ will use the
+@string@ @hash@ method.
+
+Note that it is not possible to have more than one instance definition
+for a given type in a program.  The reason for this is that there must
+be no ambiguity when working out which method implementation should be
+called in any given situation.
+\XXX{Well, I think this should rather be ``in the same scope.''  I think
+that this will actually be the easiest thing to do anyway when we move
+to an explicit dictionary passing scheme.}
+
+\section{Type Class Constraints on Type Classes}
+
+Just as type class constraints can be placed on function and predicate
+and method declarations, they can equally be applied to type class and 
+instance definition.
+
+If we place a type class constraint on a type class definition then we
+are constructing an hierachy of type classes.
+
+As an example, for many applications, the most efficient type of hash
+table uses double hashing, rather than chaining buckets off a single
+hash generated index.  For double hashing we probe at indices @h1(K) + I
+* h2(K)@ (modulo the size of the hash table) for $@I@ \in \{0, 1, 2,
+\ldots\}$, looking for the correct entry or an empty slot, depending
+upon whether we are performing an insertion or a lookup.
+
+We want to add a new type class for types with a second hash function:
+\begin{verbatim}
+:- typeclass hash2able(T) <= hashable(T) where [
+    func hash2(T) = int
+].
+\end{verbatim}
+This says that to be able to declare a type $T$ as an instance of
+@hash2able@, it must first also be declared as an instance of
+@hashable@.  Therefore, every instance of @hash2able@ is a
+perfectly good argument to anything expecting an instance of @hashable@.
+
+This relationship is transitive: if @a@ is a sub-type class of @b@ and
+@b@ is a sub-type class of @c@, then @a@ is also a sub-type class of
+@c@.
+
+Note that there can be no loops in the hierarchy: it is not acceptable
+for type class @a@ to be a sub-type class of @b@ and simultaneously have
+@b@ as a sub-type class of @a@.
+
+Back to the example.
+\begin{verbatim}
+:- type hash2_table(K, V) == array(maybe(K, V)).
+:- mode hash2_table_di == array_di.
+:- mode hash2_table_ui == array_ui.
+:- mode hash2_table_uo == array_uo.
+
+:- func find_empty(int, int, hash2_table(K, V)) = int.
+:- mode find_empty(in,  in,  hash2_table_ui   ) = out is det.
+
+find_empty(I, H2, HT) =
+    ( if   HT ^ elem(I `mod` size(HT)) = no
+      then I
+      else find_empty((I + H2) `mod` size(HT), H2, HT)
+    ).
+
+:- func find_value(K,  int, int, hash2_table(K, V)) = V.
+:- mode find_value(in, in,  in,  hash2_table_ui   ) = out is det.
+
+find_key(K, I, H2, HT) = V :-
+    HT ^ elem(I `mod` size(HT)) = yes(K0, V0),
+    ( if   K = K0
+      then V = V0
+      else find_key(K, I + H2, H2, HT)
+    ).
+
+:- func set(K,  V,  hash2_table(K, V)) = hash2_table(K, V)
+            <= hash2able(K).
+:- mode set(in, in, hash2_table_di   ) = hash2_table_uo is det.
+
+set(K, V, HT) = HT ^ elem(I) := yes(K, V) :-
+    I = find_empty(hash(K) `mod` size(HT), hash2(K), HT).
+
+:- func lookup(K,  hash2_table(K, V)) = V
+            <= hash2able(K).
+:- mode lookup(in, hash2_table_ui   ) = out is semidet.
+
+lookup(K, HT) = find_key(K, hash(K), hash2(K), HT).
+\end{verbatim}
+(Note that the above implementation omits some important details.  These
+include the fact that this kind of hash table can fill up and hence may
+need resizing once occupancy becomes high -- the hash table must never
+become completely full -- and that the hash values should be coprime
+with the size of the hash table -- something that can be arranged by,
+say, multiplying the hash values by three and five respectively and
+ensuring that the size of the hash table is always a power of two.)
+\XXX{Should I put in all the checks and balances anyway?  I'm only using
+it as an illustrative example for type classes.}
+
+Looking at the signatures for @set@ and @lookup@, we observe that the
+constraint @hash2able(T)@ implicitly includes the constraint
+@hashable(T)@ since by definition the latter is a sub-type class of the
+former, hence we can use the @hash@ method without having to explicitly
+state that $T$ must be an instance of @hashable@.
+
+\section{Type Class Constraints on Instance Definitions}
+
+Sometimes it is useful to place a type class constraint on the type
+variable parameters in an instance definition.  For example, to make
+@list@s of @hashable@ things @hashable@, we would write
+\begin{verbatim}
+:- instance hashable(list(T)) <= hashable(T) where [
+    hash([])       = 0,
+    hash([X | Xs]) = hash(X) `xor` hash(Xs)
+].
+\end{verbatim}
+So @hash(X)@ calls the implementation for @T@ and @hash(Xs)@ calls the
+implementation for @list(T)@ -- which is what is defined here!
+
+As an aside, it is quite all right to use methods as higher order
+functions.  We could quite easily have written
+\begin{verbatim}
+:- instance hashable(list(T)) <= hashable(T) where [
+    hash(Xs) = foldl(func(X, H) = hash(X) `xor` H, Xs, 0)
+].
+\end{verbatim}
+and obtained the same effect.
+
+Note that type class constraints may only range over type variables and
+not structured types.  That is, @<= foo(T)@ is acceptable, but
+@<= foo(list(T))@ is not.
+\XXX{Check this.}
+
+\section{Multiple Type Class Constraints}
+
+In some cases we may want to place more than one type class constraint
+on a type variable, be it on a predicate, function or type class or
+instance definition.
+
+A common idiom is to construct an ``empty'' type class with no methods
+that only serves to group a number of other type classes together.  As
+an example, we might describe a geometrical shape as something that has
+both a list of vertices and a colour.  Each of these properties is
+independent of the other, so there should be no sub-type classing
+between them.  Instead, we would write:
+\begin{verbatim}
+:- typeclass shape(T) <= (has_vertices(T), has_colour(T)) where [].
+\end{verbatim}
+Note that in order to get the syntax right, we have to group multiple
+type class constraints in parentheses.
+
+There is, of course, no reason why @shape@ could not also have methods
+of its own if required.
+
+This is an example of \emph{multiple inheritance}, albeit of a set of
+method signatures, rather than their implementation.
+
+Most languages with built-in OO support do not allow multiple
+inheritance of implementation because it means both complicating the
+language semantics (what do you do when two methods from different
+superclasses have the same name?) and the language run-time (you
+generally pay a cost everywhere for such a facility, even if you don't
+use it) and can lead to real code maintenance problems.
+\XXX{Do I need to substantiate these claims?}
+
+Several languages, such as Java and C#, have included the notions of
+\emph{interfaces}, which serve much the same purpose as type classes.
+Since we are only allowed to inherit method signatures, there is no
+problem (provided we insist that no method in a sub-type class may have the
+same name, arity and signature as another method in a super-type class.)
+
+\section{Abstract Instances}
+
+It is not necessary to reveal to the outside world the details of how a
+particular instance is implemented.  Instead, we can do the same thing
+as we do for abstract types:
+\begin{verbatim}
+:- module m.
+:- interface.
+
+:- type t ...
+
+:- typeclass c(T) where [ ... ].
+
+:- instance c(t).           % An abstract instance declaration.
+
+:- implementation.
+
+:- instance c(t) where [    % Here we define the instance.
+    ...
+].
+\end{verbatim}
+
+\section{Instances of Abstract Types}
+
+It is not possible to declare an abstract type that is elsewhere defined
+as an equivalence type as a type class instance.  The reason for this is
+probably best explained by example.  Say someone else has written module
+@a@:
+\begin{verbatim}
+:- module a.
+:- interface.
+
+:- type t.
+
+:- typeclass c(T) where [ ... ].
+\end{verbatim}
+and I write module @b@:
+\begin{verbatim}
+:- module b:
+...
+:- implementation.
+:- import_module a.
+
+:- instance c(t) where [ ... ].
+\end{verbatim}
+Since @t@ is abstract, we have no way of knowing whether the
+implementation section of @a@ goes on to say
+\begin{verbatim}
+:- interface.
+:- import_module int.
+
+:- type t == int.
+
+:- instance c(t) where [ ... ].
+\end{verbatim}
+thereby leaving method resolution on @int@ with respect to @c@
+ambiguous.
+\XXX{I don't think I have the argument right here...}
+
+\XXX{This isn't convincing.  Have I got this right?  Either way, isn't
+this just an artifact of having instances being resolved at link time
+rather than as a scope issue...}
+
+The upshot of this is that if you want to declare an abstract type to be
+a type class instance, you should first wrap it up in a no-tag type:
+\XXX{We should really have a section on no-tag types in the Types
+chapter.}
+\begin{verbatim}
+    % t is an abstract type defined elsewhere.
+    %
+:- type my_t ---> my_t(t).
+
+:- instance c(my_t) where [ ... ].
+\end{verbatim}
+Since we have \emph{wrapped up} the type @t@, there can be no confusion
+between which methods for @c@ we should call.  We pay nothing (other
+than a little typing) for using no-tag types since their representation
+is identical to that of the type they wrap.
+\XXX{Perhaps I could say this better.}
+
+\section{Multi-Parameter Type Classes}
+
+Type classes are not restricted to a single parameter.  It is sometimes
+useful to be able to describe method suites that relate two or more
+type variables (every type parameter to a type class must be a distinct
+type variable.)
+
+Consider the following simple multi-parameter type class definition used
+to specify where values of one type may be ``cast'' (or coerced) into
+values of another type:
+\begin{verbatim}
+:- typeclass castable(T1, T2) where [
+    func cast(T1) = T2
+].
+\end{verbatim}
+We can now set up instances allowing us to convert @int@s into @float@s
+and @string@s and even (wrapped) @list@s of @char@:
+\begin{verbatim}
+:- instance castable(int, float) where [
+    cast(X) = float(X)
+].
+:- instance castable(int, string) where [
+    cast(X) = format("%d", [i(X)])
+].
+
+:- type wrapped_chars ---> chars(list(char)).
+
+:- instance castable(int, wrapped_chars) where [
+    cast(X) = chars(to_char_list(format("%d", [i(X)])))
+].
+\end{verbatim}
+\XXX{Would it be better to use @cast(X)@ there at the end, since we
+already have @castable(int, string)@?}
+
+Note that every method signature in a type class definition must contain
+\emph{every} type variable that is a parameter to the type class.
+Without this constraint we could have ambiguous situations like the
+following:
+\begin{verbatim}
+:- typeclass foo(T1, T2) where [
+    func f(T1) = T2,
+    func g(T1) = T1     % Error!  Doesn't mention T2.
+].
+
+:- instance foo(int, float) where [
+    f(X) = 1.0,
+    g(X) = X + 1
+].
+:- instance foo(int, string) where [
+    f(X) = "bar",
+    g(X) = X + 2
+].
+\end{verbatim}
+Now there is no way of working out, \emph{in any context}, whether the
+method call @g(123)@ should invoke the @foo(int, float)@ version or the
+@foo(int, string)@ version.
+
+\section{What Type Classes Can't Do (Yet)}
+
+Work is afoot to extend the Mercury type class system to include
+\emph{functional dependencies} and \emph{constructor classes}.
+
+Functional dependencies allow one to specify that given one type
+variable, another is necessarily defined.  That is, if we write
+@(T1 -> T2)@ to say that ``given'' @T1@ we may always ``infer'' @T2@ for
+this type class, then we could say:
+\begin{verbatim}
+:- typeclass contains(T1, T2) <= (T1 -> T2) where [
+    pred contains(T1, T2),
+    mode contains(in, in) is semidet
+\end{verbatim}
+and the functional dependency constraint essentially constitutes a
+promise that if we, say,  declare an instance @contains(bitmap, int)@,
+we will not elsewhere declare an instance @contains(bitmap, char)@.
+
+Constructor classes refers to the ability to use only partially
+specified types as type class parameters.  For instance, we might want
+to say something like
+\begin{verbatim}
+:- typeclass mappable(T) where [
+    func map(func(T1) = T2, T(T1)) = T(T2)
+].
+\end{verbatim}
+supporting instance definitions like
+\begin{verbatim}
+:- instance mappable(list) where [
+    map(_, []      ) = [],
+    map(F, [X | Xs]) = [F(X) | map(F, Xs)]
+].
+:- instance mappable(array) where [
+    map(F, A) = array(map(F, to_list(A)))
+].
+\end{verbatim}
+
+\XXX{Should probably go through the collection type class problem in
+some detail.}
+
+\section{Existentially Quantified Types}
+
+One thing we have yet to demonstrate is how to form heterogeneous
+collections.  Say we have a typeclass
+\begin{verbatim}
+:- typeclass stringable(T) where [
+    func string(T) = string
+].
+\end{verbatim}
+with such things as @int@, @float@, @char@ as instances.  Our goal is to
+write a predicate to print out a list a @stringable@ values, regardless
+of their type.  Unfortunately we cannot simply write
+\begin{verbatim}
+:- pred write_strings(list(T), io, io) <= stringable(T).
+:- mode write_strings(in,      di, uo) is det.
+
+write_strings([],       !IO).
+write_strings([X | Xs], !IO) :-
+    io__write_string(string(X), !IO),
+    write_strings(Xs, !IO).
+\end{verbatim}
+because this would restrict the first argument to all members of the
+same type.  What we want to be able to say is, given @X = 10@,
+@Y = " green bottle", Z = @'s'@ is to just call
+@write_strings([X, Y, Z])@ and see @10 green bottles@ appear in the
+output.
+
+Existentially quantified types (sometimes abbreviated to just
+existential types) to do what we want.  Here's how we could use them to
+solve the problem with @write_strings@:
+\begin{verbatim}
+:- type some_stringable
+    --->    some [T] a_stringable(T) => stringable(T).
+
+:- pred write_strings(list(some_stringable), io, io).
+:- mode write_strings(in,                    di, uo) is det.
+
+write_strings([],                     !IO).
+write_strings([a_stringable(X) | Xs], !IO) :-
+    io__write_string(string(X), !IO),
+    write_strings(Xs, !IO).
+\end{verbatim}
+We start by introducing a new type, @some_stringable@.  This type has a 
+single, existentially quantified constructor called @a_stringable@ whose
+single argument is constrained by the fact that whatever it is, it must
+be an in an instance of @stringable@.
+
+Note that the type variable @T@ does not appear in the head of the type
+definition because it is bound to the constructor by the existential
+quantifier, @some@.  This is what allows us to construct heterogeneous
+collections of @stringable@ instance values.
+
+The constraint @=> stringable(T)@ has the arrow pointing in a different
+deirection, because existentially quantified types place a burden on the
+\emph{caller's} ability to handle a value, rather than the
+\emph{callee's}.  Because of this directionality, existentially
+quantified types are generally ``outputs'' since a caller has no way of
+knowing which particular type is actually allowed.
+\XXX{This needs clarifying.}
+
+The compiler cannot work out without help \XXX{(Is this in general or
+just hard or just a SMOP?)} whether an occurrence of an existentially
+quantified data constructor is meant as a construction or
+deconstruction.  To solve this problem, we insist that
+\emph{constructions} be preceeded with `@new ' (note the space), while
+\emph{deconstructions} are not.  Thus, to construct our heterogeneous
+list of @stringable@s, we would write
+\begin{verbatim}
+    L = [ 'new a_stringable'(X),
+          'new a_stringable'(Y),
+          'new a_stringable'(Z) ]
+\end{verbatim}
+and we can now pass @L@ to @write_strings@ and everything will work
+fine.
+
+There is no problem with combining ordinary type class constraints with
+existentially quantified type class constraints; the only rule is that
+the existential quantifier and corresponding constraints must go at the
+outermost level:
+\begin{verbatim}
+:- some [T2] pred foo(T1, T2) => bar(T1) <= baz(T2).
+\end{verbatim}
+where @T1@ is universally quantified and @T2@ existentially quantified.
+\XXX{Check to see if I need extra parentheses anywhere here.}

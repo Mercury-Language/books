@@ -1,4 +1,6 @@
-\section{Lists}
+% vim: ft=tex ff=unix ts=4 sw=4 et wm=8 tw=0
+
+\chapter{Lists}
 
 Lists are perhaps the single most useful data structure in the
 programmer's armoury.
@@ -24,7 +26,7 @@ Also, an expression of the form @[A, B, C | Xs]@ is syntactic sugar for
 These are obviously singly linked lists.  \XXX{Discussion of the pros
 and cons of the various list ADTs out there.}
 
-\subsection{The Main List Operations}
+\section{The Main List Operations}
 
 The higher order functions @map@, @foldl@ and @foldr@ provide easy ways
 of iterating over lists, either transforming them member by member or
@@ -35,7 +37,7 @@ The section on higher order programming \XXX{} has already dealt with
 discussion here and concentrate on operations we have not previously
 examined.
 
-\subsubsection{Miscellany}
+\subsection{Miscellany}
 
 \begin{verbatim}
     % length([X1, X2, X3, ..., XN]) = N
@@ -51,7 +53,7 @@ length(Xs) = foldl((func(_, N) = N + 1), Xs, 0).
 reverse(Xs) = foldl((func(X, Ys) = [X | Ys]), Xs, []).
 \end{verbatim}
 
-\subsubsection{Membership}
+\subsection{Membership}
 
 \XXX{Should have a section on equality and @compare@ and so forth.}
 
@@ -97,7 +99,7 @@ give the head of the list an index of 1 or 0:
 :- func index1(list(T), int) = T.
 \end{verbatim}
 
-\subsubsection{Mapping}
+\subsection{Mapping}
 
 @map@ applies its function argument to each member of its @list@ argument
 and returns the corresponding @list@ of results.
@@ -135,10 +137,10 @@ arguments:
             list(T1), list(T2), list(T3)) = list(T4).
 \end{verbatim}
 
-\XXX{Should probably include a subsubsection on zipping and
+\XXX{Should probably include a subsection on zipping and
 interleaving.}
 
-\subsubsection{Folding}
+\subsection{Folding}
 
 The two main folding operations are @foldl@ and @foldr@.  We have
 already seen a definition of @foldr@ (the version supplied in the
@@ -172,9 +174,9 @@ sum(Xs)     = foldl((func(X, A ) = X + A   ), Xs, 0 ).
 prod(Xs)    = foldl((func(X, A ) = X * A   ), Xs, 1 ).
 \end{verbatim}
 
-\subsubsection{XXX More To Come}
+\subsection{XXX More To Come}
 
-\subsection{General Advice}
+\section{General Advice}
 
 \XXX{This probably deserves its own top-level section.}
 

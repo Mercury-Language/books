@@ -1,4 +1,6 @@
-\section{Predicates}
+% vim: ft=tex ff=unix ts=4 sw=4 et wm=8 tw=0
+
+\chapter{Predicates}
 
 The key computational unit in Mercury is the predicate.  A
 predicate describes a relationship between its arguments; it is
@@ -10,7 +12,7 @@ languages, but also procedures with multiple return values and
 even non-deterministic relationships, in which there may be
 several different solutions for a given set of input arguments.
 
-\subsection{Introduction}
+\section{Introduction}
 
 A predicate is defined by a set of \emph{clauses}, where each
 clause takes the form
@@ -231,8 +233,8 @@ In general, Mercury will reorder each clause body for each mode
 declaration so that results are generated before they are needed -- each
 mode of a predicate is referred to as a \emph{procedure}.
 
-\subsection{Execution}
-This subsection explains Mercury's execution model in more
+\section{Execution}
+This section explains Mercury's execution model in more
 detail.  In particular, the notions of failure, backtracking
 and non-determinism are addressed.
 
@@ -400,7 +402,7 @@ non-determinism can be used to write very clear, concise programs.
 Support for backtracking and unification is what distinguishes Mercury
 from purely functional languages.
 
-\subsection{Recursion}
+\section{Recursion}
 
 Imperative languages like C and Java provide a whole slew of
 mechanisms for supporting iterative (looping) control flow --
@@ -464,7 +466,7 @@ Tail recursive code like this should execute just as quickly
 and efficiently as a for or while loop in an imperative
 language.
 
-\subsection{Unifications}
+\section{Unifications}
 
 Mercury has but two basic atomic (\ie indivisible) types of
 goal: unifications and calls.
@@ -526,7 +528,7 @@ becomes
 where @V_1@\ldots@V_8@ are all temporary variables
 introduced in the conversion to SHNF.
 
-\subsection{Calls}
+\section{Calls}
 The other kind of primitive goal supported by Mercury is the
 predicate call, @p(X1, ..., Xn)@, which we have already seen in
 the examples above.
@@ -540,7 +542,7 @@ Two relatively important built-in predicates are @true@ and
 from Mercury's Prolog roots where it was sometimes more useful
 to think in procedural terms.}
 
-\subsection{Conjunction}
+\section{Conjunction}
 
 A goal of the form @G1, G2, ..., Gn@ is called a \emph{conjunction}
 with the separating commas read as ``and''.  A conjunction
@@ -561,7 +563,7 @@ If a goal fails then the program backtracks to the nearest
 preceding choice-point (\ie non-deterministic goal that may
 have other solutions).
 
-\subsection{Negation}
+\section{Negation}
 
 A goal of the form not @G@ succeeds iff @G@ has no solutions.  @G@
 may be a compound goal, in which case it should be enclosed in
@@ -579,7 +581,7 @@ performs can generate such things; getting the modes right for
 such things requires that the compiler observe this
 simplification rule.)
 
-\subsection{If-Then-Else Goals}
+\section{If-Then-Else Goals}
 
 Mercury's if-then-else construct looks like this:
 \begin{verbatim}
@@ -703,7 +705,7 @@ prime_divisor_or_zero(N, S) :-
     S = ( if prime_divisor(N, D) then D else 0 ).
 \end{verbatim}
 
-\subsection{Disjunction}
+\section{Disjunction}
 
 Just as conjunction lets you use ``and'' to construct goals,
 disjunction lets you use ``or''.  A \emph{disjunctive} goal takes the
@@ -751,7 +753,7 @@ definitions.)
 In general it is better style to use clausal form for
 top-level disjunctions.
 
-\subsection{Switches}
+\section{Switches}
 Mercury recognises particular forms of (@semi-@)@det@
 disjunction which it can compile very efficiently.
 
@@ -804,7 +806,7 @@ Switches are an elegant way of describing conditions based on
 unification tests and are typically more efficient than the
 equivalent if-then-else chains.
 
-\subsection{Existential Quantification}
+\section{Existential Quantification}
 
 Sometimes we only need to know whether a solution exists, but
 are not interested in the result.  For this we use existential
@@ -822,7 +824,7 @@ also appear in the head are implicitly existentially
 quantified, which means you never actually need to use
 explicit existential quantification in your programs.
 
-\subsection{Universal Quantification}
+\section{Universal Quantification}
 
 On the other hand, we may wish to know whether a particular
 property holds for all solutions to a particular goal.  This
@@ -837,7 +839,7 @@ is equivalent to writing
     not (some [X, Y, Z] not G)
 \end{verbatim}
 
-\subsection{Implication}
+\section{Implication}
 
 Mercury has three types of goal for describing implicative
 relationships between goals.\footnote{The translations are given by de Morgan's laws.}
@@ -855,7 +857,7 @@ ambiguity in the scope of the implication.)
 Implication is most often used with universal quantification
 to test for some general property.
 
-\subsubsection{Examples}
+\subsection{Examples}
 
 This example uses the predicate @member(X, Xs)@ to non-deterministically
 project members @X@ from the @list@ @Xs@ and the semidet predicate
@@ -900,11 +902,11 @@ member(X, [_ | Xs]) :- member(X, Xs).
 even(X) :- X `mod` 2 = 0.
 \end{verbatim}
 
-\subsection{Higher Order Application}
+\section{Higher Order Application}
 
 \XXX{I'll talk about this later.}
 
-\subsection{Anonymous and Singleton Variables}
+\section{Anonymous and Singleton Variables}
 
 Often one is not interested in a particular output variable
 from a call or unification.  In these cases you can use the

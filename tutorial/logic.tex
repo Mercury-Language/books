@@ -1,4 +1,6 @@
-\section{Logic and Logic Programming}
+% vim: ft=tex ff=unix ts=4 sw=4 et wm=8 tw=0
+
+\chapter{Logic and Logic Programming}
 
 While programming in a purely functional style is a fairly intuitive
 notion, the notion of programming in logic might at first seem a little
@@ -6,14 +8,14 @@ odd.  Nevertheless, in this section we shall demonstrate that there is
 an easily understood logic-based programming paradigm.  But first, a
 refresher course on basic logic.
 
-\subsection{Propositional Logic}
+\section{Propositional Logic}
 
 We start off with propositional logic (otherwise known as the
 \emph{predicate calculus}) because it is simple and can be used to
 illustrate several ideas that we will need to understand predicate
 logic.
 
-\subsubsection{Propositions}
+\subsection{Propositions}
 
 A \emph{proposition} is simply a statement that is either true or false.
 An \emph{atomic} proposition is one that is indivisible (\ie not a
@@ -25,7 +27,7 @@ we usually abbreviate them with short names or even just single letters.
 In this section we will use $a$, $b$, $c$, \ldots to stand for arbitrary
 atomic propositions.
 
-\subsubsection{Logical Formulae}
+\subsection{Logical Formulae}
 
 Typically we want to combine atomic propositions into more complex
 \emph{compound} propositions or logical formulae.  For example, I may
@@ -39,7 +41,7 @@ proposition.)
 There are a number of logical \emph{connectives} we can use to combine
 propositions into larger propositions.
 
-\subsubsection{Negation}
+\subsection{Negation}
 
 For any proposition $p$, $\Not{p}$ (read as ``not $p$'') is its
 \emph{negation}.  That is, if $p$ is true then $\Not{p}$ is false and
@@ -56,7 +58,7 @@ where $\True$ stands for truth and $\False$ for falsity.
 
 Note that $\Not{\Not{p}}$ is the same as $p$.
 
-\subsubsection{Conjunction}
+\subsection{Conjunction}
 
 For any propositions $p$ and $q$, the \emph{conjunction} $p \Conj q$
 (read as ``$p$ and $q$'') is true iff both $p$ and $q$ are true:
@@ -80,7 +82,7 @@ Conjunction is commutative: $p \Conj q \Eqv q \Conj p$.
 
 Conjunction is idempotent: $p \Conj p \Eqv p$.
 
-\subsubsection{Disjunction}
+\subsection{Disjunction}
 
 For any propositions $p$ and $q$, the \emph{disjunction} $p \Disj q$
 (read as ``$p$ or $q$'') is true iff at least one of $p$ and $q$ is
@@ -111,7 +113,7 @@ Disjunction is commutative: $p \Disj q \Eqv q \Disj p$.
 
 Disjunction is idempotent: $p \Disj p \Eqv p$.
 
-\subsubsection{Distribution over Conjunction and Disjunction}
+\subsection{Distribution over Conjunction and Disjunction}
 
 The following rules are very useful:
 \begin{align*}
@@ -121,7 +123,7 @@ The following rules are very useful:
 & \Eqv (p \Conj r) \Disj (q \Conj r) \\
 \end{align*}
 
-\subsubsection{Implication}
+\subsection{Implication}
 
 For any propositions $p$ and $q$, the \emph{implication} $p \Imp q$
 (read as ``$p$ implies $q$'' or ``if $p$ then $q$'') is \emph{false} iff 
@@ -171,7 +173,7 @@ is made of green cheese.'')
 Note that we sometimes prefer to write $q \Bimp p$ which is just another
 way of writing $p \Imp q$.
 
-\subsubsection{Equivalence}
+\subsection{Equivalence}
 
 For any propositions $p$ and $q$, the \emph{equivalence} $p \Eqv q$
 (read as ``$p$ is equivalent to $q$'') is \emph{true} iff 
@@ -187,7 +189,7 @@ p       & q       & p \Imp q \\
 \end{array}
 \]
 
-\subsubsection{De Morgan's Laws}
+\subsection{De Morgan's Laws}
 
 The 19th century logician Augustus De Morgan proved two laws:
 \begin{align*}
@@ -228,7 +230,7 @@ to deduce the following useful identities and implications:
 right hand side is referred to as the \emph{contrapositive} form of the
 left.)
 
-\subsubsection{Modus Ponens}
+\subsection{Modus Ponens}
 
 The key rule we're interested in is as follows: if $p$ and $p \Imp q$
 then it must follow that $q$.  The name given to this rule, \emph{modus
@@ -252,7 +254,7 @@ $(a \Disj q) \Conj \Not{a} \Imp q$:
 QED \\
 \end{tabular}
 
-\subsubsection{Axioms, Goals and Proof}
+\subsection{Axioms, Goals and Proof}
 
 For any given problem, there is going to be a minimal set of
 propositions that are simply taken as read -- the ground rules of the
@@ -266,7 +268,7 @@ A \emph{proof} of a goal is a sequence of steps terminating in inference
 of the goal, where each step infers new statements by appling a rule of
 logic to one or more axioms or previously inferred statements.
 
-\subsubsection{An Example}
+\subsection{An Example}
 
 \XXX{Check this isn't copyright!  It's been doing the Cambridge Tripos
 rounds for years, at least.}
@@ -320,7 +322,7 @@ A more formal presentation of this proof looks like this:\\
 QED \\
 \end{tabular}
 
-\subsection{Predicate Logic}
+\section{Predicate Logic}
 
 The expressive power of propositional logic is rather limited.  The key
 problem is that it makes no provision for making general statements such
@@ -332,7 +334,7 @@ forth.  The relationship between odd numbers and this property of their
 squares is not explicitly represented, other than as a correspondence
 amongst the set of axioms.
 
-\subsubsection{Predicates and Logical Variables}
+\subsection{Predicates and Logical Variables}
 
 Predicate logic (otherwise known as the \emph{predicate calculus} or
 \emph{first order logic} or \emph{first order predicate calculus})
@@ -359,7 +361,7 @@ All of the logical rules that apply to the propositional calculus also
 apply to the predicate calculus, along with a few extra rules to deal
 with variables.
 
-\subsubsection{Terms and Types}
+\subsection{Terms and Types}
 
 The values that logical variables range over are referred to as
 \emph{terms}.  Terms can be thought of as abstract names or labels or
@@ -400,7 +402,7 @@ range over logical formulae as well then you need the second order
 predicate calculus.  However, we do not need such complex machinery for
 our purposes.)
 
-\subsubsection{Unification}
+\subsection{Unification}
 
 Formulae of the form $t = u$ are referred to as \emph{unifications}.
 There is nothing special about the equality symbol -- it is just another
@@ -414,7 +416,7 @@ f(t_1, t_2, \ldots, t_n) = f(t_1', t_2', \ldots, t_n')
 \end{align*}
 \XXX{Need I say more?}
 
-\subsubsection{Quantification}
+\subsection{Quantification}
 
 Quantifers are used to introduce logic variables to a formula and they
 come in two flavours.
@@ -480,7 +482,7 @@ identities:
 Since the names of quantified variables do not matter, we can rename
 them at will.
 
-\subsubsection{Using Quantifiers}
+\subsection{Using Quantifiers}
 
 From $\All{X}{p}$ we can deduce $p[t/X]$ for any term $t$.  The
 expression $p[t/X]$ denotes the application of the \emph{substitution}
@@ -538,7 +540,7 @@ The constraint is required because we do not want to inadvertently
 the quantifier.  We can always move quantifiers out to the outermost
 level by renaming variables as necessary.
 
-\subsubsection{An Example: Schubert's Steamroller}
+\subsection{An Example: Schubert's Steamroller}
 
 This rather knotty problem was devised by Mark E. Schubert \XXX{}.
 
@@ -699,14 +701,14 @@ some sort of feel for first order logic.
 
 The point of this exercise is XXX HERE
 
-\subsubsection{Aside on higher order programming?}
+\subsection{Aside on higher order programming?}
 
 \XXX{We can treat closures not as higher order terms, but rather as
 structures containing (amongst other things) \emph{names} of predicates
 which can be interpreted by some special machinery that handles higher
 order application.}
 
-\subsection{Using Predicate Logic for Computation}
+\section{Using Predicate Logic for Computation}
 
 Horn clauses.
 

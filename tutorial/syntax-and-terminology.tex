@@ -1,6 +1,104 @@
-\section{Basic Syntax and Terminology}
+% vim: ft=tex ff=unix ts=4 sw=4 et wm=8 tw=0
 
-Predicates.
+\chapter{Basic Syntax and Terminology}
+
+
+
+\section{Introduction}
+
+Describing Mercury takes a number of terms that are well understood
+in the declarative programming community, but are rarely, if ever, used
+in the more common imperative schools.  This chapter introduces the bulk
+of the terms the reader may not be familiar with, but which occurr
+frequently throughout the rest of this book.  The intention is to
+provide a ``gloss'' to aid comprehension of what follows; more full
+explanations will be given as the terms are used formally for the first
+time.
+
+
+
+\section{Declarative and Imperative}
+
+Languages like C, C++, Java and so forth are all \emph{imperative}
+programming languages.
+
+Imperative programming considers a program to be a \emph{sequence of
+instructions}.  Run-time control-flow decisions are made on the basis of
+the contents of the \emph{mutable variables} that represent the
+\emph{state} of the program.  Instructions fall into three categories:
+those that update mutable variables with the result of some computation;
+those that change the control flow of the program depending upon the
+state of those variables; and those that perform input/output (IO)
+operations.
+
+Languages like Mercury and Haskell are \emph{declarative} programming
+languages.
+
+Declarative programming considers a program to be a \emph{computable
+relationship} between its inputs and outputs.  There are no mutable
+variables in declarative programming; the term \emph{variable} instead
+refers to the name given to the result of some computation.  Some
+relationships are simple enough to be computed directly, such as
+@X = Y + Z@ where any two of the values are known.  Other relationships
+have to be expressed by the programmer in terms of combinations of these
+very basic relationships.
+
+The ``moral'' motivation behind declarative programming is that the
+resulting program is merely a refinement of the statement of the
+problem, whereas it is actually very difficult to say exactly what
+relationship a program is computing, making it harder to decide whether
+the program contains a bug or not.
+
+The practical motivation is that you generally get more bang for your
+buck in terms of progress made per line of code written.  Moreover,
+because declarative programs are essentially just statements of
+mathematics, compilers can and do perform extensive checking and
+verification tests on the code.  A large class of bugs that are part of
+the day-to-day life of the imperative programmer simply cannot be
+expressed in a declarative language; those that can be are usually
+caught by the compiler, well before one needs to fire up the debugger.
+
+\XXX{I think I'm selling this too hard.  The speech should probably go
+in the introduction.}
+
+
+
+\section{Predicates, Modes and Determinism}
+
+In logic, a \emph{predicate} is simply the name given to a relationship
+between some number of variables.  For example, @father(C, F)@ might
+represent the relationship of @F@ being the father of @C@.  @C@ and @F@
+are said to be the \emph{parameters} of @father@.
+
+Given any bindings for @F@ and @C@ we can ask whether @father(C, F)@ is
+true or not.  Moreover, we may be able to give the bindings for only a
+subset of the variables.  Say we fix @F@, we can ask what the possible
+bindings for @C@ are that would make @father(C, F)@ true.  Conversely,
+we might ask what the possible values of @F@ are for a given @C@.
+Indeed, we may go one step further and specify \emph{neither} @F@ nor
+@C@ and simply ask for all possible pairwise bindings with the
+appropriate property.
+
+We use the term \emph{determinism} to refer to the number of possible
+solutions a predicate can have in a particular \emph{mode} (i.e. given
+fixed values for certain the variables.)  A predicate is
+\emph{deterministic} if there is exactly one solution (set of bindings)
+for the remaining variables, otherwise it is \emph{nondeterministic}.
+(We will see that in Mercury it is useful to further subdivide the
+determinism categories.)
+
+For example, @father@ is deterministic if we fix only @C@ since every child
+has exactly one father.  However, if we fix only @F@ we may get any
+number of possible bindings for @C@ depending upon how many children @F@
+has had, hence this mode of @father@ is nondeterministic.
+
+
+
+\section{Functions and Expressions}
+
+
+
+
 
 Procedures.
 

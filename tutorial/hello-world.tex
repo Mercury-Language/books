@@ -1,6 +1,10 @@
+% vim: ft=tex ff=unix ts=4 sw=4 et wm=8 tw=0
+
 \chapter{Hello, World!}
 
 Some example programs.
+
+
 
 \section{Hello, World!}
 
@@ -66,3 +70,226 @@ main(!IO) :-
     io__print("Hello, world!\n", !IO).
 \end{verbatim}
 
+
+
+\section{Rot13}
+
+The simplest form of Caesar cypher is @rot13@, whereby each letter in a
+message is replaced with one thirteen letters ahead in the alphabet
+(wrapping around from @z@ to @a@.) That is, @a@ becomes @n@, @b@ becomes
+@o@, \ldots, @z@ becomes @m@.  There being twenty six letters in the
+Roman alphabet, a second application of @rot13@ to the cyphertext will
+reveal the original plaintext message.
+
+It is the custom in some public fora, such as USENET, to use @rot13@ to
+encode such things as plot spoilers for films and books or jokes that
+may offend, so that those not wishing to see the material in question
+will not inadvertently catch a glimpse.
+
+The Mercury code for the @rot13@ program looks like this:
+\begin{verbatim}
+:- module rot13.
+
+:- interface.
+:- import_module io.
+
+:- pred main(io, io).
+:- mode main(di, uo) is det.
+
+:- implementation.
+:- import_module int, exception.
+
+main(!IO) :-
+    io__read_byte(Result, !IO),
+    (
+        Result = ok(X),
+        io__write_byte(
+            ( if      0'a =< X, X =< 0'z
+              then    (X + 13 - 0'a) `mod` 26 + 0'a
+              else if 0'A =< X, X =< 0'Z
+              then    (X + 13 - 0'A) `mod` 26 + 0'A
+              else    X
+            ),
+            !IO
+        ),
+        main(!IO)
+    ;
+        Result = eof
+    ;
+        Result = error(_),
+        throw(Result)
+    ).
+\end{verbatim}
+\begin{itemize}
+\item The IO read operation returns a success code in @Result@.
+\item We \emph{must} handle the return code!
+\item We \emph{switch} on the the result to decide what to do.
+\item Mercury has conditional expressions.
+\item The ASCII code of the character @a@ is written @0'a@.
+\item Notice the use of @`@backquotes@`@ to treat a name as an infix
+binary operator (@mod@ in this case.)
+\end{itemize}
+
+
+
+\section{A Spelling Checker}
+
+\begin{verbatim}
+:- module spell.
+
+:- interface.
+:- import_module io.
+
+:- pred main(io, io).
+:- mode main(di, uo) is det.
+
+:- implementation.
+:- import_module list, char, map, string, std_util, exception.
+
+:- type dictionary == map(string, unit).
+
+:- func dictionary = string.
+
+    % This may be something else, like "/usr/dict/words".
+    %
+dictionary = "/usr/share/dict/words".
+
+main(!IO) :-
+    build_dictionary(Dict, !IO),
+    check_spellings(Dict, !IO).
+
+:- pred build_dictionary(dictionary, io, io).
+:- mode build_dictionary(out,        di, uo) is det.
+
+build_dictionary(Dict, !IO) :-
+    io__open_input(dictionary, OpenResult, !IO),
+    (   OpenResult = ok(InputStream)
+    ;   OpenResult = error(_),          throw(OpenResult)
+    ),
+    io__read_file_as_string(InputStream, ReadResult, !IO),
+    (   ReadResult = ok(String)
+    ;   ReadResult = error(_, _),       throw(ReadResult)
+    ),
+    io__close_input(InputStream, !IO),
+    Dict =
+        foldl(
+            func(Word, Dict0) = Dict0 ^ elem(to_lower(Word)) := unit,
+            split_into_words(String),
+            map__init
+        ).
+
+:- func split_into_words(string) = list(string).
+
+split_into_words(String) = words(isnt(char__is_alnum), String).
+
+:- pred check_spellings(dictionary, io, io).
+:- mode check_spellings(in,         di, uo) is det.
+
+check_spellings(Dict, !IO) :-
+    io__read_line_as_string(ReadResult, !IO),
+    (
+        ReadResult = ok(String),
+        list__foldl(check_spelling(Dict), split_into_words(String), !IO),
+        check_spellings(Dict, !IO)
+    ;
+        ReadResult = eof
+    ;
+        ReadResult = error(_),
+        throw(ReadResult)
+    ).
+
+:- pred check_spelling(dictionary, string, io, io).
+:- mode check_spelling(in,         in,     di, uo) is det.
+
+check_spelling(Dict, Word, !IO) :-
+    ( if   Dict `contains` to_lower(Word)
+      then true
+      else io__format("%s\n", [s(Word)], !IO)
+    ).
+\end{verbatim}
+\begin{itemize}
+\item @build_dictionary/3@ returns a @dictionary@ in @Dict@.
+\item @check_spellings/3@ \emph{uses} @Dict@.
+\item We use higher order functions and predicates (@foldl@) where an
+imperative programmer would use a loop.
+\item We package up complex operations as \emph{closures} via partial
+application (@check_spelling(Dict)@).
+\item We can use lambdas or closures as the body of the loop.  It's all
+the same thing.
+\item @foldl@ is overloaded in that it comes in both function and
+predicate versions and the predicate version has multiple modes (it can
+handle unique IO states, for instance.)
+\item A @map@ is an ADT that supports dictionary-like operations (you
+use one to set up a mapping between keys and values -- an associative
+array, if you like.)  @map@s support O(log n) lookup and insert times.
+\item In this case, we only need to check that the @dictionary@ contains
+a particular word.  In this case we defined a @dictionary@ to be a map
+from @string@s to @unit@s, where @unit@ is the type that carries no
+information -- it has but one data constructor, also called @unit@.
+\end{itemize}
+
+
+
+\section{Finding a Path Through a Maze}
+
+\begin{verbatim}
+:- module route.
+:- interface.
+:- import_module int, list.
+
+:- type vertex(T) == T.
+:- type exits(T)  == list(vertex(T)).
+:- type maze(T)   == list({vertex(T), exits(T)}).
+:- type path(T)   == list(vertex(T)).
+
+:- func sample_maze = maze(char).
+
+:- pred find_path(maze(T), vertex(T), vertex(T), path(T)).
+:- mode find_path(in,      in,        in,        out    ) is nondet.
+
+:- implementation.
+
+    %   a --> b     c
+    %         |     ^
+    %         v     |
+    %   d <-- e <-- f
+    %   |     ^     ^
+    %   v     |     |
+    %   g --> h --> i
+    %
+sample_maze =
+    [   {a, [b]},       {b, [e]},       {c, []},
+        {d, [g]},       {e, [d]},       {f, [c, e]},
+        {g, [h]},       {h, [e, i]},    {i, [f]}
+    ].
+
+find_path(Maze, From, To, Path) :-
+    find_reverse_path(Maze, To, [From], RPath),
+    Path = reverse(RPath).
+
+:- pred find_reverse_path(maze(T), vertex(T), path(T), path(T)).
+:- mode find_reverse_path(in,      in,        in,      out    ) is nondet.
+
+find_reverse_path(Maze, To, RPath0 @ [Vertex | _], RPath) :-
+    ( if Vertex = To then
+        RPath = RPath0
+      else
+        list__member(Maze, {To, Exits}),
+        list__member(Exit, Exits),
+        not list__member(Exits, Path0),
+        find_reverse_path(Maze, To, [Exit | Path0], Path)
+    ).
+\end{verbatim}
+\begin{itemize}
+\item Mercury has parametrically polymorphic types.
+\item Mercury allows \emph{unification expressions} like
+\verb!RPath0 \@ [Vertex | _]!.
+\item Mercury supports non-determinism (where programs -- or more
+correctly, \emph{goals} -- may \emph{fail}
+or have \emph{more than one solution}).  Failure leads to
+\emph{backtracking} to look for alternative ways to a solution.
+\emph Mercury supports multiple modes for a predicate (e.g.
+@list__member@ is being used in both the @(out, in) is nondet@ and
+@(in, in) is semidet@ modes.
+\emph Mercury goals may be negated.
+\end{itemize}

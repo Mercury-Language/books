@@ -1,4 +1,6 @@
-\section{Functions}
+% vim: ft=tex ff=unix ts=4 sw=4 et wm=8 tw=0
+
+\chapter{Functions}
 
 Functions are @det@ (or @semidet@) relations with (at least) one output.
 
@@ -13,7 +15,7 @@ subexpression in turn.  That is, one can use an expression as in
 \begin{verbatim}
     X = (B + sqrt(B*B - 4*A*C)) / (2*A)
 \end{verbatim}
-rather than the somewhat verbose
+rather than the verbose and somewhat opaque
 \begin{verbatim}
     square(B, BSquared),
     multiply(4, A, FourA),
@@ -25,7 +27,7 @@ rather than the somewhat verbose
     divide(Numerator, Denominator, X)
 \end{verbatim}
 
-\subsection{Definition}
+\section{Definition}
 
 This example illustrates how functions are defined:
 \begin{verbatim}
@@ -92,15 +94,15 @@ determinisms?  Remember to point out (somewhere) that
 functions may also have multiple procedures.  See the ref.
 manual section on Determinism.}
 
-\subsection{Pattern Matching}
+\section{Pattern Matching}
 
 \XXX{Dealt with above.}
 
-\subsection{Recursion}
+\section{Recursion}
 
 \XXX{Dealt with above.}
 
-\subsection{Conditional Expressions}
+\section{Conditional Expressions}
 
 Conditional (if-then-else) expressions look like this:
 \begin{verbatim}
@@ -115,20 +117,20 @@ Note that as with if-then-else goals, the else clause is \emph{not}
 optional in a conditional expression (it would make no sense
 not to have one.)
 
-\subsection{* Partial (Semi-Deterministic) Functions}
+\section{* Partial (Semi-Deterministic) Functions}
 
 \XXX{Leave for later.}
 
-\subsection{Overview of Semidet Predicates}
+\section{Overview of Semidet Predicates}
 
 \XXX{Deal with this in a later section.  It's sort-of advanced
 stuff.}
 
-\subsection{Polymorphism}
+\section{Polymorphism}
 
 \XXX{Dealt with in section on types.}
 
-\subsection{Infix Notation}
+\section{Infix Notation}
 
 Mercury syntax supports a number of prefix, infix and postfix
 operators, including all the usual arithmetic operators.  This

@@ -1,9 +1,11 @@
-\section{Types}
+% vim: ft=tex ff=unix ts=4 sw=4 et wm=8 tw=0
+
+\chapter{Types}
 
 Mercury is strongly typed.  Every value has a type and every
 predicate associates a particular type with each argument.
 
-\subsection{Primitive Types}
+\section{Primitive Types}
 
 The primitive Mercury types are @int@, @float@, @char@ and @string@ --
 examples are @123@, @3.141@, @('x')@, and @"foo"@,
@@ -15,7 +17,7 @@ While primitive types are recognised by the compiler, no
 operations are.  Operations on the primitive types are defined in
 modules of the same name in the Mercury standard library.
 
-\subsection{Algebraic Types}
+\section{Algebraic Types}
 
 You can define new types in Mercury:
 \begin{verbatim}
@@ -82,7 +84,7 @@ name for both type and data constructor.)
 \XXX{Tyson suggests that diagrams would make this section
 easier to understand.}
 
-\subsection{Pattern Matching}
+\section{Pattern Matching}
 
 Pattern matching is the primary means of identifying which
 constructor is used for a particular type value.  The
@@ -172,7 +174,7 @@ This is also fine, although where possible it is often a
 better idea to use pattern matching or switches, since then
 the compiler generally has better scope for optimisation.
 
-\subsection{Algebraic Types with Fields}
+\section{Algebraic Types with Fields}
 Just as with many languages, it is possible to give names to
 the fields in data constructors, which can be used to access
 just those fields.\footnote{Not all fields have to be named, although one has
@@ -271,7 +273,7 @@ than storing it in the data constructor, but make it look like
 a field.)  We will go into this in more detail later on \XXX{}.\footnote{\emph{Syntactic sugar}: syntax that makes life easier,
 without otherwise adding anything new to the language.}
 
-\subsection{Equivalence Types}
+\section{Equivalence Types}
 
 For documentation and brevity it is also useful to be able to
 declare type synonyms:
@@ -287,7 +289,7 @@ Equivalence types can also take parameters:
             :- type ints_tree    == list_tree(int).
 \end{verbatim}
 
-\subsection{Abstract Types}
+\section{Abstract Types}
 
 Often one wants to export a type from a module, but hide its
 definition so that users of the module can only manipulate
@@ -357,11 +359,11 @@ union(A, B) = A ++ B.
 ...
 \end{verbatim}
 
-\subsection{* Types with Programmer-Defined Equality}
+\section{* Types with Programmer-Defined Equality}
 
 \XXX{Defer explanation until later.}
 
-\subsection{Explicit Type Constraints}
+\section{Explicit Type Constraints}
 
 Occasionally the compiler needs the programmer to specify what the type
 of a particular variable is in order to resolve an ambiguous situation.
@@ -423,5 +425,7 @@ assistance.
 %\XXX{I'd like to have @with_type@ replaced with @:@ in the language
 %before this goes to print...}
 
+\XXX{Need a section on type representation.}
 
+\XXX{Need to talk about no-tag types.}
 

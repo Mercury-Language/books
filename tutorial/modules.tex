@@ -1,4 +1,6 @@
-\section{Modules}
+% vim: ft=tex ff=unix ts=4 sw=4 et wm=8 tw=0
+
+\chapter{Modules}
 
 The Mercury unit of compilation is the module.  Modules
 are compiled separately and the resulting object files linked
@@ -15,7 +17,7 @@ types or type class instances exported by the module (we will come
 across type classes later on \XXX{}.)  Declarations and definitions in
 the implementation section are not externally visible.
 
-\subsection{Names and Namespaces}
+\section{Names and Namespaces}
 
 It would be unreasonable to insist that no two preds (or types
 or \ldots) share the same name in any Mercury program.  To this
@@ -27,14 +29,14 @@ In this section we will use the term \emph{name} to refer to the
 name of any type, func, pred, inst, mode, type class and so
 forth that one might find in a Mercury program.
 
-\subsection{Visibility}
+\section{Visibility}
 
 In order to use a name, it must be visible at each point in
 a module where it appears.
 
 \XXX{This stuff needs illustrating with examples.}
 
-\subsubsection{In the Interface Section}
+\subsection{In the Interface Section}
 
 A name is visible in an interface section if it is
 \begin{itemize}
@@ -48,7 +50,7 @@ A name is visible in an interface section if it is
 Any name defined or declared in the interface section is
 said to be \emph{public} or \emph{exported} by that module.
 
-\subsubsection{In the Implementation Section}
+\subsection{In the Implementation Section}
 
 A name is visible in an implementation section if it is
 \begin{itemize}
@@ -62,7 +64,7 @@ Any name declared or defined in the implementation section
 that is not exported by the module is said to be \emph{private}
 or \emph{local} to the module.
 
-\subsection{Qualification}
+\section{Qualification}
 
 Name qualification allows us to avoid abiguity where one
 module imports two other modules which export different things
@@ -97,14 +99,14 @@ predicates, but not types, constructors and functions.
 which does much the same thing, except that names imported via
 @use_module@ \emph{must} be fully qualified.)
 
-\subsection{Submodules and Hierarchical Namespaces}
+\section{Submodules and Hierarchical Namespaces}
 
 The module namespace may be structured rather than flat.  Modules can
 also have submodules to form a tree-like namespace.
 
 Submodules come in two flavours, nested and separate.
 
-\subsubsection{Nested Submodules}
+\subsection{Nested Submodules}
 
 Nested submodules appear in the same source file as the parent module.
 
@@ -191,7 +193,7 @@ is referring to the function defined in @scalar_vector3@ and that the
 multiplication @R * 3.0@ is referring to the function defined in the
 @vector3_scalar@.
 
-\subsubsection{Separate Submodules}
+\subsection{Separate Submodules}
 
 Separate submodules are defined in separate files and must be explicitly
 listed in the parent module in @include_module@ declarations, but are 
@@ -262,7 +264,7 @@ same as if they had been written as nested submodules.
 \XXX{Is this the right place to mention the file name mapping option to
 @mmake@?}
 
-\subsubsection{Visibility and Submodules}
+\subsection{Visibility and Submodules}
 
 \XXX{Need to check this one out carefully.}
 

@@ -1,10 +1,12 @@
-\section{The Mode and Determinism Systems}
+% vim: ft=tex ff=unix ts=4 sw=4 et wm=8 tw=0
+
+\chapter{The Mode and Determinism Systems}
 
 One of the things that distinguishes Mercury from other languages
 is its strong mode system.  In casual use, the term \emph{mode}
 encompasses both direction of data flow and determinism.
 
-\subsection{Direction of Data Flow}
+\section{Direction of Data Flow}
 
 In logic, there is no difference between the goal @(A, B)@ and
 the goal @(B, A)@.  However, the compiler must convert the
@@ -26,7 +28,7 @@ procedure expecting an input value.
 Before we can discuss modes properly, however, we must first
 examine the notion of \emph{insts}.
 
-\subsubsection{Insts}
+\subsection{Insts}
 
 An \emph{inst} describes the instantiation state of a variable
 at any point in a Mercury program.  Broadly speaking, a
@@ -61,7 +63,7 @@ On top of the built-in insts (@free@, @ground@, @unique@, @dead@
 and the higher order insts), it is possible to define your
 own insts.  \XXX{Finish this off...}
 
-\subsubsection{Modes}
+\subsection{Modes}
 
 A \emph{mode} describes how a variable's inst changes over the
 course of a call.  In the following, I is an inst
@@ -121,7 +123,7 @@ backtracking), @uo@ produces a @unique@ (@ground@) value and @ui@
 preserves the @unique@ (@ground@) inst of the parameter across
 the call.
 
-\subsection{Determinism Categories}
+\section{Determinism Categories}
 
 Every Mercury procedure has a determinism.  The set of
 possible determinisms and their meanings is given in the
@@ -189,7 +191,7 @@ Determinisms are useful for three main reasons:
 \item the compiler needs to know the determinism of
 \end{enumerate}
 
-\subsubsection{Modes and Determinisms}
+\subsection{Modes and Determinisms}
 
 As one might expect, there is a tight relationship between
 modes and determinisms.  Essentially, for each possible
@@ -233,7 +235,7 @@ where
 
 [XXX Perhaps an example or two would be better?]
 
-\subsection{Committed Choice Non-Determinism}
+\section{Committed Choice Non-Determinism}
 
 Committed choice non-determinism is useful when you only
 require a single solution from a predicate that may have many.
@@ -260,7 +262,7 @@ such programs.
 \XXX{Examples}
 \XXX{Probably more to say.}
 
-\subsection{* Using Insts for Subtyping}
+\section{* Using Insts for Subtyping}
 
 Insts can be used to define limited subtypes, where a subtype
 takes on a subset of the possible values of the supertype.
@@ -303,17 +305,17 @@ and so forth\ldots
 
 \XXX{Should probably add some explanation for the above.}
 
-\subsection{Higher Order Insts and Modes}
+\section{Higher Order Insts and Modes}
 
 
 
-\subsection{The Standard Function Mode}
+\section{The Standard Function Mode}
 
 \XXX{NB I've already mentioned this one.}
 
 
 
-\subsection{Higher Order Mode Declarations}
+\section{Higher Order Mode Declarations}
 
 It is possible to specify the mode of a procedure using the
 following syntax:
@@ -335,13 +337,13 @@ The mode declaration is equivalent to writing
 Judicious use of @with_inst@ declarations can improve the
 readability and maintainability of a program.
 
-\subsection{* Uniqueness}
-\subsubsection{Determinism Restrictions}
+\section{* Uniqueness}
+\subsection{Determinism Restrictions}
 
 \XXX{I've said something of this earlier on just before
 Determinism.}
 
-\subsubsection{* Mostly Unique Insts}
+\subsection{* Mostly Unique Insts}
 
 \XXX{This is definitely more advanced stuff.}
 \begin{itemize}
@@ -354,7 +356,7 @@ Determinism.}
   two.
 \end{itemize}
 
-\subsection{Higher Order Insts and Modes}
+\section{Higher Order Insts and Modes}
 
 \begin{itemize}
 \item The type system says what values a variable may take on.
@@ -367,7 +369,7 @@ Determinism.}
   can be abbreviated to just @pred(...) is <detism>@
 \end{itemize}
 
-\subsubsection{The Standard Function Inst}
+\subsection{The Standard Function Inst}
 
 \XXX{Said something about this earlier.}
 
@@ -388,7 +390,7 @@ Determinism.}
   func type had the standard @func@ inst or not.
 \end{itemize}
 
-\subsection{Polymorphic Modes}
+\section{Polymorphic Modes}
 
 \XXX{Look this up.}
 

@@ -1,4 +1,6 @@
-\section{Higher Order Programming}
+% vim: ft=tex ff=unix ts=4 sw=4 et wm=8 tw=0
+
+\chapter{Higher Order Programming}
 
 Predicates and functions are first class values, just like values of
 type @int@, @string@, @list(char)@ and so forth.  They can be
@@ -17,7 +19,7 @@ Indeed, it is one of the key reasons why one should consider a typical
 declarative programming language in preference to the more common
 imperative languages.
 
-\subsection{Example: the Map Function}
+\section{Example: the Map Function}
 
 It is very common to want to apply a function to each member of a @list@
 to obtain the @list@ of transformed values.  That is, given a function
@@ -52,7 +54,7 @@ as required.  Since @map/2@ is polymorphic, it will work for any @F@
 with the appropriate signature -- there is no need to recode it for each
 particular function we wish to map over a @list@.
 
-\subsection{Example: the Foldr Function}
+\section{Example: the Foldr Function}
 
 \XXX{Should probably reference ``Why Functional Programming Matters''.}
 
@@ -157,7 +159,7 @@ functions such as @foldr@.  Such functions enable you to solve the
 general case once and then never have to expend mental or physical
 effort duplicating the scheme for each specific application.
 
-\subsection{Lambdas}
+\section{Lambdas}
 
 Sometimes it is a little painful to have to name each and every small
 auxiliary function when writing higher order code.  Lambdas are
@@ -189,7 +191,7 @@ Their use is justified in the above cases.
 
 \XXX{Don't forget the scope rules.}
 
-\subsection{Partial Application (Currying)}
+\section{Partial Application (Currying)}
 
 Looking at the definition of @map@ once more,
 \begin{verbatim}
@@ -233,10 +235,10 @@ pred expression may not be.}
 
 \XXX{What about restrictions on partial application?}
 
-\subsection{Modes}
-\subsection{* Monomorphism Restriction}
-\subsection{* Monomoding Restriction}
-\subsection{* Efficiency}
+\section{Modes}
+\section{* Monomorphism Restriction}
+\section{* Monomoding Restriction}
+\section{* Efficiency}
 
 
 
