@@ -1,11 +1,12 @@
 sketch.txt
 Ralph Becket <rafe@cs.mu.oz.au>
 Mon Oct 15 13:05:39 EST 2001
- vim: ft=txt ts=4 sw=4 et wm=10
+vim: ft=txt ts=4 sw=4 et wm=10
 
 [This is intended as a brief sketch of the book, to be used as a guide
 for writing the real text.]
 
+[XXX Check consistency of hyphenation for non- sub- etc.]
 
 
 HELLO, WORLD!
@@ -151,7 +152,7 @@ DECLARATIVE VS IMPERATIVE PROGRAMMING
         computation.
 
         The nearest Mercury equivalent to the function f() in the C
-        program above is 
+        program above is
 
         [begin code]
 
@@ -234,7 +235,7 @@ DECLARATIVE VS IMPERATIVE PROGRAMMING
         These labels also have to be applied to all predicates that
         use the impure code.  At some point we hope that a pure
         interface can be presented to the programmer, in which case
-        the program must include a /promise/ to the compiler that 
+        the program must include a /promise/ to the compiler that
         impurity annotations are not required for users of the
         top-level predicate with an impure definition.
 
@@ -700,6 +701,84 @@ TYPES
 
         [XXX Defer explanation until later.]
 
+    EXPLICIT TYPE CONSTRAINTS
+
+        Occasionally the compiler needs the programmer to specify
+        what the type of a particular variable is in order to resolve
+        an ambiguous situation.  For example, the predicate
+        io__print/3 endeavours to write out a human readable form of
+        its first argument, regardless of its type (this is made
+        possible through the magic of run-time type information, or
+        RTTI, which we will discuss later XXX.) Normally the compiler
+        has no problem working out the type of the argument, but
+        occasionally the programmer has to state the type explicitly.
+
+        [begin code]
+
+            main(!IO) :-
+                io__print(123, !IO),
+                io__print(length("abcd"), !IO).
+
+        [end code]
+
+        The compiler complains about the second call to io__print/3
+        with
+
+        [begin code]
+
+            foo.m:028: In clause for predicate `foo:main/2':
+            foo.m:028:   error: ambiguous overloading causes type ambiguity.
+            foo.m:028:   Possible type assignments include:
+            foo.m:028: V_6 :: (pred int) or int
+
+        [end code]
+
+        where V_6 is the type of the variable that the compiler has
+        introduced to unify with length("abcd") and then pass to
+        io__print/3.
+
+        The problem is that (for hysterical raisins XXX) the Mercury
+        standard library string module includes both a function of
+        arity one and a predicate of the same name of arity two:
+
+        [begin code]
+
+            :- func length(string) = int.
+
+            :- pred length(string, int).
+            :- mode length(in,     out) is det.
+
+        [end code]
+
+        Both perform the same task, but are called in different ways.
+        The problem that the expression length("abcd") presents the
+        compiler, in the absence of other typing information, is that
+        it could be either the result of function application, in
+        which case the type of V_6 would be int, or the closure formed
+        by applying the predicate length/2 to a single argument (this
+        is called /currying/ and happens all the time in higher order
+        programming; higher order programming is discussed later
+        XXX), in which case V_6 would have type `pred(int)'.
+
+        One way to solve the problem is to add an explicit type
+        constraint to the program:
+
+        [begin code]
+
+            main(!IO) :-
+                io__print(123, !IO),
+                io__print(length("abcd") `with_type` int, !IO).
+
+        [end code]
+
+        The compiler can now deduce that the programmer means
+        length("abcd") to be a function application rather than a
+        closure and can compile this program without further
+        assistance.
+
+        XXX I'd like to have `with_type` replaced with `:' in the
+        language before this goes to print...
+
 PREDICATES
 
     The key computational unit in Mercury is the predicate.  A
@@ -892,7 +971,8 @@ PREDICATES
             :- mode father(out, in) is nondet.   % Infer Child from Father.
             :- mode mother(out, in) is nondet.   % Infer Child from Mother.
             :- mode parent(out, in) is nondet.   % Infer Child from Parent.
-            :- mode ancestor(out, in) is nondet. % Infer Person from Ancestor.
+            :- mode ancestor(out, in) is nondet. % Infer Person from 
+Ancestor.
 
         [end code]
 
@@ -908,7 +988,8 @@ PREDICATES
 
         [begin code]
 
-            :- pred parents(person, person, person).    % Child, Mother, Father.
+            :- pred parents(person, person, person).    % Child, Mother, 
+Father.
             :- mode parents(in,     out,    out   ) is semidet.
             :- mode parents(out,    in,     in    ) is nondet.
 
@@ -1013,7 +1094,8 @@ PREDICATES
                 parent(Person, Parent),
                 ancestor(Parent, Ancestor).
 
-            :- pred parents(person, person, person).    % Child, Mother, Father.
+            :- pred parents(person, person, person).    % Child, Mother, 
+Father.
             :- mode parents(in,     out,    out   ) is semidet.
             :- mode parents(out,    in,     in    ) is nondet.
 
@@ -1157,7 +1239,7 @@ PREDICATES
 
         [end code]
 
-        So our program concludes that a solution to 
+        So our program concludes that a solution to
 
         [begin code]
 
@@ -2366,22 +2448,563 @@ INPUT AND OUTPUT
             extras distribution to help, including a lexer and parser
             generators.)
 
-            Here's a simple program that XXX Here !!!
+            Here's a simple program echoes the capitalised version of
+            letters in the input stream:
 
-MODES
+            [begin code]
+
+                :- module capitalise.
+                :- interface.
+                :- import_module io.
+
+                :- pred main(io, io).
+                :- mode main(di, uo) is det.
+
+                :- implementation.
+                :- import_module char, exception.
+
+                main(!IO) :-
+                    io__read_char(R, !IO),
+                    (
+                        R = ok(C),
+                        io__write_char(char__to_upper(C), !IO),
+                        main(!IO)
+                    ;
+                        R = eof
+                    ;
+                        R = error(E),
+                        exception__throw(E)
+                    ).
+
+            [end code]
+
+THE MODE AND DETERMINISM SYSTEMS
+
+    One of the things that distinguishes Mercury from other languages
+    is its strong mode system.  In casual use, the term "mode"
+    encompasses both direction of data flow and determinism.
+
     DIRECTION OF DATA FLOW
+
+        In logic, there is no difference between the goal (A, B) and
+        the goal (B, A).  However, the compiler must convert the
+        logical specification that is a Mercury program into an
+        imperative language that can be executed on a computer.  This
+        constraint means that it matters very much for efficiency and,
+        in some cases, correctness, if A "produces" values that
+        are "consumed" by B, or vice versa.
+
+        The mode system is what allows Mercury to compile logic
+        programs so efficiently.  The body of each procedure of a
+        predicate is reordered so that the producer of a value is
+        guaranteed to be executed before any consumers.
+
+        This scheme also allows the compiler to identify programming
+        errors such as using an unbound variable as an argument to a
+        procedure expecting an input value.
+
+        Before we can discuss modes properly, however, we must first
+        examine the notion of /insts/.
+
+        INSTS
+
+            An /inst/ is describes the instantiation state of a variable
+            at any point in a Mercury program.  Broadly speaking, a
+            variable's inst will be one of the following:
+            - free, where the variable has not been bound to anything yet;
+            - ground, where the variable has been bound to a concrete
+              value;
+            - bound, to a partially instantiated value (the top-level
+              data constructor of the value is fixed, but one or more
+              arguments may not be bound or may be partially
+              instantiated); or
+              [XXX should the tutorial mention partially instantiated
+              values at all?]
+            - dead, where the value bound to the variable will never be
+              examined again.
+
+            (A bound variable's inst also indicates whether the variable is
+            the unique reference to the value or if the value may be
+            shared - that is, if several variables may be bound to the same
+            thing.  There is a built-in inst, unique, which stands for a
+            unique, ground value.)
+
+            A variable's inst tells us which possible states it can be
+            in at some point in the program.
+
+            The need for higher order insts (which we will come to)
+            and the potential for manipulating partially instantiated
+            values means that insts cannot be restricted to the set
+            {free, ground, unique, dead}.  However, it is sufficient
+            to restrict ourselves to the {free, ground} subset of
+            possible insts in order to understand the basic ideas.
+
+            [XXX Need to include the syntax etc. for inst
+            declarations.  Also mention parametric insts.]
+
+            On top of the built-in insts (free, ground, unique, dead
+            and the higher order insts), it is possible to define your
+            own insts.  XXX Finish this off...
+
+        MODES
+
+            A /mode/ describes how a variable's inst changes over the
+            course of a call.  In the following, I is an inst
+            variable and (BeforeInst >> AfterInst) is a mode, stating
+            that before the call the argument must have inst
+            BeforeInst and afterwards it will have inst AfterInst.  As
+            with types, we can give names to modes and even give them
+            parameters.
+
+            AfterInst must be a refinement of BeforeInst in the sense
+            that instantiated (i.e. non-free) parts of the value in
+            question must remain the same, but free parts may become
+            bound.  [XXX This isn't strictly true - the laziness
+            module in extras uses a force implementation that changes
+            the constructor of the lazy value.  Of course, this means
+            lazy values require user-defined equality and so forth,
+            but...]
+
+            Let's take a look at some examples (these are taken from
+            the built-in Mercury definitions):
+
+            [begin code]
+
+                :- mode in(I)  == (I    >> I).
+                :- mode out(I) == (free >> I).
+
+                :- mode in     == in(ground).
+                :- mode out    == out(ground).
+
+                    % The inst parameter for uo/1 and ui/1 should be
+                    % unique.
+                    %
+                :- mode di(I)  == (I    >> dead).
+                :- mode uo(I)  == (free >> I   ).
+                :- mode ui(I)  == (I    >> I   ).
+
+                :- mode di     == di(unique).
+                :- mode uo     == uo(unique).
+                :- mode ui     == ui(unique).
+
+            [end code]
+
+            So, a procedure parameter with mode in(I) must have inst I
+            before the call and will also have inst I afterwards.  The
+            most common case of this is the plain in mode, in which
+            case the parameter must be ground beforehand and will be
+            ground afterwards.
+
+            A parameter with with mode out(I) must be free before the
+            call and will have inst I after the call.  The common case
+            is the plain out mode, in which case the parameter will
+            be ground after the call.
+
+            The three uniqueness modes, di, uo and ui (/destructive
+            input/, /unique output/ and /unique input/, respectively)
+            are similar, except that in the di case the parameter is
+            dead after the call (hence no further references may be
+            made to that variable in the program, even on
+            backtracking), uo produces a unique (ground) value and ui
+            preserves the unique (ground) inst of the parameter across
+            the call.
+
     DETERMINISM CATEGORIES
-    COMMITTED CHOICE
-    * SUBTYPING
-    * UNIQUE MODES
+
+        Every Mercury procedure has a determinism.  The set of
+        possible determinisms and their meanings is given in the
+        following table:
+
+            Determinism             Number of Solutions
+                                    Min             Max
+
+            failure                 0               0
+            semidet                 0               1
+            nondet                  0               at least one
+            det                     1               1
+            multi                   1               at least one
+            cc_nondet               0               1
+            cc_multi                1               1
+            erroneous               never returns
+
+        Each determinism says something about the number of possible
+        solutions a procedure can have on backtracking.  This table
+        includes a number of categories we haven't seen before.
+
+        failure applies to procedures such as false that have no
+        solutions.
+
+        semidet applies to procedures such as (>)/2 or map__search/3
+        that have at most one solution.
+
+        nondet applies to procedures such as member/2 that can have
+        any number of solutions, including zero.
+
+        det applies to procedures such as (+)/2 that have precisely
+        one solution.
+
+        multi applies to procedures such as nat/1 below that may have
+        several solutions, but which always have at least one:
+
+        [begin code]
+
+                % nat(N) enumerates the natural numbers in N.
+                %
+            :- pred nat(int).
+            :- mode nat(out) is multi.
+
+            nat(0).
+            nat(N + 1) :- nat(N).
+
+        [end code]
+
+        cc_nondet and cc_multi are /committed choice/ versions of
+        nondet and multi, respectively.  Committed choice
+        non-determinism is described in more detail in the next
+        section, suffice to say that these procedures will only
+        produce (at most) one solution.
+
+        Finally, erroneous applies to predicates that either never
+        return and/or always terminate by throwing an exception (we
+        will deal with exceptions in a later chapter XXX).
+
+        Determinisms are useful for three main reasons:
+        1. determinism declarations act both as useful documentation
+        to the reader of a program and as information for the
+        compiler;
+        2. the compiler will check that a procedure does indeed have
+        the declared determinism and can give helpful error messages
+        when this is not the case; and
+        3. the compiler needs to know the determinism of
+
+        MODES AND DETERMINISMS
+
+            As one might expect, there is a tight relationship between
+            modes and determinisms.  Essentially, for each possible
+            set of argument modes, a procedure should have at most one
+            possible determinism.
+
+            [XXX My brain is too foggy to say more about this right
+            now.]
+
+            [XXX Clean this up and check it (esp. the cc and e entries):
+            There is a partial order on determinisms (copy it from the
+            reference manual?).]
+
+            Disjunction:
+                min-solutions(P ; Q) = max(1, min-solns(P) (+) min-solns(Q))
+                max-solutions(P ; Q) =        max-solns(P) (+) max-solns(Q)
+
+            where
+
+                 (+) |   0   |   1   |  > 1
+                 ----+----------------------
+                  0  |   0   |   1   |  > 1
+                  1  |   1   |  > 1  |  > 1
+                 > 1 |  > 1  |  > 1  |  > 1
+
+            P  ;  Q |  f  |  s  |  n  |  d  |  m  | ccn | ccm |  e  |
+            --------+------------------------------------------------
+                f   |  f     s     n     d     m    ccn   ccm    e
+                s   |  s     s     n     m     m    ccn   ccm    e
+                n   |  n     n     n     n     m    ccn   ccm    e
+                d   |  d     m     m     d     m    ccm   ccm    d
+                m   |  m     m     m     m     m    ccm   ccm    m
+               ccn  | ccn   ccn   ccn   ccm   ccm   ccn   ccm   ccn
+               ccm  | ccm   ccm   ccm   ccm   ccm   ccm   ccm   ccm
+                e   |  e     e     e     d     m    ccn   ccm    e
+
+            Conjunction:
+                min-solutions(P, Q) = max(1, min-solns(P) (*) min-solns(Q))
+                max-solutions(P, Q) =        max-solns(P) (*) max-solns(Q)
+
+            where
+
+                 (*) |   0   |   1   |  > 1
+                 ----+----------------------
+                  0  |   0   |   0   |   0
+                  1  |   0   |   1   |  > 1
+                 > 1 |   0   |  > 1  |  > 1
+
+            P  ,  Q |  f  |  s  |  n  |  d  |  m  | ccn | ccm |  e  |
+            --------+------------------------------------------------
+                f   |  f     f     f     f     f     f     f     f
+                s   |  f     s     n     s     n    ccn   ccn    e
+                n   |  f     n     n     n     m    ccn   ccn    e
+                d   |  f     s     n     d     m    ccn   ccm    e
+                m   |  f     n     n     m     m    ccn   ccm    e
+               ccn  |  f    ccn   ccn   ccn   ccn   ccn   ccm    e
+               ccm  |  f    ccn   ccn   ccm   ccm   ccm   ccm    e
+                e   |  f     e     e     e     e     e     e     e
+
+            [XXX I think the tables are a mistake.  Perhaps an example
+            would be better.]
+
+    COMMITTED CHOICE NON-DETERMINISM
+
+        Committed choice non-determinism is useful when you only
+        require a single solution from a predicate that may have many.
+        For instance, a theorem prover only needs a single proof
+        (among all the possible proofs it could generate) for each
+        sub-goal. [XXX Too abstract an example?]
+
+        It is also useful for describing the semantics of exceptions
+        (we will discuss this in more detail later XXX, but briefly
+        since it is impossible in general to decide whether a
+        procedure will always throw an exception, an exception handler
+        is deemed to be a committed choice goal since the outcome -
+        normal return or exception - is unknown and it can only happen
+        once.)
+
+        [XXX Mention relationship to Hilbert's choice operator & how cc
+        declarations add axioms to the program concerning the single
+        solution.]
+
+        It is an error if a program attempts to backtrack over a
+        committed choice goal and the compiler will detect and reject
+        such programs.
+
+        [XXX Examples]
+        [XXX Probably more to say.]
+
+    * USING INSTS FOR SUBTYPING
+
+        Insts can be used to define limited subtypes, where a subtype
+        takes on a subset of the possible values of the supertype.
+
+        Examples:
+
+        [begin code]
+
+            :- inst sign  ---> -1 ; 0 ; 1.
+
+            :- func sign(int) = sign.
+            :- mode sign(in)  = out(sign) is det.
+
+            sign(X) = ( if      X < 0 then -1
+                        else if X = 0 then  0
+                        else                1 ).
+
+            :- inst digit ---> 0 ; 1 ; 2 ; 3 ; 4 ; 5 ; 6 ; 7 ; 8 ; 9.
+
+            :- func digit_to_char(int) = char.
+            :- mode digit_to_char(in(digit)) = out is det.
+
+            digit_to_char(0) = '0'.
+            digit_to_char(1) = '1'.
+            ...
+            digit_to_char(9) = '9'.
+
+            :- inst non_empty_list(I) ---> [I | list(I)].
+            :- inst non_empty_list    ==   non_empty_list(ground).
+
+            :- pred head(list(T),            T  ).
+            :- mode head(in,                 out) is semidet.
+            :- mode head(in(non_empty_list), out) is det.
+
+            head([X | _], X).
+
+            :- type abc ---> a ; b ; c.
+            :- inst ab  ---> a ; b.
+
+            ... and so forth.
+
+        [end code]
+
+        XXX Should probably add some explanation for the above.
+
+    HIGHER ORDER INSTS AND MODES
+
+
+
+    THE STANDARD FUNC MODE
+
+        XXX NB I've already mentioned this one.
+
+        
+
+    HIGHER ORDER MODE DECLARATIONS
+
+        It is possible to specify the mode of a procedure using the
+        following syntax:
+
+        [begin code]
+
+            :- inst test == ( pred(in) is semidet ).
+
+            :- pred even(int).
+            :- mode even `with_inst` test.
+
+            even(X) :- X `mod` 2 = 0.
+
+        [end code]
+
+        The mode declaration is equivalent to writing
+
+        [begin code]
+
+            :- mode even(in) is semidet.
+
+        [end code]
+
+        XXX This isn't very convincing since the longhand is more
+        concise.
+
+        Judicious use of with_inst declarations can improve the
+        readability and maintainability of a program.
+
+    * UNIQUENESS
         DETERMINISM RESTRICTIONS
-        MOSTLY UNIQUE MODES
-    HIGHER ORDER MODES
+
+            XXX I've said something of this earlier on just before
+            Determinism.
+
+        MOSTLY UNIQUE INSTS
+
+            XXX This is definitely more advanced stuff.
+            - Mostly unique <=> destructive update undone on
+              backtracking.
+            - Trailing and cost of trailing.
+            - Possibility of optimizing trailing via FFI and impurity.
+            - Distributed fat: implementation costs everywhere you can
+              backtrack and may slurp up a general purpose register or
+              two.
+
+    HIGHER ORDER INSTS AND MODES
+
+        - The type system says what values a variable may take on.
+        - The mode system dictates the direction the data flows.
+        - Higher order values are *procedures* (not predicates), hence
+          their modes also need to tell us the direction of data flow
+          (and determinism.)
+
+        XXX Fill in how HO insts are described and used.
+        - For the sake of brevity, the mode
+
+            in(pred(...) is <detism>)
+
+          can be abbreviated to just
+
+            pred(...) is <detism>
+
         THE STANDARD FUNC MODE
+
+            XXX Said something about this earlier.
+
+            - The set of insts func(in, in, ..., in) = out is det is
+              subsumed by the inst ground.  That is, you do not need to
+              use a complex inst to pass around and use values with this
+              sort of inst.
+            - (Any of the in arg modes may be replaced with an higher
+              order inst.)
+            - Since this is the most common type of higher order inst,
+              higher order programming is thereby simplified.
+            - There is a consequence: it is an error for a program to try
+              to convert an higher order value with a different sort of
+              inst to ground (e.g. by passing it to something expecting a
+              ground value).  This is necessary because otherwise there
+              would be no way of knowing whether a ground value with a
+              func type had the standard func inst or not.
+
         STANDARD FUNCS AND THE GROUND INST
 
+            XXX Said this above.
+
+    POLYMORPHIC MODES
+
+        XXX Look this up.
+
 MODULES
-    NAMESPACES
+
+    The Mercury unit of compilation is the module.  That is, modules
+    can be compiled separately and the resulting object files linked
+    together to make a program.
+
+    A module has two parts: the interface and the implementation.
+
+    The interface describes the types, insts, preds and funcs and so
+    forth that would be visible to another module that imported this
+    one.
+
+    The implementation supplies all the code that defines the
+    behaviour of the exported preds and funcs and defines any abstract
+    types or type class instances exported by the module (we will come
+    across type classes later on XXX.)
+
+    NAMES AND NAMESPACES
+
+        It would be unreasonable to insist that no two preds (or types
+        or ...) share the same name in any Mercury program.  To this
+        end, the Mercury module system makes use of two mechanisms:
+        restrictions on the visiblity of names and a module qualified
+        naming scheme.
+
+        In this section we will use the term /name/ to refer to the
+        name of any type, func, pred, inst, mode, type class and so
+        forth that one might find in a Mercury program.
+
+    VISIBILITY
+
+        In order to use a name, it must be visible at each point in
+        a module where it appears.
+
+        IN THE INTERFACE SECTION
+
+            A name is visible in an interface section if it is
+            - declared or defined there;
+            - is exported by a module which is imported in this
+              module's interface section;
+            - is declared or defined in a parent module (we will come
+              to submodules shortly XXX.)
+
+            Any name defined or declared in the interface section is
+            said to be /public/ or /exported/ by that module.
+
+        IN THE IMPLEMENTATION SECTION
+
+            A name is visible in an implementation section if it is
+            - declared or defined there;
+            - is exported by a module which is imported in this
+              module's interface or implementation section;
+            - is declared or defined in a parent module.
+
+            Any name declared or defined in the implementation section
+            that is not exported by the module is said to be /private/
+            or /local/ to the module.
+
+    QUALIFICATION
+
+        Name qualification allows us to avoid abiguity where one
+        module imports two other modules which export different things
+        under the same "base" name.
+
+        A fully qualified name takes the form <modulename>__<thingname>
+        (or, for submodules, <modulename>__<submodulename>__...__<thingname>)
+        where `__' is the module name separator symbol.
+
+        Using fully qualified names throughout a program quickly
+        becomes tedious and can distract from the readability of the
+        source code.  Mercury therefore allows one to omit qualifiers
+        (or partial prefixes in the case of submodules) where there is
+        no ambiguity.
+
+        The compiler will not confuse names of different sorts of
+        things - for instance, there is never ambiguity between a type
+        and an inst with the same name since the types and insts
+        always appear in separate contexts.
+
+        Potential ambiguity arises with funcs, preds and data
+        constructors since all three can appear in unifications.
+        Ambiguity can still be resolved by the compiler if the
+        possible ways of resolving the name in question each have
+        different types or arities (XXX Need to go over some examples
+        a la io__print.  And be more precise.)
+
+        A convention worth adopting is to explicitly qualify
+        predicates, but not types, constructors and functions.
+
+    HIERARCHY
+
     OVERLOADING AND NAME RESOLUTION
     SUBMODULES
         NESTED
@@ -2456,4 +3079,9 @@ COMPILING PROGRAMS
     PROFILING
     VARIOUS CONSIDERATIONS
     AN OVERVIEW OF CONTEMPORARY OPTIMIZER TECHNOLOGY
+
+* RTTI
+
+
+
 
