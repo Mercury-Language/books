@@ -1,0 +1,68 @@
+\chapter{Hello, World!}
+
+Some example programs.
+
+\section{Hello, World!}
+
+Because it's traditional...  Type the following into a file called
+@hello.m@:
+\begin{verbatim}
+:- module hello.
+
+:- interface.
+:- import_module io.
+
+:- pred main(io, io).
+:- mode main(di, uo) is det.
+
+:- implementation.
+:- import_module string.
+
+    % The show starts here.
+    %
+main(IO0, IO) :-
+    io__print("Hello, world!\n", IO0, IO).
+\end{verbatim}
+Compile and run the program with
+\begin{verbatim}
+$ mmc --make hello
+$ ./hello
+Hello, world!
+\end{verbatim}
+We'll start by just listing some of the salient points illustrated
+by the ``Hello, world!'' program.
+\begin{itemize}
+\item Modules live in files with the same name (with a @.m@ suffix).
+\item Every module starts with a declaration giving its name.
+\item Non-code directives and declarations are introduced with @:-@.
+\item Every declaration ends with a full stop.
+\item Modules are divided into interface and implementation sections.
+\item The interface section lists the things that are exported by the
+  module.  The top-level module in a Mercury program must export a
+  predicate @main/2@ (functors are conventionally referred to with
+  @name/arity@).
+\item The implementation section provides the code for the functions
+  and predicates exported in interface section.
+\item A module has to be imported before the things it defines can be
+  used.  Hence @io__print@ refers to the print predicate defined in
+  the io module.
+\item The basic computational device in Mercury is the predicate.
+  Predicates have type signatures and mode signatures -- the latter
+  specifying which arguments are inputs and which are outputs.
+\item Comments start with a @%@ sign and extend to the end of the line.
+\end{itemize}
+
+(IO is handled in Mercury by explicitly passing around the ``state
+of the world''" -- each IO operation takes the current state and
+produces a new one; the old state becoming unavailable for use
+thereafter.  This might sound odd, but is a necessary part of
+keeping Mercury a pure language.  \XXX{This will be explained in
+more detail in the section on declaration IO.})
+
+Special syntax exists to simplify passing state variable pairs
+around; for ``Hello, world!'' this becomes
+\begin{verbatim}
+main(!IO) :-
+    io__print("Hello, world!\n", !IO).
+\end{verbatim}
+
