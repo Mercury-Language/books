@@ -1,295 +1,1011 @@
-% vim: ft=tex ff=unix ts=4 sw=4 et wm=8 tw=0
+% vim: ft=tex ff=unix ts=4 sw=4 et tw=76
 
-\chapter{Hello, World!}
+\chapter{Mercury By Example}
 
-Some example programs.
+This chapter aims to convey through examples a basic feeling for how
+Mercury works.  Pedagogical efficiency at this stage requires some glossing
+over of finer details and a certain lattitude in precision; these
+deficiencies are remedied in later chapters.  The approach taken here is to
+start by presenting the ``obvious'' solution to each problem and then
+introduce features of Mercury that allow for more elegant or efficient
+programs (although we are not necessarily trying to write the most efficient
+programs possible at this point!)
+
+By convention, we use a @fixed width typeface@ for source code, code
+fragments, and output from programs.  Examples of program output are
+presented as if run from a standard Unix command line shell. \XXX{Is it okay
+to be Unix-centric in a book?}  A @>@ character in the first column
+indicates input from the user; anything else is output from the program.  It
+should be obvious from context which parts of the text are program output
+and which are Mercury code.
 
 
 
 \section{Hello, World!}
 
-Because it's traditional...  Type the following into a file called
-@hello.m@:
-\begin{verbatim}
-:- module hello.
+It is slightly unfortunate that the ``Hello, World!'' program introduces
+no less than three advanced Mercury concepts, but since tradition
+dictates that any tutorial text start with ``Hello, World!'' we'll just
+have to jump straight in with the knowledge that things will get easier
+thereafter.
 
+We define a \emph{predicate} called @main@ with two parameters which
+we've named @IO0@ and @IO@:
+\begin{myverbatim}
+main(IO0, IO) :-
+    io.write_string("Hello, World!\n", IO0, IO).
+\end{myverbatim}
+Throughout this book we will use the
+notation @name/arity@ to refer to symbols, hence we will write @main/2@
+when talking about this predicate.  Every Mercury program must include a
+@main/2@ predicate that is called when the program is run.
+
+Syntactically, \emph{variables} start with a capital letter, while
+everything else (things that start with lower case letters, numbers or
+non-alphabetic characters) is a \emph{functor}.
+
+A predicate is defined by one or more \emph{clauses} in which the
+\emph{head} is separated from the \emph{body} by a @:-@ symbol.  Here
+the body is simply a call to @io.write_string/3@ -- this is a
+\emph{module qualified name} and refers to @write_string/3@ as defined
+in the @io@ module.  Module qualification of names is only
+\emph{necessary} when there may be ambiguity, although it is often a
+good idea to do so anyway for software engineering reasons.
+
+Back to the source code: strings in Mercury are delimited by @"@double
+quote marks@"@ and appear much the same as they do in C or Java
+programs.  Character escapes are introduced with a preceding backslash
+@\@ and have the usual meanings: @\n@, for example, denotes the newline
+character.
+
+All predicates that perform input/output (IO) operations have to include
+two @io.state@ parameters denoting respectively the ``state of the
+world'' before and after the IO operation.  In order to ensure that IO
+operations occur in a definite order, @io.state@s are \emph{unique}:
+they cannot be copied and after being used once an @io.state@ becomes
+``dead'' and is no longer available.
+
+In Mercury, every predicate must be accompanied by a @pred@ declaration,
+giving the types of its parameters, and @mode@ declarations, indicating
+which parameters are inputs and which are outputs.  We'll return to
+these topics in later chapters, but for now we'll simply write down the
+declarations for @main/2@:
+\begin{myverbatim}
+:- pred main(io.state, io.state).
+:- mode main(di,       uo      ) is det.
+\end{myverbatim}
+The first declaration says that @main@ is a predicate with two
+arguments, both of which have type @io.state@.  The second declaration
+says that a call to @main/2@ requires that the first argument be a
+``destructive input'' (@di@) which is unique on input and is dead
+after the call, and that the second argument is a ``unique
+output'' (\ie after the call it will be instantiated with a unique value.)
+The @is det@ part of the @mode@ declaration states that @main/2@ is
+\emph{deterministic} -- that is, it will always succeed and will have
+only one possible \emph{solution}.  (We will see later that some
+predicates can fail and some can have multiple solutions.)
+
+Note that declarations always start with a @:-@ and that declarations
+and clauses always finish with a single full stop.
+
+Since we refer to names defined in the @io@ module (which is part of the
+Mercury standard library), we must also have an @import_module@
+declaration in our program:
+\begin{myverbatim}
+:- import_module io.
+\end{myverbatim}
+
+All that is left to do is to wrap up our clauses and declarations in a
+\emph{module}, which is the unit of compilation for Mercury programs.  A
+Mercury module has two parts: the \emph{interface} section containing the
+declarations for the things that are \emph{exported} by the module; and the
+\emph{implementation} section which contains predicate definitions and so
+forth, the details of which are hidden from other users of the module.
+
+We will call our module @hello@; the Mercury tools will expect us to put
+the source code in a file called @hello.m@:
+\begin{myverbatim}
+:- module hello.
 :- interface.
 :- import_module io.
 
-:- pred main(io, io).
-:- mode main(di, uo) is det.
+:- pred main(io.state, io.state).
+:- mode main(di,       uo      ) is det.
 
 :- implementation.
-:- import_module string.
 
-    % The show starts here.
-    %
 main(IO0, IO) :-
-    io__print("Hello, world!\n", IO0, IO).
-\end{verbatim}
-Compile and run the program with
-\begin{verbatim}
-$ mmc --make hello
-$ ./hello
-Hello, world!
-\end{verbatim}
-We'll start by just listing some of the salient points illustrated
-by the ``Hello, world!'' program.
-\begin{itemize}
-\item Modules live in files with the same name (with a @.m@ suffix).
-\item Every module starts with a declaration giving its name.
-\item Non-code directives and declarations are introduced with @:-@.
-\item Every declaration ends with a full stop.
-\item Modules are divided into interface and implementation sections.
-\item The interface section lists the things that are exported by the
-  module.  The top-level module in a Mercury program must export a
-  predicate @main/2@ (functors are conventionally referred to with
-  @name/arity@).
-\item The implementation section provides the code for the functions
-  and predicates exported in interface section.
-\item A module has to be imported before the things it defines can be
-  used.  Hence @io__print@ refers to the print predicate defined in
-  the io module.
-\item The basic computational device in Mercury is the predicate.
-  Predicates have type signatures and mode signatures -- the latter
-  specifying which arguments are inputs and which are outputs.
-\item Comments start with a @%@ sign and extend to the end of the line.
-\end{itemize}
+    io.write_string("Hello, World!\n", IO0, IO).
+\end{myverbatim}
+A Mercury module starts with a @module@ declaration giving its name,
+followed immediately by an @interface@ declaration.  What follows
+thereafter, up to the @implementation@ declaration, is deemed to be
+\emph{exported} by the module.  We put the declarations (but not the
+clauses) for @main/2@ here.  Since the declarations for @main/2@ use
+names exported by the @io@ module, we have to include the appropriate
+@import_module@ declaration and convention dictates we place this at the
+top of the interface section.  After the @implementation@ declaration we
+write our predicate definitions -- these are \emph{private} and anything
+defined here, but not declared in the interface section, will not be
+visible to other users of the module.
 
-(IO is handled in Mercury by explicitly passing around the ``state
-of the world''" -- each IO operation takes the current state and
-produces a new one; the old state becoming unavailable for use
-thereafter.  This might sound odd, but is a necessary part of
-keeping Mercury a pure language.  \XXX{This will be explained in
-more detail in the section on declaration IO.})
+We build and run the @hello@ program like this:
+\begin{myverbatim}
+> mmc --make hello
+Making hello.int3
+Making hello.c
+Making hello.o
+Making hello
+> ./hello
+Hello, World!
+\end{myverbatim}
+Et voila!
 
-Special syntax exists to simplify passing state variable pairs
-around; for ``Hello, world!'' this becomes
-\begin{verbatim}
+\subsection{Goals and Conjunctions}
+
+To illustrate a point, let's define @main/2@ in a slightly more
+long-winded way:
+\begin{myverbatim}
+main(IO0, IO) :-
+    io.write_string("Hello, ", IO0, IO1),
+    io.write_string("World!",  IO1, IO2),
+    io.nl(IO2, IO).
+\end{myverbatim}
+(The predicate @io.nl/2@ simply writes out a newline character.)
+
+The body of a clause is also what's known as a \emph{goal}.  An \emph{atomic
+goal} is either a call, such as @io.nl(IO2, IO)@, or a \emph{unification} of
+the form @X = Y@.  A sequence of goals separated by commas (read as ``and'')
+forms a compound goal called a \emph{conjunction}.
+
+\subsection{IO and State Variables}
+
+Since Mercury only allows a variable to be bound once, we have to use a
+different variable name for each @io.state@.  As demonstrated in the
+definition of @main/2@ above, this quickly becomes tedious.  So the language
+provides some syntactic sugar -- a notational convenience that has nothing
+to do with the language semantics -- in the guise of \emph{state variables}.
+A state variable @!X@ actually stands for a \emph{pair} of ordinary
+variables, renumbered as required in situations like this.  Hence 
+@main/2@ above is more likely to be written as
+\begin{myverbatim}
 main(!IO) :-
-    io__print("Hello, world!\n", !IO).
-\end{verbatim}
+    io.write_string("Hello, ", !IO),
+    io.write_string("World!",  !IO),
+    io.nl(!IO).
+\end{myverbatim}
+The Mercury compiler will transform this code into something just like the
+version in which we numbered each @io.state@ by hand.  State variables are
+explained in detail in chapter \XXX{}.
 
 
 
 \section{Rot13}
 
-The simplest form of Caesar cypher is @rot13@, whereby each letter in a
-message is replaced with one thirteen letters ahead in the alphabet
-(wrapping around from @z@ to @a@.) That is, @a@ becomes @n@, @b@ becomes
-@o@, \ldots, @z@ becomes @m@.  There being twenty six letters in the
-Roman alphabet, a second application of @rot13@ to the cyphertext will
-reveal the original plaintext message.
+The simplest form of Caesar cypher is @rot13@, in which each letter in the
+plaintext is replaced with the letter thirteen letters ahead in the alphabet
+(wrapping around from @z@ to @a@) in the cyphertext.  That is, @a@ becomes
+@n@, @b@ becomes @o@, \ldots and @z@ becomes @m@.  There being twenty six
+letters in the Roman alphabet, a second application of @rot13@ to the
+cyphertext will reveal the original plaintext message.
 
-It is the custom in some public fora, such as USENET, to use @rot13@ to
-encode such things as plot spoilers for films and books or jokes that
-may offend, so that those not wishing to see the material in question
-will not inadvertently catch a glimpse.
+A session with a @rot13@ program might look like this:
+\begin{myverbatim}
+> I shot an arrow in the air, she fell to Earth in Berkely Square.
+V fubg na neebj va gur nve, fur sryy gb Rnegu va Orexryl Fdhner.
+> V fubg na neebj va gur nve, fur sryy gb Rnegu va Orexryl Fdhner.
+I shot an arrow in the air, she fell to Earth in Berkely Square.
+\end{myverbatim}
 
-The Mercury code for the @rot13@ program looks like this:
-\begin{verbatim}
-:- module rot13.
+It is the custom in some public fora, newsgroups for instance, to use
+@rot13@ to encode things such as plot spoilers in messages discussing film
+endings so as not to spoil the surprise for those who haven't yet seen the
+film.  Those wishing to view the unencrypted text can simply filter the
+message through a @rot13@ program.
 
-:- interface.
-:- import_module io.
+A @rot13@ program is a simple text filter, reading in a character at a time
+from the input stream and writing the converted character to the output
+stream.
 
-:- pred main(io, io).
-:- mode main(di, uo) is det.
-
-:- implementation.
-:- import_module int, exception.
-
+The predicate we will use to read in each character, @io.read_char/3@,
+returns a result which is either @ok(C)@ where @C@ is the character just
+read in, @eof@ for the end-of-file condition, or @error(E)@ where @E@ is a
+code indicating the nature of the error.  Here is our definition for
+@main/2@:
+\begin{myverbatim}
 main(!IO) :-
-    io__read_byte(Result, !IO),
+    io.read_char(Result, !IO),
     (
-        Result = ok(X),
-        io__write_byte(
-            ( if      0'a =< X, X =< 0'z
-              then    (X + 13 - 0'a) `mod` 26 + 0'a
-              else if 0'A =< X, X =< 0'Z
-              then    (X + 13 - 0'A) `mod` 26 + 0'A
-              else    X
-            ),
-            !IO
-        ),
+        Result = ok(C),
+        io.write_byte(rot13(C), !IO),
         main(!IO)
     ;
         Result = eof
     ;
         Result = error(_),
-        throw(Result)
+        exception.throw(Result)
     ).
-\end{verbatim}
-\begin{itemize}
-\item The IO read operation returns a success code in @Result@.
-\item We \emph{must} handle the return code!
-\item We \emph{switch} on the the result to decide what to do.
-\item Mercury has conditional expressions.
-\item The ASCII code of the character @a@ is written @0'a@.
-\item Notice the use of @`@backquotes@`@ to treat a name as an infix
-binary operator (@mod@ in this case.)
-\end{itemize}
+\end{myverbatim}
+The call to @io.read_char/3@ instantiates @Result@ with one of the
+possible outcomes of the input operation.  To decide what to do next we
+use a \emph{disjunction}: a sequence of goals separated by
+semicolons (read as ``or'') inside parentheses.  Each
+\emph{arm} of the disjunction starts by attempting to unify @Result@
+with one of the possible outcomes.  (This type of disjunction is called a
+\emph{switch} because it's rather like the @switch@ statement found in C and
+Java.)
+
+If @Result@ matches @ok(C)@ -- unifying @C@ with the character just read
+in -- then we encrypt the character using a function @rot13/1@, which we'll
+come to next, write it out and make a recursive call to @main/2@ to process
+the rest of the input.  If @Result@ matches @eof@ then we're finished.
+Finally, if @Result@ matches @error(_)@ (the underscore @_@ stands for any
+``don't care'' value) then we simply \emph{throw} it as an exception, which
+will cause execution to halt with an error message.
+
+(Note that a functor with no arguments, such as @eof@, \emph{is not}
+followed by empty parentheses, as one would expect in a language like C or
+Java.)
+
+We implement @rot13/1@ as a function.  A function is just syntactic sugar
+for a deterministic predicate with a single output that, unlike ordinary
+predicates, can be used in expressions.  Functions are almost always the
+right stylistic choice in such cases:
+\begin{myverbatim}
+:- func rot13(int) = int.
+:- mode rot13(in ) = out is det.
+
+rot13(X) = Z :-
+    ( if   encrypt_letter(X, Y)
+      then Z = Y
+      else Z = X
+    ).
+\end{myverbatim}
+(The @( if _ then  _ else )@ construct is called a \emph{conditional goal};
+the @else@ arm is \emph{not} optional.)
+
+In this case, if @encrypt_letter(X, Y)@ succeeds (unifying @Y@ with the
+encrypted form of @X@) then the result, @Z@, is @Y@, otherwise @X@ can't
+be a letter and we just return it unchanged in @Z@.
+
+We're on the home strait.  All we need to do now is implement the 
+translation of letters:
+\begin{myverbatim}
+:- pred encrypt_letter(int, int).
+:- mode encrypt_letter(in,  out) is semidet.
+
+encrypt_letter(X, Y) :-
+    (   X = 'A', Y = 'N'
+    ;   X = 'B', Y = 'O'
+    ...
+    ;   X = 'Z', Y = 'M'
+    ;   X = 'a', Y = 'n'
+    ;   X = 'b', Y = 'o'
+    ...
+    ;   X = 'z', Y = 'm'
+    ).
+\end{myverbatim}
+Once again, we use a switch to decide what to do: if @X@ matches @'A'@
+then we return @'N'@ in @Y@, and so forth.
+Because this switch does not cover all possible values that @X@ might
+have (the digit characters, for instance)
+the switch can \emph{fail}.  Don't worry too much about what
+this means for now, other than that failure of a call can be detected
+using a conditional goal, as in the code for @rot13/1@ above.
+Since @encrypt_letter/2@ has at most one solution for any given @X@, but can
+fail, it is said to be \emph{semi-deterministic}, hence the @semidet@
+determinism annotation on the mode declaration.
+
+To turn the above code into something we can compile, we need only wrap
+it up with the appropriate module declarations as before, remembering to
+include
+\begin{myverbatim}
+:- import_module exception.
+\end{myverbatim}
+at the start of the implementation section since we use
+@exception.throw/1@ in @main/2@.
+
+\subsection{Functions and Conditional Expressions}
+
+Function mode declarations like the following
+common,
+\begin{myverbatim}
+:- mode f(in, in, ..., in) = out is det.
+\end{myverbatim}
+are so common that Mercury allows us to omit them altogether for functions
+that have just one mode and it is of this form.
+
+Second, just as Mercury has conditional goals, it also has \emph{conditional
+expressions}.  Thus we can shorten the definition of @rot13/1@ to
+\begin{myverbatim}
+rot13(X) = ( if encrypt_letter(X, Y) then Y else X ) :-
+    true.
+\end{myverbatim}
+where @true/0@ is a built-in predicate that always succeeds, but does
+nothing else.  The @then@ and @else@ arms of a conditional expression
+contain expressions, rather than goals.
+
+Third, any clause in which the body is just @true@ can be written as
+just the head part on its own, hence we can simplify @rot13/1@ still
+further to:
+\begin{myverbatim}
+rot13(X) = ( if encrypt_letter(X, Y) then Y else X ).
+\end{myverbatim}
+This rule works for predicates as well as functions.
+
+\subsection{Predicates and Disjunctions}
+
+If the body of a clause is a disjunction, it can often be described more
+clearly using multiple clauses.  That is, we could rewrite
+@encrypt_letter/2@ as
+\begin{myverbatim}
+encrypt_letter(X, Y) :- X = 'A', Y = 'N'.
+encrypt_letter(X, Y) :- X = 'B', Y = 'O'.
+...
+encrypt_letter(X, Y) :- X = 'y', Y = 'l'.
+encrypt_letter(X, Y) :- X = 'z', Y = 'm'.
+\end{myverbatim}
+which will be transparently converted by the Mercury compiler into our
+original definition using a disjunction.  So far we've actually made
+life harder on our fingers\ldots but!  Mercury has some more
+syntactic sugar that, together with clausal notation, really does pay
+off.
+
+If the Mercury compiler sees an expression rather than a variable in an
+head argument, as in
+\begin{myverbatim}
+p(expr1, expr2, ...) :- ...
+\end{myverbatim}
+it will transparently convert this into
+\begin{myverbatim}
+p(X1, X2, ...) :- X1 = expr1, X2 = expr2, ...
+\end{myverbatim}
+where @X1@ and @X2@ and so on are chosen so as not to coincide with
+anything in the original definition of the clause.
+
+Consequently we can write @encrypt_letter/2@ in a quite perspicuous
+fashion:
+\begin{myverbatim}
+encrypt_letter('A', 'N').
+encrypt_letter('B', 'O').
+...
+encrypt_letter('y', 'l').
+encrypt_letter('z', 'm').
+\end{myverbatim}
+
+\subsection{Using Arithmetic Instead}
+
+If we know that our program is only going to be run on ASCII data (or
+some other character set encoding in which the byte codes for the
+letters of the alphabet are contiguous), we could rewrite @rot13/1@ to
+do away with the need for @encrypt_letter/2@ altogether:
+\begin{myverbatim}
+rot13(X) = Y :-
+    char.to_int(X, XCode),
+    YCode = ( if      0'A =< X, X =< 0'Z
+              then    ((13 + X - 0'A) `mod` 26) + 0'A
+              else if 0'a =< X, X =< 0'z
+              then    ((13 + X - 0'a) `mod` 26) + 0'a
+              else                            X
+            )
+    char.to_int(Y, YCode).
+\end{myverbatim}
+Several new things are illustrated in this definition.  Let's start off by
+looking at syntax.  The first thing to notice is that the integer code for
+the character @'A'@ is written as @0'A@.  The second is that while the names
+@=<@ (less than or equal to), @+@ and @-@ can all appear as infix operators
+as one would expect, it is also possible to use any other name as an infix
+operator simply by enclosing it in @`@backquotes@`@.  This is what we've
+done with @mod/2@ above.  The Mercury Reference Manual \XXX{} contains a
+list of which names can be used as prefix, infix or postfix operators.  Note
+that it makes no difference to Mercury if we write @+(13, X)@ rather than
+@13 + X@ or @mod(Y, 26)@ rather than @Y `mod` 26@.  The latter are simply
+easier to read.
+
+The integer operators are all defined in the @int@ module in the Mercury
+standard library, which \emph{must} be imported before they can be used --
+unlike most languages, basic arithmetic is not built-in to Mercury.
+
+The other new thing here is the use of the same predicate in different
+``directions''.  The predicate @char.to_int/2@ converts between characters
+and integer character codes.  The first such call,
+@char.to_int(X, XCode)@ uses the mode
+\begin{myverbatim}
+:- mode char.to_int(in, out) is det.
+\end{myverbatim}
+to convert @X@ into its character code, @XCode@.  The second call,
+@char.to_int(Y, YCode)@ uses the mode
+\begin{myverbatim}
+:- mode char.to_int(out, in) is semidet.
+\end{myverbatim}
+to convert @YCode@ into the corresponding character, @Y@ (this ``direction''
+is semi-deterministic because not all integers correspond to characters.)
+
+\subsection{If-Then-Else Chains vs. Switches}
+
+Where possible, it is not only clearer, on the whole, to use a switch in
+preference to an @if-then-else@ chain, but the compiler can often do a
+better job of optimizing switches (implementing them with jump tables or
+hash
+tables for instance.)
 
 
 
 \section{A Spelling Checker}
 
-\begin{verbatim}
-:- module spell.
+In this section we write a simple spelling checker that will take two
+files as arguments, a dictionary file and a file to be checked for spelling
+mistakes, and print out any words in the latter that do not appear in the
+former:
+\begin{myverbatim}
+> ./spell_check my_dictionary_file my_text_file
+doog
+kat
+mowse
+\end{myverbatim}
+(On Unix systems one can usually find a dictionary file in
+@/usr/dict/words@.)
+Our first approach will simply compute the set of words in each file
+and use the set difference function to decide which words in the text file
+have been misspelled.
 
-:- interface.
-:- import_module io.
-
-:- pred main(io, io).
-:- mode main(di, uo) is det.
-
-:- implementation.
-:- import_module list, char, map, string, std_util, exception.
-
-:- type dictionary == map(string, unit).
-
-:- func dictionary = string.
-
-    % This may be something else, like "/usr/dict/words".
-    %
-dictionary = "/usr/share/dict/words".
-
+First, let's write @main/2@: it has to retrieve the file names of the
+dictionary and source file from the command line arguments, read
+and compute the set of words in each file, and print out any words in
+the text file set that do not appear in the dictionary file set:
+\begin{myverbatim}
 main(!IO) :-
-    build_dictionary(Dict, !IO),
-    check_spellings(Dict, !IO).
 
-:- pred build_dictionary(dictionary, io, io).
-:- mode build_dictionary(out,        di, uo) is det.
+    io.command_line_arguments(Args, !IO),
 
-build_dictionary(Dict, !IO) :-
-    io__open_input(dictionary, OpenResult, !IO),
-    (   OpenResult = ok(InputStream)
-    ;   OpenResult = error(_),          throw(OpenResult)
-    ),
-    io__read_file_as_string(InputStream, ReadResult, !IO),
-    (   ReadResult = ok(String)
-    ;   ReadResult = error(_, _),       throw(ReadResult)
-    ),
-    io__close_input(InputStream, !IO),
-    Dict =
-        foldl(
-            func(Word, Dict0) = Dict0 ^ elem(to_lower(Word)) := unit,
-            split_into_words(String),
-            map__init
-        ).
+    ( if Args = [DictFileName, TextFileName] then
 
-:- func split_into_words(string) = list(string).
+            % Read in the list of words in each file.
+            %
+        file_to_word_set(DictFileName, DictWordSet, !IO),
+        file_to_word_set(TextFileName, TextWordSet, !IO),
 
-split_into_words(String) = words(isnt(char__is_alnum), String).
+            % Find the list of misspelt words.
+            %
+        ErrorWordSet = TextWordSet `set.difference` DictWordSet,
+        Errors       = set.to_sorted_list(ErrorWordSet),
 
-:- pred check_spellings(dictionary, io, io).
-:- mode check_spellings(in,         di, uo) is det.
+            % Write out the misspelt words.
+            %
+        write_words_in_list(Errors, !IO)
 
-check_spellings(Dict, !IO) :-
-    io__read_line_as_string(ReadResult, !IO),
-    (
-        ReadResult = ok(String),
-        list__foldl(check_spelling(Dict), split_into_words(String), !IO),
-        check_spellings(Dict, !IO)
-    ;
-        ReadResult = eof
-    ;
-        ReadResult = error(_),
-        throw(ReadResult)
-    ).
-
-:- pred check_spelling(dictionary, string, io, io).
-:- mode check_spelling(in,         in,     di, uo) is det.
-
-check_spelling(Dict, Word, !IO) :-
-    ( if   Dict `contains` to_lower(Word)
-      then true
-      else io__format("%s\n", [s(Word)], !IO)
-    ).
-\end{verbatim}
-\begin{itemize}
-\item @build_dictionary/3@ returns a @dictionary@ in @Dict@.
-\item @check_spellings/3@ \emph{uses} @Dict@.
-\item We use higher order functions and predicates (@foldl@) where an
-imperative programmer would use a loop.
-\item We package up complex operations as \emph{closures} via partial
-application (@check_spelling(Dict)@).
-\item We can use lambdas or closures as the body of the loop.  It's all
-the same thing.
-\item @foldl@ is overloaded in that it comes in both function and
-predicate versions and the predicate version has multiple modes (it can
-handle unique IO states, for instance.)
-\item A @map@ is an ADT that supports dictionary-like operations (you
-use one to set up a mapping between keys and values -- an associative
-array, if you like.)  @map@s support O(log n) lookup and insert times.
-\item In this case, we only need to check that the @dictionary@ contains
-a particular word.  In this case we defined a @dictionary@ to be a map
-from @string@s to @unit@s, where @unit@ is the type that carries no
-information -- it has but one data constructor, also called @unit@.
-\end{itemize}
-
-
-
-\section{Finding a Path Through a Maze}
-
-\begin{verbatim}
-:- module route.
-:- interface.
-:- import_module int, list.
-
-:- type vertex(T) == T.
-:- type exits(T)  == list(vertex(T)).
-:- type maze(T)   == list({vertex(T), exits(T)}).
-:- type path(T)   == list(vertex(T)).
-
-:- func sample_maze = maze(char).
-
-:- pred find_path(maze(T), vertex(T), vertex(T), path(T)).
-:- mode find_path(in,      in,        in,        out    ) is nondet.
-
-:- implementation.
-
-    %   a --> b     c
-    %         |     ^
-    %         v     |
-    %   d <-- e <-- f
-    %   |     ^     ^
-    %   v     |     |
-    %   g --> h --> i
-    %
-sample_maze =
-    [   {a, [b]},       {b, [e]},       {c, []},
-        {d, [g]},       {e, [d]},       {f, [c, e]},
-        {g, [h]},       {h, [e, i]},    {i, [f]}
-    ].
-
-find_path(Maze, From, To, Path) :-
-    find_reverse_path(Maze, To, [From], RPath),
-    Path = reverse(RPath).
-
-:- pred find_reverse_path(maze(T), vertex(T), path(T), path(T)).
-:- mode find_reverse_path(in,      in,        in,      out    ) is nondet.
-
-find_reverse_path(Maze, To, RPath0 @ [Vertex | _], RPath) :-
-    ( if Vertex = To then
-        RPath = RPath0
       else
-        list__member(Maze, {To, Exits}),
-        list__member(Exit, Exits),
-        not list__member(Exits, Path0),
-        find_reverse_path(Maze, To, [Exit | Path0], Path)
+
+        exception.throw("usage: spell_check <dictfile> <textfile>")
     ).
-\end{verbatim}
-\begin{itemize}
-\item Mercury has parametrically polymorphic types.
-\item Mercury allows \emph{unification expressions} like
-\verb!RPath0 \@ [Vertex | _]!.
-\item Mercury supports non-determinism (where programs -- or more
-correctly, \emph{goals} -- may \emph{fail}
-or have \emph{more than one solution}).  Failure leads to
-\emph{backtracking} to look for alternative ways to a solution.
-\emph Mercury supports multiple modes for a predicate (e.g.
-@list__member@ is being used in both the @(out, in) is nondet@ and
-@(in, in) is semidet@ modes.
-\emph Mercury goals may be negated.
-\end{itemize}
+\end{myverbatim}
+This definition introduces several new things.  Let's start with the new
+piece of syntax: comments begin with a per cent @%@ symbol and extend to the
+end of the line.
+
+@main/2@ begins by calling @io.command_line_arguments/3@ to obtain the
+list of command line arguments in @Args@.  If @Args@ is a two member
+list (instantiating @DictFileName@ and @TextFileName@ respectively) then we
+enter the spelling checker part of the algorithm, otherwise we report a
+usage error by throwing an exception.
+
+Having obtained the dictionary and text file names, @file_to_word_set/4@
+is called to get the set of words in each file.  The predicate
+@file_to_word_set/4@ is described below.
+
+We use the @set.difference/2@ function to obtain the set of words in the
+text file, but not in the dictionary, and then call
+@set.to_sorted_list/1@ to turn the error set into a list.
+
+Finally, we call @write_words_in_list/3@ (also described below) to print out
+each member of @ErrorWords@.
+
+Returning to @file_to_word_set/4@, this predicate has to open the given
+file, read its contents, and work out the set of words therein.  Here's
+one possible implementation:
+\begin{myverbatim}
+:- pred file_to_word_set(string, set(string), io, io).
+:- mode file_to_word_set(in,     out,         di, uo) is det.
+
+file_to_word_set(FileName, WordSet, !IO) :-
+
+    io.open_input(FileName, OpenResult, !IO),
+    (
+        OpenResult = ok(InputStream),
+        io.read_file_as_string(InputStream, ReadResult, !IO),
+        (
+            ReadResult = ok(String),
+            Words      = string.words(String),
+            WordSet    = set.list_to_set(Words)
+        ;
+            ReadResult = error(_, _),
+            exception.throw(ReadResult)
+        )
+    ;
+        OpenResult = error(_),
+        exception.throw(OpenResult)
+    ).
+\end{myverbatim}
+The first thing to observe is that we've used @io@ rather than
+@io.state@ in the @pred@ declaration; this is a common convention in
+modern Mercury programs: the @io@ library defines @io.io@ as a
+synonym for @io.state@ and @io@ is the unqualified form of @io.io@.  It
+simply looks better on the page.
+
+The next new thing is the type @set(string)@.  The @set/1@ type, defined
+in the @set@ module in the Mercury standard library, is
+\emph{parameterised}.  That is, we can have @set(int)@, @set(string)@,
+@set(set(int))@ and so forth and Mercury will ensure that we never get
+different types of set mixed up in our programs.  The chapter on types
+\XXX{} explains parametric types in detail.
+
+The call to @io.open_input@ tries to open an input stream for the file
+named in @FileName@.  \XXX{Do I need to explain ``input stream''?}
+The only possible outcomes are @ok/1@ or @error/1@, which
+we test for in a switch.
+
+If all is well, @io.read_file_as_string/4@ attempts to read all the data
+from the file referred to by @InputStream@.  The result will be of the form
+@ok/1@ for success or @error/2@ if there was a problem (this particular
+error result includes any data that was read up to the point the error
+occurred along with the error code.)  Again, we use a switch to decide what
+to do.
+
+The function @string.words/1@ is used to break the resulting string along
+contiguous sequences of whitespace into a list of strings.
+
+Finally, we turn the list of words into a @set(string)@ using
+@set.list_to_set/1@.
+
+There's only one more thing to do: define @write_words_in_list/3@.
+This is easy to do: if we have the empty list then we don't write
+anything at all; otherwise we write out the first string in the list
+(the \emph{head}) followed by a newline, and then repeat for the rest of
+the list (the \emph{tail}):
+\begin{myverbatim}
+:- pred write_words_in_list(list(string), io, io).
+:- mode write_words_in_list(in,           di, uo) is det.
+
+write_words_in_list([],             !IO).
+
+write_words_in_list([Word | Words], !IO) :-
+    io.write_string(Word, !IO),
+    io.nl(!IO),
+    write_words_in_list(Words, !IO).
+\end{myverbatim}
+The functor @[]/0@ matches for the empty list, while @[Word | Words]@
+unifies @Word@ and @Words@ with the head and tail respectively of a
+non-empty list.  Since the first argument must be one or the other, our two
+clauses constitute a complete switch on the first argument.
+
+The recursive call to @write_words_in_list/3@ handles printing the words
+in the tail of the non-empty list.  Recursion is the only mechanism used for
+iteration in Mercury (unlike other languages with special constructs such as
+@for@ and @while@ loops.)
+
+Now we can wrap up the code into a module as usual (this time importing
+@string@, @list@, @set@ and @exception@ in the implementation section)
+and\ldots \emph{hey presto!}
+
+\subsection{Handling Punctuation}
+
+Our spelling checker is rather literal minded.  One issue is that any
+immediately adjacent punctuation is assumed to be part of a word as
+well.  For example,
+\begin{myverbatim}
+    string.words("Panic stations!") = ["Panic", "stations!"]
+\end{myverbatim}
+The dictionary file is unlikely to include @stations!@ as an entry.
+
+We can change our program to treat anything that \emph{isn't} a letter
+as a word separator by replacing the following line in
+@file_to_word_set/4@
+\begin{myverbatim}
+    Words = string.words(String),
+\end{myverbatim}
+with
+\begin{myverbatim}
+    Words = string.words(isnt_a_letter, String),
+\end{myverbatim}
+and adding the following predicate to the program:
+\begin{myverbatim}
+:- pred isnt_a_letter(char).
+:- mode isnt_a_letter(in  ) is semidet.
+
+isnt_a_letter(Char) :-
+    not char.is_alpha(Char).
+\end{myverbatim}
+This change introduces three new points: overloading, higher order
+programming and negation.
+
+\emph{Overloading} refers to using the same name for more than one thing.
+Here we use @string.words/2@ rather than @string.words/1@.  The former takes
+as its first argument a predicate that decides whether a particular
+character is something that separates words.  We've
+used a predicate of our own, @isnt_a_letter/1@ that does the job we
+want (we'll come to @isnt_a_letter/1@ in a moment.)  Passing predicates as
+arguments is part of \emph{higher order programming}.
+
+The definition of @isnt_a_letter/1@ uses a new logical connective: @not@,
+the mercury symbol for \emph{logical negation}.  The goal
+@not char.is_alpha(Char)@ \emph{fails} if the goal @char.is_alpha(Char)@
+succeeds (which it will if @Char@ is a letter) and \emph{succeeds} if
+@char.is_alpha(Char)@ fails.
+
+(Note that since we use a predicate from the @char@ module, we have to add
+this to our list of imports at the top of the implementation section.)
+
+\subsection{Handling Capitalisation}
+
+Another problem with our spelling checker is that two strings that are
+identical, except for capitalisation, do not compare the same -- so @"Dog"@
+and @"dog"@ are considered different by our program.  An easy remedy for
+this is to first convert every word to lower case.  To achieve this, all we
+need do is change the following lines in @file_to_word_set/4@
+\begin{myverbatim}
+    Words   = string.words(String),
+    WordSet = set.list_to_set(Words)
+\end{myverbatim}
+to
+\begin{myverbatim}
+    Words   = string.words(String),
+    LCWords = words_to_lower_case(Words),
+    WordSet = set.list_to_set(LCWords)
+\end{myverbatim}
+and add the function
+\begin{myverbatim}
+:- func words_to_lower_case(list(string)) = list(string).
+
+words_to_lower_case([]) = [].
+
+words_to_lower_case([Word | Words]) =
+    [string.to_lower(Word) | words_to_lower_case(Words)].
+\end{myverbatim}
+where the function @string.to_lower/1@ returns its argument string with any
+upper case letters converted to lower case.
+
+The the list constructors, @[]@ and @[|]@, \emph{deconstruct} the function
+argument in the clause heads, whereas in the body they happen to
+\emph{construct} the result (it all depends upon whether the term being
+unified with is an input or an output, respectively.)
+
+The pattern used in @words_to_lower_case/1@ is so common that the @list@
+module abstracts it with the function @list.map/2@.  A black belt Mercury
+programmer probably wouldn't bother writing @words_to_lower_case/1@ at all,
+but would say @list.map(string.to_lower, Words)@ instead -- it amounts to
+exactly the same thing.  Don't worry if this seems a little confusing right
+now.  The mysteries of higher order programming, such as they are, will be
+made clear in chapter \XXX{}.
+
+\subsection{Writing Lists the Easy Way}
+
+Here's another example of how higher order programming can save time and
+effort: writing out each item in a list is a common task.  The @io@ library
+provides the predicate @io.write_list/5@ to save you the trouble of having
+to write your own routine each time.
+
+Instead of using @write_words_in_list/3@ in @main/2@, we could have written
+\begin{myverbatim}
+    io.write_list(Errors, "\n", io.write_string, !IO),
+    io.nl(!IO)
+\end{myverbatim}
+This call to @io.write_list/5@ applies @io.write_string@ to each member of
+@Errors@ (along with the @!IO@ pair), and writes out @"\n"@ \emph{between}
+each call (so we need to add a call to @io.nl/2@ afterwards.)
+
+
+
+\section{A Simple Data Base}
+
+Our final example demonstrates how some predicates can have
+multiple solutions and can even be used in more than one ``direction''.
+
+To represent the information in the data base clearly, we need to introduce
+some new types.  We define the type @gender/0@ which has \emph{data
+constructors} (\ie possible values) @male/0@ and @female/0@.  We also
+define @date/0@ with a single data constructor, @date/3@ (another
+example of overloading), with three named fields for year, month and day.
+And we add the type @name/0@ as a synonym for @string@:
+\begin{myverbatim}
+:- type gender ---> male ; female.
+:- type date   ---> date(year :: int, month :: int, day ::int).
+:- type name   ==   string.
+\end{myverbatim}
+Next we have a @person/3@ relation (another word for predicate) which
+records against each person's name their gender and date of birth:
+\begin{myverbatim}
+:- pred person(name, gender, date).
+:- mode person(in,   out,    out ) is semidet.
+:- mode person(out,  out,    out ) is multi.
+
+    % Great-grandparents.
+    %
+person("Edith Sorrel",      female, date(1897,  1,  3)).
+
+    % Grandparents.
+    %
+person("George Becket",     male,   date(1925,  7, 18)).
+person("Faith Becket",      female, date(1923,  2, 23)).
+person("William Allen",     male,   date(1917, 11, 14)).
+person("Gertrude Allen",    female, date(1921,  8, 29)).
+
+    % Parents.
+    %
+person("William Becket",    male,   date(1945,  6, 12)).
+person("Patricia Becket",   female, date(1943,  3,  3)).
+person("Tom Allen",         male,   date(1944,  4, 30)).
+person("Ina Allen",         female, date(1950, 12, 12)).
+
+    % Most recent generation.
+    %
+person("Ralph Becket",      male,   date(1970, 12, 10)).
+person("Kieran Becket",     male,   date(1972,  7, 17)).
+person("Simon Allen",       male,   date(1970, 11, 14)).
+person("Suzanne Allen",     female, date(1969,  4,  1)).
+\end{myverbatim}
+``What's going on here?'' I hear you cry, ``@person/3@ has \emph{two} mode
+declarations!''  In Mercury it is perfectly reasonable for a predicate to
+have more than one mode declaration, indicating that the predicate can be
+called in more than one way.  The first mode declaration,
+\begin{myverbatim}
+:- mode person(in, out, out) is semidet.
+\end{myverbatim}
+says that a goal @person(Name, Gender, Date)@ for which @Name@ is an input
+(\ie has already been bound) is semi-deterministic: there is at most one
+solution (\ie the goal \emph{may} fail) instantiating @Gender@ and @Date@.
+On the other hand,
+\begin{myverbatim}
+:- mode person(out, out, out) is multi.
+\end{myverbatim}
+says that a goal @person(Name, Gender, Date)@ for which none of the
+arguments are inputs has \emph{one or more} solutions instantiating @Name@,
+@Gender@ and @Date@.  This is what the @multi@ determinism category stands
+for.  We'll come to what happens with predicates that have have more than
+one solution shortly.
+
+Moving on to the other key relation in our data base, @is_child_of/2@
+records which person is a child of which other person:
+\begin{myverbatim}
+:- pred name `is_child_of` name.
+:- mode in   `is_child_of` in  is semidet.
+:- mode in   `is_child_of` out is nondet.
+:- mode out  `is_child_of` in  is nondet.
+
+"Faith Becket"      `is_child_of`   "Edith Sorrel".
+"William Becket"    `is_child_of`   "George Becket".
+"William Becket"    `is_child_of`   "Faith Becket".
+"Patricia Becket"   `is_child_of`   "William Allen".
+"Patricia Becket"   `is_child_of`   "Gertrude Allen".
+"Tom Allen"         `is_child_of`   "William Allen".
+"Tom Allen"         `is_child_of`   "Gertrude Allen".
+"Ralph Becket"      `is_child_of`   "William Becket".
+"Ralph Becket"      `is_child_of`   "Patricia Becket".
+"Kieran Becket"     `is_child_of`   "William Becket".
+"Kieran Becket"     `is_child_of`   "Patricia Becket".
+"Simon Allen"       `is_child_of`   "Tom Allen".
+"Simon Allen"       `is_child_of`   "Ina Allen".
+"Suzanne Allen"     `is_child_of`   "Tom Allen".
+"Suzanne Allen"     `is_child_of`   "Ina Allen".
+\end{myverbatim}
+\XXX{Change names etc.  It's part of my family tree with wild guesses about
+most of the dates.}
+The first mode declaration states that given inputs @Child@ and @Parent@,
+the goal @Child `is_child_of` Parent@ will either succeed or fail -- that
+is, it can be used to test whether one person is the offspring of another.
+
+The second mode declaration states that a goal
+@Child `is_child_of` Parent@, for which @Child@ is an input, is
+non-deterministic (hence the @nondet@ determinism category).  In other
+words, the goal may fail or have one or more solutions for @Parent@.
+The goal,
+\begin{myverbatim}
+    "Edith Sorrel" `is_child_of` Parent
+\end{myverbatim}
+for instance, has no solutions.  The goal
+\begin{myverbatim}
+    "Faith Becket" `is_child_of` Parent
+\end{myverbatim}
+has one solution, namely
+\begin{myverbatim}
+    Parent = "Edith Sorrel"
+\end{myverbatim}
+while
+\begin{myverbatim}
+    "William Becket" `is_child_of` Parent
+\end{myverbatim}
+has both
+\begin{myverbatim}
+    Parent = "George Becket"
+\end{myverbatim}
+and
+\begin{myverbatim}
+    Parent = "Faith Becket"
+\end{myverbatim}
+as solutions.
+
+The third mode declaration states that a goal @Child `is_child_of` Parent@,
+in the case where @Parent@ is an input, is similarly non-deterministic.
+
+Now let's introduce some new relations (if you'll pardon the pun).  The
+simplest one, @is_parent_of/2@, is just the converse of @is_child_of/2@:
+\begin{myverbatim}
+:- pred name `is_parent_of` name.
+:- mode in   `is_parent_of` in  is semidet.
+:- mode in   `is_parent_of` out is nondet.
+:- mode out  `is_parent_of` in  is nondet.
+
+Parent `is_parent_of` Child :- Child `is_child_of` Parent.
+\end{myverbatim}
+That was easy.  What about mothers and fathers?
+\begin{myverbatim}
+:- pred name `is_mother_of` name.
+:- mode in   `is_mother_of` in  is semidet.
+:- mode in   `is_mother_of` out is nondet.
+:- mode out  `is_mother_of` in  is nondet.
+
+Mother `is_mother_of` Child :-
+    Mother `is_parent_of` Child,
+    person(Mother, Gender, _),
+    Gender = female.
+\end{myverbatim}
+(Recall that an underscore @_@ on its own means ``don't care''.) So @Mother@
+is the mother of @Child@ if @Mother@ is a parent of @Child@ and the
+@person/3@ record for @Mother@ lists @Mother@ as female.
+
+The careful reader will be wondering about the third mode declaration for
+@is_mother_of/2@ -- surely each @Child@ can have no more than one mother,
+making the correct mode @semidet@ rather than @nondet@.  While this is true
+for the genealogical domain, Mercury has no idea that this is actually a
+genealogical data base and that this is therefore a necessary domain
+constraint.  Rather, it reasons that if @Child@ is an input, then the call
+to @is_parent_of/2@ can have more than one possible solution for @Mother@,
+hence @is_mother_of/2@ may have more than one possible solution.  (There
+\emph{is} a way to express this domain constraint, but doing so requires
+black belt level techniques which we aren't going to get into this early in
+the book.)
+
+The code for @is_father_of/2@ is very similar:
+\begin{myverbatim}
+:- pred name `is_father_of` name.
+:- mode in   `is_father_of` in  is semidet.
+:- mode in   `is_father_of` out is nondet.
+:- mode out  `is_father_of` in  is nondet.
+
+Father `is_father_of` Child :-
+    Father `is_parent_of` Child,
+    person(Father, Gender, _),
+    Gender = male.
+\end{myverbatim}
+Now, Mercury will replace a predicate call with a non-variable term as an
+argument with one in which the argument \emph{is} a variable and add a
+unification goal connecting the new variable and the term.  That is, a call
+\begin{myverbatim}
+    p(<expr1>, <expr2>, ...)
+\end{myverbatim}
+is transparently converted to
+\begin{myverbatim}
+    X1 = <expr1>,
+    X2 = <expr2>,
+    ...
+    p(X1, X2, ...)
+\end{myverbatim}
+(and a similar thing happens for goals containing function applications.)
+This means we can rewrite the clause for @is_father_of/2@ (and similarly for
+@is_mother_of/2@) as
+\begin{myverbatim}
+Father `is_father_of` Child :-
+    Father `is_parent_of` Child,
+    person(Father, male, _).
+\end{myverbatim}
+which is easier to both read and maintain.
+
+Let's return briefly to the question of what it means for a predicate
+to have more than one possible solution.  Consider the goal
+\begin{myverbatim}
+    Mother `is_mother_of` "Ralph Becket"
+\end{myverbatim}
+The definition of @is_mother_of/2@ says we must therefore find a solution to
+\begin{myverbatim}
+    Mother `is_parent_of` "Ralph Becket",
+    person(Mother, female, _)
+\end{myverbatim}
+and hence, from the definition of @is_parent_of/2@, a solution to
+\begin{myverbatim}
+    "Ralph Becket" `is_child_of` Mother,
+    person(Mother, female, _)
+\end{myverbatim}
+Mercury works its way through the clauses of @is_child_of/2@ looking for a
+solution to the first subgoal.  The first one it comes
+to is
+\begin{myverbatim}
+    Mother = "William Becket"
+\end{myverbatim}
+Execution proceeds to the second subgoal,
+\begin{myverbatim}
+    person("William Becket", female, _)
+\end{myverbatim}
+Since there are no matching clauses for this goal, execution
+\emph{backtracks} (or unwinds) to the
+last non-deterministic goal (the call to @is_child_of/2@) to look for a
+different solution.  The next solution to the @is_child_of/2@ subgoal is
+\begin{myverbatim}
+    Mother = "Patricia Becket"
+\end{myverbatim}
+As before, execution proceeds to the second subgoal
+\begin{myverbatim}
+    person("Patricia Becket", female, _)
+\end{myverbatim}
+which this time \emph{does} have a matching clause.  So now we know that
+\begin{myverbatim}
+    Mother = "Patricia Becket"
+\end{myverbatim}
+is a solution to the goal
+\begin{myverbatim}
+    Mother `is_mother_of` "Ralph Becket"
+\end{myverbatim}
+Hurrah!
+
+To sum up, Mercury's execution model for non-deterministic
+predicates is to search systematically through all possibilities while
+looking for solutions, backtracking to the most recent non-exhausted
+non-deterministic \emph{choice point} whenever a subgoal fails.  One final
+word on the subject: Mercury is allowed to reorder the goals in a
+conjunction as necessary to ensure mode correctness (\ie before a variable
+can be used as an input it must be instantiated either from a unification or
+as an output argument to a call.)
+
+Now that we have a feeling for how non-determinism works, let's finish up by
+writing down some more interesting relations.  To save space we won't bother
+including the mode declarations (working out the possible modes for each is
+left as a light exercise for the reader).
+
+First, a grandparent is defined as the parent of a parent:
+\begin{myverbatim}
+Grandparent `is_grandparent_of` Child :-
+    Parent `is_parent_of` Child,
+    Grandparent `is_parent_of` Parent.
+\end{myverbatim}
+More generally, an ancestor of a person is \emph{either} a parent 
+\emph{or} an ancestor of a parent of the person:
+\begin{myverbatim}
+Ancestor `is_ancestor_of` Person :-
+    Ancestor `is_parent_of` Person.
+
+Ancestor `is_ancestor_of` Person :-
+    Parent `is_parent_of` Person,
+    Ancestor `is_ancestor_of` Parent.
+\end{myverbatim}
+Two people are siblings if they have a parent in common and are different
+(one isn't usually considered to be one's own sibling):
+\begin{myverbatim}
+SiblingA `is_sibling_of` SiblingB :-
+    Parent `is_parent_of` SiblingA,
+    Parent `is_parent_of` SiblingB,
+    SiblingA \= SiblingB.
+\end{myverbatim}
+The goal @SiblingA \= SiblingB@ is syntactic sugar for
+@not SiblingA = SiblingB@.
+
+Two people are cousins if their parents are siblings:
+\begin{myverbatim}
+CousinA `is_cousin_of` CousinB :-
+    ParentA `is_parent_of` CousinA,
+    ParentB `is_parent_of` CousinB,
+    ParentA `is_sibling_of` ParentB.
+\end{myverbatim}
+Here's how we define niece-or-nephewdom:
+\begin{myverbatim}
+NieceOrNephew `is_niece_or_nephew_of` AuntOrUncle :-
+    Parent `is_sibling_of` AuntOrUncle,
+    NieceOrNephew `is_child_of` Parent.
+\end{myverbatim}
+It's all remarkably straightforward!
+
+\XXX{Are there too many examples here?  Do they need more explanation?
+What could I do with the date information?  What about getting the solutions
+to these predicates?}
+
+\XXX{I've ditched the maze searching example as too complex to do right this
+early in the book.}
+
+\XXX{Overuse of ``simple'', ``much''...}
