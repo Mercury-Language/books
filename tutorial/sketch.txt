@@ -28,7 +28,8 @@ HELLO, WORLD!
 
             % The show starts here.
             %
-        main --> io__print("Hello, world!\n").
+        main(IO0, IO) :-
+            io__print("Hello, world!\n", IO0, IO).
 
     [end code]
 
@@ -58,11 +59,29 @@ HELLO, WORLD!
     - The implementation section provides the code for the functions
       and predicates exported in interface section.
     - A module has to be imported before the things it defines can be
-      used.
+      used.  Hence io__print refers to the print predicate defined in
+      the io module.
     - The basic computational device in Mercury is the predicate.
       Predicates have type signatures and mode signatures - the latter
       specifying which arguments are inputs and which are outputs.
     - Comments start witha "%" sign and extend to the end of the line.
+
+    (IO is handled in Mercury by explicitly passing around the "state
+    of the world" - each IO operation takes the current state and
+    produces a new one; the old state becoming unavailable for use
+    thereafter.  This might sound odd, but is a necessary part of
+    keeping Mercury a pure language.  XXX This will be explained in
+    more detail in the section on declaration IO.)
+
+    Special syntax exists to simplify passing state variable pairs
+    around; for "Hello, world!" this becomes
+
+    [begin code]
+
+        main(!IO) :-
+            io__print("Hello, world!\n", !IO).
+
+    [end code]
 
 
 
@@ -73,6 +92,10 @@ DECLARATIVE VS IMPERATIVE PROGRAMMING
         Imperative: a list of instructions for transforming state.
 
         Declarative: a specification of /what/ is to be computed.
+
+        Declarative languages typically have a very simple translation
+        into conventional mathematical logic, which is how the meaning
+        of a program is defined.
 
         Pure declarative programming languages exhibit referential
         transparency.  In a nutshell, this means that anywhere you see
@@ -115,6 +138,12 @@ DECLARATIVE VS IMPERATIVE PROGRAMMING
         to itself!  This sort of thing is great for writing buggy,
         hard to maintain code.
 
+        [Footnote: one can give a reasonably simple operational
+        semantics to C whereby we repeatedly substitute the body of
+        f(1) into a string of /instructions/, but as we see here, this
+        does not necessarily support the more intuitive, declarative
+        reading one might hope for.]
+
         Since referential transparency means no side-effects, you
         can't have variables that change their state as the program
         evolves.  Instead, a "variable" in a declarative programming
@@ -144,24 +173,26 @@ DECLARATIVE VS IMPERATIVE PROGRAMMING
     BENEFITS OF DECLARATIVE STYLE
 
         While the lack of mutable state might seem like a serious
-        drawback to a programmer used only to imperative languages, in
+        drawback to programmers raised on imperative languages, in
         practice it turns out to be something of a boon.  Experienced
-        imperative programmers know that fewer globals means clearer,
-        more maintainable, more reusable code with fewer bugs.
+        imperative programmers acknowledge that fewer globals and less
+        state means clearer, more maintainable, more reusable code
+        with fewer bugs.
 
-        The philosophy behind declarative languages is to simplify the
+        The philosophy underlying declarative languages is to simplify the
         /writing/ of bug free programs and to leave the tedious
-        business of book keeping and optimization to the compiler.
-        Referential transparency means that more optimizations can be
-        applied in more places in a program than is the case with
-        imperative programs, simply because proving that it is safe to
-        apply a particular optimization is so much easier in the
-        absence of side effects.
+        business of identifying programming errors, run-time book
+        keeping such as memory management, and non-algorithmic
+        optimization to the compiler.  Referential transparency means
+        that more optimizations can be applied in more places in a
+        program than is the case with imperative programs, simply
+        because proving that it is safe to apply a particular
+        optimization is so much easier in the absence of side effects.
 
-        Mercury was designed as an industrial strength purely
-        declarative programming language aimed at the rapid
-        development of medium and large scale programs with the
-        emphasis on producing fast, correct programs.
+        Mercury was designed as a purely declarative, industrial
+        strength programming language aimed at the rapid development
+        of medium and large scale systems with the emphasis on
+        producing fast, correct programs.
 
         To this end, Mercury doesn't support a corner-cutting
         programming style: you /have/ to get the types right, check
@@ -169,10 +200,11 @@ DECLARATIVE VS IMPERATIVE PROGRAMMING
         an option [footnote: Mercury does have support for impure code
         via calls to another language, but one has to label each such
         call explicitly; in the end it is often easier just to do the
-        right thing.].  Very often, Mercury programmers find that a
-        program that compiles also does exactly what was intended; in
-        the author's long experience this almost never happens with
-        imperative programs.
+        right thing.].  Very often, Mercury programmers find that once
+        a program is accepted by the compiler, it also does exactly
+        what was intended; in the author's long experience this almost
+        never happens with imperative languages, even for small
+        programs.
 
         [XXX Place to mention types, garbage collection, polymorphism,
         pattern matching, etc etc?]
@@ -184,9 +216,9 @@ DECLARATIVE VS IMPERATIVE PROGRAMMING
 
         Purity is all very well, but the fact remains that
         occasionally one has to interoperate with code written in
-        impure code and that (very rarely and usually when that last
-        drop of speed is required) some low-level algorithms may be
-        best expressed as impure constructs.
+        impure languages and that (very rarely and usually when that
+        last drop of speed is required) some low-level algorithms may
+        be best expressed as impure constructs.
 
         For the former, Mercury has a simple and well developed
         foreign language interface allowing the programmer to write
@@ -195,20 +227,20 @@ DECLARATIVE VS IMPERATIVE PROGRAMMING
         language in question - the alternative is to use C as the
         lingua franca in the traditional style.)  It is the
         programmer's responsiblility to supply the appropriate purity
-        declarations for predicates defined using foreign code.
+        declarations for predicates defined in terms of foreign code.
 
         The latter is handled using purity annotations.  Impure code
         (written in a foreign language) must be labelled as such.
         These labels also have to be applied to all predicates that
-        use the impure code.  At some point (hopefully) a pure
+        use the impure code.  At some point we hope that a pure
         interface can be presented to the programmer, in which case
-        the program must include a "promise" to the compiler that 
+        the program must include a /promise/ to the compiler that 
         impurity annotations are not required for users of the
         top-level predicate with an impure definition.
 
     MERCURY PHILOSOPHY
 
-        [I think I've already covered this one.  Tyson suggests an
+        [XXX I think I've already covered this one.  Tyson suggests an
         implementation philosophy section (e.g. no distributed fat) in
         a much later section.]
 
@@ -221,15 +253,17 @@ TYPES
 
     The primitive Mercury types are int, float, char and string -
     examples are 123, 3.141, ('x'), and "foo", respectively.
+    [Footnote: Mercury also includes tuples, such as {"Route", 66},
+    and higher order values, namely predicates and functions, among
+    its primitive types; however, we can ignore these for now.]
 
     While primitive types are recognised by the compiler, no
     operations are.  Operations on the primitive types are defined in
-    modules of the same name in the standard library.
+    modules of the same name in the Mercury standard library.
 
     ALGEBRAIC TYPES
 
-        You can define new types in Mercury as the following examples
-        illustrate:
+        You can define new types in Mercury:
 
         [begin code]
 
@@ -244,11 +278,15 @@ TYPES
         [end code]
 
         Here primary_colour is the name of the new type and its
-        /constructors/ (possible values) are red, green and blue.
+        /data constructors/ (possible values) are red, green and blue.
 
         Similarly rgb_colour is a type with only one constructor,
-        rgb/3, which takes three float arguments (this is rather like
-        a C struct).
+        rgb/3, which in this case takes three float arguments.
+        [Footnote: some languages require you to add empty parentheses
+        after function symbols, such as red, green, and blue above,
+        that have no arguments; Mercury, on the other hand, requires
+        that the parentheses be omitted alltogether if the functor has
+        no arguments.]
 
         You can define parametric types
 
@@ -269,7 +307,7 @@ TYPES
         We can have instances of binary_tree(T) for any type T - for
         example, binary_tree(int), binary_tree(string) or even
         binary_tree(binary_tree(...)).
-        
+
         - T here is said to be a type variable.
         - Variables of any kind in Mercury are distinguished by
           starting with a capital letter.
@@ -294,15 +332,19 @@ TYPES
         library.)
 
         (Note that Mercury doesn't get confused if you use the same
-        name for both type and constructor.)
+        name for both type and data constructor.)
 
-        [NOTE: Tyson suggests that diagrams would make this section
+        [XXX Tyson suggests that diagrams would make this section
         easier to understand.]
 
     PATTERN MATCHING
 
         Pattern matching is the primary means of identifying which
-        constructor is used for a particular type value.  For example:
+        constructor is used for a particular type value.  The
+        following function definition illustrates:
+        [Footnote: functions are a useful shorthand for predicates
+        that have a single output and can therefore appear as
+        sub-expressions.]
 
         [begin code]
 
@@ -322,9 +364,20 @@ TYPES
 
         The first clause matches when the first argument is a leaf/0
         and the second clause matches when the first argument is a
-        branch/3.
+        branch/3, unifying A, L, and R with the arguments of the
+        branch/3 value.
 
-        Alternatively one can use explicit unification as in
+        (Here we using if-then-else expressions where what follows the
+        "then" or "else" is the result of the whole if-then-else
+        expression.)
+
+        Note that all function clauses must compute results of the
+        same type.  Similarly, the results of the "then" and "else"
+        arms of an if-then-else expression must have the same type.
+
+        Another way of writing insert/2 is to use explicit unification
+        to find out what data constructor was used for a particular
+        argument:
 
         [begin code]
 
@@ -333,22 +386,37 @@ TYPES
 
             insert(T0, X) = T :-
                 (
-                    T0 = leaf,
-                    T  = branch(X, leaf, leaf)
+                    T0 = leaf,           T  = branch(X, leaf, leaf)
                 ;
                     T0 = branch(A, L, R),
-                    ( if X < A then
-                        T = branch(A, insert(L, X), R)
-                      else if A < X then
-                        T = branch(A, L, insert(R, X))
-                      else
-                        T = branch(X, L, R)
+                    ( if      X < A then T = branch(A, insert(L, X), R)
+                      else if A < X then T = branch(A, L, insert(R, X))
+                      else               T = branch(X, L, R)
                     )
                 ).
 
         [end code]
 
-        or unification in an if-then-else:
+        Here we follow the function head with a ":-" and a /goal/ that
+        fills in the result.  (In fact, this is exactly how the
+        compiler would see the original implementation of insert/2.)
+
+        The goal in this case is a special kind of disjunction
+        ("choice") called a /switch/.  In this case, the argument T0
+        is unified with leaf/0 in the first disjunct and branch/3 in
+        the second.  Since T0 is an "in" mode argument, the compiler
+        knows that only one of these disjuncts will succeed (if two or
+        more disjuncts could succeed at the same time then this
+        wouldn't be a switch.)  Switches are also very common choice
+        structures in Mercury.
+        [Footnote: the convention is to name a sequence of related
+        values as X0, X1, X2, ..., X.]
+
+        (Note that in this version we are using if-then-else /goals/,
+        as opposed to if-then-else expressions.)
+
+        The third way we could implement insert/2 is to use an
+        if-then-else to decide what to do:
 
         [begin code]
 
@@ -356,85 +424,25 @@ TYPES
             :- mode insert(in, in) = out is det.
 
             insert(T0, X) = T :-
-                ( if T0 = leaf then
-                    T  = branch(X, leaf, leaf)
-                  else
-                    T0 = branch(A, L, R),
-                    ( if X < A then
-                        T = branch(A, insert(L, X), R)
-                      else if A < X then
-                        T = branch(A, L, insert(R, X))
-                      else
-                        T = branch(X, L, R)
+                ( if T0 = branch(A, L, R) then
+                    ( if      X < A then T = branch(A, insert(L, X), R)
+                      else if A < X then T = branch(A, L, insert(R, X))
+                      else               T = branch(X, L, R)
                     )
+                  else                   T = branch(X, leaf, leaf)
                 ).
 
         [end code]
 
-    EQUIVALENCE TYPES
-
-        It is also useful to be able to declare type synonyms.  For
-        example:
-
-        [begin code]
-
-            :- type int_tree == tree(int).
-
-        [end code]
-
-        Mercury would then make no distinction between a reference to
-        int_tree and a reference to tree(int).
-
-        Equivalence types can also be parametric:
-
-        [begin code]
-
-            :- type list_tree(T) == tree(list(T)).
-
-        [end code]
-
-    ABSTRACT TYPES
-
-        Often one needs to export a type, but hide it's definition.
-        Abstract types are used for this purpose:
-
-    [begin code]
-
-        :- module complex.
-        :- interface.
-        :- import_module float.
-
-        :- type complex.
-
-        :- func rectangular(float, float) = complex.    % re, im.
-        :- func polar(float, float) = complex.          % r, theta.
-        :- func complex + complex = complex.
-        :- func complex * complex = complex.
-        ...
-
-        :- implementation.
-
-        :- type complex
-            --->    re_im(float, float).
-
-        ... definition of funcs using private rectangular
-            representation
-
-    [end code]
-
-        The abstract type declaration in the module interface must be
-        matched by a concrete type definition (which may be an
-        equivalence) in the implementation section.
-
-        The definition of the abstract type is hidden from users of
-        the complex module.
-
-        Abstract types may also be parametric.
+        This is also fine, although where possible it is often a
+        better idea to use pattern matching or switches, since then
+        the compiler generally has better scope for optimisation.
 
     ALGEBRAIC TYPES WITH FIELDS
 
-        Just as with C, it is possible to give names to constructor
-        fields:
+        Just as with many languages, it is possible to give names to
+        the fields in data constructors, which can be used to access
+        just those fields.
 
         [begin code]
 
@@ -447,38 +455,109 @@ TYPES
 
         [end code]
 
-        Now, if X is a value of type rgb_colour then X ^ red,
+        [Footnote: not all fields have to be named, although one has
+        to use pattern matching or unification to access unnamed
+        fields.]
+
+        Now, say X is a value of type rgb_colour.  Then X ^ red,
         X ^ green and X ^ blue are expressions that return the value
-        in the corresponding fields.  For example, if we have
+        in the corresponding fields.  If we have
+
+        [begin code]
 
             X = rgb(0.1, 0.2, 0.3)
 
+        [end code]
+
         then
+
+        [begin code]
 
             X ^ red   = 0.1,
             X ^ green = 0.2,
             X ^ blue  = 0.3
 
-        A field can be updated in the following way:
+        [end code]
+
+        A field can be "updated" in the following way:
+
+        [begin code]
 
             Y = ( X ^ red := 0.4 )
 
+        [end code]
+
         results in
+
+        [begin code]
 
             Y = rgb(0.4, 0.2, 0.3)
 
-        So updating a field is the same as applying a substitution to
-        a field and obtaining the new value.  We can chain several
-        substitutions together:
+        [end code]
+
+        What we're actually doing here is applying a substitution to
+        a field and obtaining a new value - X is unaffected by the
+        substitution.
+
+        We can chain several substitutions together like this:
+
+        [begin code]
 
             Y = ((( X ^ red   := 0.4 )
                       ^ green := 0.5 )
                       ^ blue  := 0.6 )
 
-        * Note that it is currently an error for the same field name to
-        be used in type different /types/ in the same scope.  However,
-        different constructors of a type may have fields with the same
-        name.  For example:
+        [end code]
+
+        Fields can also nest:
+
+        [begin code]
+
+            :- type rgb_point
+                --->    rgb_point(
+                            x   :: float,
+                            y   :: float,
+                            rgb :: rgb_colour
+                        ).
+
+        [end code]
+
+        Now, if we have
+
+        [begin code]
+
+            X = rgb_point(3.0, 2.0, rgb_colour(0.1, 0.2, 0.3))
+
+        [end code]
+
+        then
+
+        [begin code]
+
+            X ^ rgb ^ red = 0.1
+
+        [end code]
+
+        and
+
+        [begin code]
+
+            Y = ( X ^ rgb ^ red := 0.4 )
+
+        [end code]
+
+        results in
+
+        [begin code]
+
+            Y = rgb_point(3.0, 2.0, rgb_colour(0.4, 0.2, 0.3))
+
+        [end code]
+
+        Note that it is an error for the same field name to be used in
+        data constructors for different /types/ defined in the same
+        module.  However, different /constructors/ of a type may have
+        fields with the same name.  For example:
 
         [begin code]
 
@@ -487,10 +566,15 @@ TYPES
             :- type bar ---> bar(a :: int).
 
         [end code]
+        [Footnote: foo, bar, baz and quux are traditional programming
+        names used in much the same way as Tom, Dick or Harry might be
+        used to name arbitrary individuals.]
 
-        would lead to an error since types foo and bar are both
-        visible in the same scope and both have constructors with a
-        common field name.  The following is acceptable, however:
+        would lead to the compiler flagging an error since the types
+        foo and bar are both defined in the same scope and both have
+        constructors with a common field name.  The following is
+        acceptable, however, since all the data constructors with the
+        same field name belong to the same type:
 
         [begin code]
 
@@ -501,18 +585,132 @@ TYPES
 
         [end code]
 
+        Field access syntax is just syntactic sugar for functions that
+        are automatically created by the compiler.  It is also
+        possible to write your own functions that can be used as field
+        names (for example, if you wanted to compute a value rather
+        than storing it in the data constructor, but make it look like
+        a field.)  We will go into this in more detail later on XXX.
+        [Footnote: /syntactic sugar/: syntax that makes life easier,
+        without otherwise adding anything new to the language.]
+
+    EQUIVALENCE TYPES
+
+        For documentation and brevity it is also useful to be able to
+        declare type synonyms:
+
+        [begin code]
+
+            :- type int_tree == tree(int).
+
+        [end code]
+
+        Mercury would make no distinction between int_tree and
+        tree(int).
+
+        Equivalence types can also take parameters:
+
+        [begin code]
+
+            :- type list_tree(T) == tree(list(T)).
+
+        [end code]
+
+    ABSTRACT TYPES
+
+        Often one wants to export a type from a module, but hide its
+        definition so that users of the module can only manipulate
+        values of the type in question via the predicates exported by
+        the module interface.
+
+        Abstract types are used for this purpose:
+
+    [begin code]
+
+        :- module complex.
+        :- interface.
+        :- import_module float.
+
+        :- type complex.                        % Abstract type.
+
+            % Constructor functions for complex numbers.
+            %
+        :- func rect(float, float) = complex.   % re, im.
+        :- func polar(float, float) = complex.  % r, theta.
+
+            % Operations on complex numbers.
+            %
+        :- func complex + complex = complex.
+        :- func complex * complex = complex.
+        ...
+
+        :- implementation.
+
+            % This implementation uses a single, rectangular
+            % representation.
+            %
+        :- type complex                         % Concrete type.
+            --->    re_im(float, float).
+
+        ... implementation of interface using private representation
+
+    [end code]
+
+        [Footnote: Mercury supports overloaded names, where the same
+        name can be used for several different things; the compiler
+        uses type information to work out which is really meant.  This
+        is how we can use the functor (+)/2 for addition for ints,
+        floats, complex numbers etc., despite the fact that these
+        operations have different implementations.]
+
+        The abstract type declaration in the module interface must be
+        matched by a concrete type definition (an algebraic or
+        equivalence type) in the implementation section.
+
+        The definition of the abstract type is hidden from users of
+        the complex module.
+
+        Finally, abstract types may also take parameters:
+
+        [begin code]
+
+            :- module set.
+            :- interface.
+
+            :- type set(T).                     % Abstract type.
+
+            :- func empty = set(T).
+            :- func union(set(T), set(T)) = set(T).
+            ...
+
+            :- implementation.
+            :- import_module list.
+
+                % This implementation uses lists to represent sets.
+                %
+            :- type set(T) == list(T).          % Concrete type.
+
+            empty       = [].
+            union(A, B) = A ++ B.
+            ...
+
+        [end code]
+
     * TYPES WITH USER-DEFINED EQUALITY
 
         [XXX Defer explanation until later.]
 
 PREDICATES
 
-    In logical terms, a predicate describes a relationship between its
-    arguments.
+    The key computational unit in Mercury is the predicate.  A
+    predicate describes a relationship between its arguments; it is
+    also possible to provide a procedural view of Mercury predicates,
+    which is how they can be used in a programming language.
 
     Predicates cover not only tests and functions, as found in other
     languages, but also procedures with multiple return values and
-    even non-deterministic relationships.
+    even non-deterministic relationships, in which there may be
+    several different solutions for a given set of input arguments.
 
     INTRODUCTION
 
@@ -529,7 +727,7 @@ PREDICATES
 
             Head.
 
-        These sorts of clauses are called facts.
+        These sorts of clauses are called /facts/.
 
         The body of a predicate clause is a /goal/ - a logical formula
         that must be satisfied in order for the head to hold.
@@ -552,10 +750,10 @@ PREDICATES
         that this is a deterministic predicate: it will always succeed
         and has just one solution for any pair of inputs.
 
-        (This sort of deterministic relation with a single output is
+        (This sort of deterministic predicate with a single output is
         called a function.  Functions are so common that Mercury
         includes special syntax and conventions to simplify working
-        with them.  More of this in a later section.)
+        with them.  More of this in a later section XXX.)
 
         For a more interesting example, consider the following small
         genealogical database:
@@ -571,7 +769,7 @@ PREDICATES
         We start by defining predicates that we can use to decide if a
         particular person is male or female.  These predicates are
         labelled semidet because they have at most one solution
-        (success) for a given argument.
+        (success) for a given argument, but might also fail.
 
         [begin code]
 
@@ -592,6 +790,7 @@ PREDICATES
         The definition for female/1 states that female(Person)
         succeeds iff male(Person) fails.  (Recall that variables in
         Mercury are distinguished by starting with a capital letter.)
+        [Footnote: /iff/: if and only if.]
 
         [begin code]
 
@@ -615,7 +814,7 @@ PREDICATES
         as an input and return a result in the second.  The
         determinism is semidet again because they are not exhaustive:
         some inputs can cause them to fail (e.g. there is no solution
-        for father(
+        for father(arthur, X).)
 
         [begin code]
 
@@ -639,7 +838,7 @@ PREDICATES
           (e.g. if Child = cissy).
 
         (How failure and multiple solutions affect the execution of a
-        Mercury program is explained below.)
+        Mercury program will be explained below.)
 
         [begin code]
 
@@ -672,8 +871,8 @@ PREDICATES
             det                     1               1
             multi                   1               at least one
 
-        (There are a few other determinisms, but we shan't cover them
-        at this point.)
+        (There are a few other determinisms, but we don't need to
+        consider them just yet XXX.)
 
         The compiler will check that your determinism declarations are
         correct.
@@ -704,14 +903,14 @@ PREDICATES
         Child = carl and Child = sissy.
 
         There is no reason why a predicate cannot have several output
-        arguments (or even no input arguments...)  For example, we
+        arguments or even no input arguments.  For example, we
         might go on to add
 
         [begin code]
 
             :- pred parents(person, person, person).    % Child, Mother, Father.
-            :- mode parents(in,     out,    out) is semidet.
-            :- mode parents(out,    in,     in) is nondet.
+            :- mode parents(in,     out,    out   ) is semidet.
+            :- mode parents(out,    in,     in    ) is nondet.
 
             parents(Child, Mother, Father) :-
                 mother(Child, Mother),
@@ -720,7 +919,8 @@ PREDICATES
         [end code]
 
         The first mode of parents/3 is semidet because both mother/2
-        and father/2 are semidet when called with Child as an input.
+        and father/2 are semidet when called with Child as an input
+        and both must succeed for parents/3 to succeed.
 
         The second mode is nondet for similar reasons, but exhibits an
         interesting property.  At first glance you might think that
@@ -734,6 +934,10 @@ PREDICATES
         however - the compiler will recognise the situation and treat
         the definition of parents/3 like this as far as the second
         mode is concerned:
+        [Footnote: the compiler isn't doing any special analysis here;
+        this is just a natural consequence of conversion to
+        super-homogeneous normal form, which will be explained later
+        on XXX.]
 
         [begin code]
 
@@ -747,8 +951,8 @@ PREDICATES
         [end code]
 
         So here father/2 is being called with (out, in) arguments and
-        the parents/3 succeeds if the result X is bound to the same
-        value as Child.
+        parents/3 succeeds if the result X is bound to the same value
+        as Child.
 
         In effect the compiler has deduced that father/2 has the
         following implied mode:
@@ -777,30 +981,30 @@ PREDICATES
         [begin code]
 
             :- pred father(person, person).     % Child, Father.
-            :- mode father(in,     out) is semidet.
-            :- mode father(out,    in) is nondet.
+            :- mode father(in,     out   ) is semidet.
+            :- mode father(out,    in    ) is nondet.
 
         f1  father(betty, arthur).
         f2  father(carl,  bill).
         f3  father(cissy, bill).
 
             :- pred mother(person, person).     % Child, Mother.
-            :- mode mother(in,     out) is semidet.
-            :- mode mother(out,    in) is nondet.
+            :- mode mother(in,     out   ) is semidet.
+            :- mode mother(out,    in    ) is nondet.
 
         m1  mother(bill,  alice).
         m2  mother(carl,  betty).
         m3  mother(cissy, betty).
 
             :- pred parent(person, person).     % Child, Parent.
-            :- mode parent(in,     out) is nondet.
-            :- mode parent(out,    in) is nondet.
+            :- mode parent(in,     out   ) is nondet.
+            :- mode parent(out,    in    ) is nondet.
 
         p1  parent(Child, Parent) :- father(Child, Parent).
         p2  parent(Child, Parent) :- mother(Child, Parent).
 
             :- pred ancestor(person, person).   % Person, Ancestor.
-            :- mode ancestor(in,     out) is nondet.
+            :- mode ancestor(in,     out   ) is nondet.
 
         a1  ancestor(Person, Ancestor) :-
                 parent(Person, Ancestor).
@@ -810,8 +1014,8 @@ PREDICATES
                 ancestor(Parent, Ancestor).
 
             :- pred parents(person, person, person).    % Child, Mother, Father.
-            :- mode parents(in,     out,    out) is semidet.
-            :- mode parents(out,    in,     in) is nondet.
+            :- mode parents(in,     out,    out   ) is semidet.
+            :- mode parents(out,    in,     in    ) is nondet.
 
         s1  parents(Child, Mother, Father) :-
                 mother(Child, Mother),
@@ -842,10 +1046,10 @@ PREDICATES
 
         So one solution to parent(cissy, Parent) is Parent = bill.  We
         obtained this by first expanding the goal according to p1 and
-        then expanding the resulting goal (father(cissy, Parent))
+        then expanding the resulting goal father(cissy, Parent)
         according to each of f1, f2 and f3 until we found one that
-        matched.
-        
+        succeeded.
+
         If the program later has to backtrack over this goal then we
         have to forget the binding Parent = bill and try the next
         clause for parent/2 (since there are no more clauses for
@@ -857,7 +1061,7 @@ PREDICATES
             p2 =>
                 mother(cissy, Parent)
                 m1 => FAIL because bill \= cissy
-                m2 => FAIL because bill \= cissy
+                m2 => FAIL because carl \= cissy
                 m3 => Parent = betty
 
         [end code]
@@ -969,8 +1173,8 @@ PREDICATES
 
         [end code]
 
-        (As was indicated earlier, in practice we'd be more likely to
-        write the goal as just
+        As we indicated earlier in the definition of parents/3, in
+        practice we'd be more likely to write the goal as just
 
         [begin code]
 
@@ -979,7 +1183,7 @@ PREDICATES
         [end code]
 
         and let Mercury work out where the implicit unification should
-        go.)
+        go.
 
         [The above example might give the impression that Mercury is a term
         rewriting system.  This is not true (although conceivably a very
@@ -988,12 +1192,10 @@ PREDICATES
         computationally equivalent.]
 
         In practice, ninety per cent of the code one writes is
-        deterministic and the majority of what's left will be
-        semi-deterministic.  However, there are times (like in the example
+        deterministic.  However, there are times (as in the example
         above) when non-determinism can be used to write very clear,
         concise programs.  Support for backtracking and unification is
-        what distinguishes Mercury and other logic programming languages
-        from functional languages.
+        what distinguishes Mercury from purely functional languages.
 
     RECURSION
 
@@ -1003,10 +1205,10 @@ PREDICATES
 
         Declarative languages typically provide but one mechanism for
         such things: recursion.  A recursive predicate is simply one
-        that calls itself.  (Later on we will discover /higher order/
-        predicates and observe that the standard library supplies
-        predicates that stand in for the common iterative mechanisms
-        found in imperative languages.)
+        defined in terms of itself.  (Later on we will discover
+        /higher order/ predicates and observe that the standard
+        library supplies predicates that stand in for the common
+        iterative mechanisms found in imperative languages.)
 
         Some simple examples:
 
@@ -1034,16 +1236,17 @@ PREDICATES
         Although middle recursion is easy to read, it incurrs some
         performance penalty in that each iteration has to record
         something extra on the stack in order to finish up the
-        computation (that said, the compiler can in many cases turn
+        computation.
+        [Footnote: that said, the compiler can in fact turn some
         middle recursive predicates into equivalent tail recursive
-        predicates that do not incurr a stack overhead.)
+        predicates that do not incurr a stack overhead.]
 
-        [XXX Include a side-bar or something explaining stack frames?]
+        [XXX Include a side-bar or something explaining stack frames.]
 
-        Tail recursion describes the situation where the last thing a
+        /Tail recursion/ describes the situation where the last thing a
         predicate does is call itself.  Since there is nothing left to
         do after the call, the compiler can reuse the current call's
-        stack space for the recursive call, allowing the predicate to
+        stack frame for the recursive call, allowing the predicate to
         execute using only a fixed amount of stack space.  For
         example, tail recursive implementations of the above
         functions are
@@ -1064,61 +1267,81 @@ PREDICATES
 
         [end code]
 
+        Tail recursive code like this should execute just as quickly
+        and efficiently as a for or while loop in an imperative
+        language.
+
     UNIFICATIONS
 
-        Mercury has but two basic atomic (non-compound) types of goal:
-        unifications and calls.
+        Mercury has but two basic atomic (i.e. indivisible) types of
+        goal: unifications and calls.
 
         A unification is written X = Y.  A unification can fail if X
         and Y are not unifiable.
 
         Two values are unifiable if they are "structurally similar" -
-        that is, where you see a type constructor in one, you either
-        see the same type constructor in the other (and the
+        that is, where you see a data constructor in one, you either
+        see the same data constructor in the other (and the
         corresponding arguments are also structurally similar) or a
         variable, which will end up being bound to the corresponding
         term on the other side if the unification is successful.
 
-        (Note that unlike Prolog, Mercury forbids the aliasing of
-        variables where a partially instantiated data structure
-        contains the same unbound variable in two different places.)
+        [Footnote: unlike Prolog, Mercury forbids the aliasing of
+        variables whereby a partially instantiated data structure
+        may contain the same unbound variable in two different places.
+        This will be explained fully in a later chapter. XXX]
 
         Unifications, therefore, can be used to bind variables to
         values, test to see if a variable is bound to a particular
         constructor, unpack the arguments of a constructor or all of
         the above.
 
-        Examples:
+        In the following examples we assume that variables are
+        initially unbound:
 
-            X = 123
-                - if X is unbound then it succeeds binding X to the
-                  value 123;
-                - if X is bound then it succeeds iff the value X is
-                  bound to is also 123.
+                 123 = 123          - Succeeds.
 
-            X = Y
-                - if one of X or Y is bound and the other is not then
-                  this succeeds with the unbound variable being bound
-                  to the same value as the bound variable;
-                - if both are bound then this succeeds iff the two
-                  variables are bound to identical values.
-                  [XXX Should we mention partial instantiation?]
+                   X = 123          - Succeeds binding X to 123.
 
-            X = foo(A, B, C)
-                - if X is unbound and A, B and C are bound, then this
-                  succeeds binding X to the value foo(A, B, C) (here
-                  foo/3 is a type constructor);
-                - if X is bound then this succeeds iff X is bound to a
-                  value foo(P, Q, R) and the unifications A = P, B = Q
-                  and C = R succeed - this may result in some of A, B
-                  and C being bound as a result if they are unbound at
-                  the time of the unification.
+                 123 = 234          - Fails.
+
+                   X = foo(1, 2, 3) - Succeeds, binding X to foo(1, 2, 3).
+
+        foo(X, Y, Z) = foo(1, 2, 3) - Succeeds, binding A = 1, B = 2, Z = 3.
+
+        foo(X, Y, 4) = foo(1, 2, 3) - Fails, because 4 \= 3.
+
+        foo(X, 2, 3) = foo(1, 2, Z) - Succeeds, binding X = 1, Z = 3.
+
+        The complex unifications are most easily understood by first
+        converting them into /super homogeneous normal form/ (this is
+        what the compiler does.)  In SHNF, the left hand side of each
+        unification is a variable and the right hand side is either
+        another variable or a functor, all of whose arguments are
+        variables.  For example
+
+        foo(X, 2, 3) = foo(1, 2, Z)
+
+        becomes
+
+            V = foo(A, B, C), A = X, B = 2, C = 3,
+            V = foo(P, Q, R), P = 1, Q = 2, R = Z,
+            A = P,
+            B = Q,
+            C = R
+
+        where V, A, B, C, P, Q, and R are all temporary variables
+        introduced in the conversion to SHNF.
 
     CALLS
 
         The other kind of primitive goal supported by Mercury is the
         predicate call, p(X1, ..., Xn), which we have already seen in
         the examples above.
+
+        One way to picture the evaluation of a call is to think of it
+        as expanding into the different clause bodies for the
+        predicate definition while looking for solutions.
 
     CONJUNCTION
 
@@ -1130,10 +1353,10 @@ PREDICATES
         (The compiler may have to reorder the sequence of goals in a
         clause in order to satisfy the mode constraints.  Although one
         can set a flag to force the compiler to do no more reordering
-        than is necessary, in general this will mean that many
-        optimizations will not be applicable.  The upshot of this is
+        than is necessary, in general this will mean that certain
+        optimizations will not be possible.  The upshot of this is
         that one should avoid writing code that assumes a particular
-        evaluation order other than that dictated by mode
+        evaluation order other than that dictated by the mode
         constraints.)
 
         A conjunction executes by trying each of the goals in order.
@@ -1149,15 +1372,17 @@ PREDICATES
 
         The sub-goal G is said to be in a /negated context/ and as
         such cannot bind any variables visible outside the negation
-        (since the only way not G can succeed is if G fails.)
+        (since the only way not G can succeed is if G fails, in which
+        case it will not produce any variable bindings.)
 
-        Note that not not G is equivalent to G (while not not G would
-        be an odd thing to write, some of the code transformations the
-        compiler performs can generate such things; getting the modes
-        right for such things requires that the compiler observe this
+        Note that not not G is equivalent to G and hence may bind
+        variables if it succeeds (while not not G would be an odd
+        thing to write, some of the code transformations the compiler
+        performs can generate such things; getting the modes right for
+        such things requires that the compiler observe this
         simplification rule.)
 
-    IF-THEN-ELSE
+    IF-THEN-ELSE GOALS
 
         Mercury's if-then-else construct looks like this:
 
@@ -1167,7 +1392,7 @@ PREDICATES
 
         [end code]
 
-        (You may also see if-then-elses written as
+        You may also see if-then-elses written as
 
         [begin code]
 
@@ -1175,26 +1400,7 @@ PREDICATES
 
         [end code]
 
-        although the author finds this style less appealing.)
-
-        On rare occasions (mostly concerned with handling errors) the
-        following abbreviation is useful:
-
-        [begin code]
-
-            ( if ConditionGoal then YesGoal )
-
-        [end code]
-
-        in which case it is taken as shorthand for
-
-        [begin code]
-
-            ( if ConditionGoal then YesGoal else true )
-
-        [end code]
-
-        where true is a built-in goal that always succeeds.
+        although the author finds this style less appealing.
 
         While the parentheses are not always required, it is a very
         good idea to include them in order to avoid confusing
@@ -1204,35 +1410,19 @@ PREDICATES
 
         [begin code]
 
-            ( if      condition1(...) then code_for_case1(...)
-              else if condition2(...) then code_for_case2(...)
-              else if condition3(...) then code_for_case3(...)
+            ( if      ConditionGoal1 then YesGoal1
+              else if ConditionGoal2 then YesGoal2
+              else if ConditionGoal3 then YesGoal3
               ...
-              else                         code_for_fallthrough_case(...)
+              else                        NoGoal
             )
 
         [end code]
 
-        An if-then-else goal works just as you would expect, with the
-        following provisos:
-        - if the ConditionGoal is non-deterministic and the YesGoal
-          fails then the program will backtrack into the
-          ConditionGoal;
-        - if there is any solution to the ConditionGoal then the
-          NoGoal will never be executed;
-        - the ConditionGoal may not bind any variables that are
-          visible outside the if-then-else (logically the
-          ConditionGoal is in a negated context and the same rules
-          apply as for ordinary negated goals - however, the YesGoal
-          /can/ bind externally visible variables to results obtained
-          in the ConditionGoal);
-        - an if-then-else goal can fail in its entirety just like any
-          other compound goal.
+        Extra parentheses are not required if any of ConditionGoals,
+        YesGoals or NoGoal are compound goals.
 
-        [Ondrej Bojar says examples are necessary here.  Good point.]
-
-        These rules should be clear from the semantics of if-then-else
-        goals.  An if-then-else goal
+        The if-then-else goal
 
         [begin code]
 
@@ -1243,22 +1433,115 @@ PREDICATES
         is equivalent to the disjunction
 
         [begin code]
-                
+
             ( ConditionGoal, YesGoal ; not ConditionGoal, NoGoal )
 
         [end code]
 
-        but is implemented more efficiently (if ConditionGoal has no
-        solutions this is detected immediately, it doesn't have to be
-        retested in the "else" arm of the disjunction.)
+        but will be implemented more efficiently by the compiler (if
+        ConditionGoal produces no solutions in the first disjunct then
+        there's no point in checking again that it has none in the
+        second.)
 
-        Since  ConditionGoal is in a negated context in the "else" arm
-        of the disjunction, it cannot produce any outputs that would
-        be used in NoGoal or anything outside the if-then-else as a
-        whole.  It can, however, produce outputs that are only used in
-        the YesGoal.  (The reason for this restriction is slightly
-        subtle and will be explained in more detail later. [NB. It's
-        to do with having mode independent semantics.])
+        It's worth looking at a few examples to really understand how
+        if-then-else goals work.  Again, we assume that all variables
+        are initially unbound:
+
+        [begin code]
+
+            ( if ( X = 1 ; X = 2 ) then ( X = 2 ; X = 4 ) else X = 5 )
+
+        [end code]
+
+        The above goal is non-deterministic (the condition is multi
+        and the then-goal is non-deterministic), but has the single
+        solution X = 2.
+
+        [begin code]
+
+            ( if ( X = 1 ; X = 2 ) then ( X = 3 ; X = 4 ) else X = 5 )
+
+        [end code]
+
+        The above goal is also non-deterministic for the same reason,
+        but has no solutions.
+
+        [begin code]
+
+            ( if 1 = 2 then ( X = 3 ; X = 4 ) else ( X = 5 ; X = 6 ) )
+
+        [end code]
+
+        The above goal is non-deterministic because the else-goal is
+        non-deterministic.  Since the condition must fail, the
+        else-goal is evaluated, with solutions X = 5 and X = 6.
+
+        [begin code]
+
+            ( if 1 = 1 then ( X = 3 ; X = 4 ) else ( X = 5 ; X = 6 ) )
+
+        [end code]
+
+        The above goal is non-deterministic because the then-goal is
+        non-deterministic.  The condition has precisely one solution,
+        so the then-goal is evaluated, with solutions X = 3 and X = 4.
+
+        That said, in the vast majority of cases where the
+        condition-goal is semidet and the then- and else-goals are
+        deterministic, if-then-else goals will act in very much the
+        same way as similar structures in other programming languages.
+
+        Since the condition goal is in a negated context in the "else"
+        arm of the disjunctive form of an if-then-else, it cannot
+        produce any outputs that would be used in NoGoal or anything
+        outside the if-then-else as a whole.  It can, however, produce
+        outputs that are only used in the YesGoal.  (The reason for
+        this restriction is slightly subtle and will be explained in
+        more detail later.  [XXX It's to do with having mode
+        independent semantics.])
+
+        For example, the following somewhat contrived code violates
+        the constraint because S is bound inside the condition and is
+        also visible outside the if-then-else goal.
+
+        [begin code]
+
+            :- pred prime_divisor(int, int).
+            :- mode prime_divisor(in,  out) is nondet.
+            ...
+
+            :- pred prime_divisor_or_zero(int, int).
+            :- mode prime_divisor_or_zero(in,  out) is multi.
+
+            prime_divisor_or_zero(N, S) :-
+                ( if   prime_divisor(N, S)
+                  then true
+                  else S = 0
+                ).
+
+        [end code]
+
+        The correct way to write prime_divisor_or_zero/2 is
+
+        [begin code]
+
+            prime_divisor_or_zero(N, S) :-
+                ( if   prime_divisor(N, D)
+                  then S = D
+                  else S = 0
+                ).
+
+        [end code]
+
+        Note that if-then-else /expressions/ are slightly different;
+        the following is perfectly legal:
+
+        [begin code]
+
+            prime_divisor_or_zero(N, S) :-
+                S = ( if prime_divisor(N, D) then D else 0 ).
+
+        [end code]
 
     DISJUNCTION
 
