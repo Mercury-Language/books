@@ -2236,7 +2236,8 @@ INPUT AND OUTPUT
 
             The string argument is a format string, very similar in
             spirit to what one would pass to C's printf().  The list
-            argument is a type safe means of passing the 
+            argument is a type safe means of passing the parameters to
+            be formatted.
 
             Using io__format/4 one might write
 
@@ -2314,7 +2315,7 @@ INPUT AND OUTPUT
             malformed or the input source has gone away unexpectedly.)
 
             To this end the io library module defines the following
-            type:
+            type to report the results of input operations:
 
             [begin code]
 
@@ -2324,7 +2325,48 @@ INPUT AND OUTPUT
 
             [end code]
 
-            XXX Here.
+            In order, ok(X) is returned if the input operation
+            succeeded, reading X; eof is returned if the end of file
+            has been reached; and error(ErrorCode) is returned if
+            something went wrong (the function io__error_message/1 can
+            be used to turn ErrorCode into something printable.)
+
+            This arrangement forces the programmer to handle the error
+            cases.  There is still lively debate over whether error
+            codes or throwing exceptions is the best way to handle
+            errors for things like this.  A genuine advantage of the
+            error code approach is that you have to consider the error
+            cases from the outset, which, while requiring a little
+            more initial thought from the programmer, usually pays
+            real dividends later on.
+            [XXX is this the right place to say this?  Should I
+            enlarge on the debate?  Probably no and yes
+            respectively...]
+
+            Two very basic input predicates are
+
+            [begin code]
+
+                :- pred io__read_char(io__result(char), io, io).
+                :- mode io__read_char(in,               di, uo) is det.
+
+                :- pred io__read_line_as_string(io__result(string), io, io).
+                :- mode io__read_line_as_string(in,                 di, uo)
+                            is det.
+
+            [end code]
+
+            The input predicates are also less comprehensive in the
+            sense that there are no predicates io__read_int/3,
+            io__read_float/3 or io__read_string/3.  The problem is
+            that it's not clear exactly what should be allowed to
+            terminate the input stream for an int, float or string.
+            Instead, the library leaves issues of parsing up to
+            applications (there are several programs in the Mercury
+            extras distribution to help, including a lexer and parser
+            generators.)
+
+            Here's a simple program that XXX Here !!!
 
 MODES
     DIRECTION OF DATA FLOW
