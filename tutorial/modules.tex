@@ -53,7 +53,7 @@ f(X) = ...
 
 p(Y, Z) :- ...
 \end{myverbatim}
-Module @a@ \emph{exports} the names defined or declared in its interface
+Module @a@ \emph{exports} the names declared in its interface
 section.  In this case, @a@ exports the type @foo@ and the function
 @f/1@.
 
@@ -92,7 +92,7 @@ Module @b@ exports the type @baz@ and the predicate @q/2@ whose first
 argument is of type @a.foo@ (\ie the type @foo@ defined in module @a@)
 and whose second argument is of type @baz@ (defined in module @b@).
 
-Now let's look at file @c.m@:
+Now look at file @c.m@:
 \begin{myverbatim}
 :- module c.
 :- interface.
@@ -113,7 +113,7 @@ g(X) = ...
 r(Y, Z) :- ...
 \end{myverbatim}
 Module @c@ imports module @b@ in its interface section and can therefore
-use names exported by @b@ in both its interface and implementation
+use names exported by @b@ in both its interface \emph{and} implementation
 sections.  The function declaration for @g/1@ in the interface section
 refers to @b.baz@, as does the predicate declaration for @r/2@ in the
 implementation section.
@@ -123,49 +123,148 @@ The declaration for @r/2@ in the implementation section also refers to
 explicitly import module @a@ in order to use @a.foo@, regardless of the
 fact that module @b@ imports module @a@ in its interface section.  Note
 that the scope of the import declaration in the implementation section
-extends only over that section and not to the interface section.
+extends only over that section and not to the interface section: names
+exported by module @a@ are, in this case, \emph{not} visible in the
+interface section of module @b@.
 
-For economy of typing, it is possible to condense several import
-declarations, such as
+It is possible to condense several import declarations into one to save
+space:
 \begin{myverbatim}
 :- import_module a.
 :- import_module b.
 :- import_module c.
 \end{myverbatim}
-into one if you wish:
+can be shortened to
 \begin{myverbatim}
 :- import_module a, b, c.
 \end{myverbatim}
+should you so wish.
+
+\XXX{Do I need to mention use-module in this book?}
 
 \section{Mutually Dependent Modules}
 
-Mercury has no problem with module @a@ importing module @b@ while at the
+Mercury has no problem with module @a@ importing module @b@ when at the
 same time module @b@ imports module @a@.
 
 The Mercury standard library modules @float@ and @math@, for example,
 are mutually dependent.  The @float@ module defines the basic operations
-on floating point numbers and uses the type @math.domain_error@ to
-report things like division by zero.  The @math@ module defines more
-complex floating point operations, such as the trignometric functions,
-but necessarily depends upon the operations defined in the @float@
-module.
+on floating point numbers, but uses the type @math.domain_error@ to
+report such things as division by zero exceptions.  The @math@ module
+defines more complex floating point operations, such as the trignometric
+functions, but necessarily depends upon the operations defined in the
+@float@ module.
 
 \section{Overloading and Module Qualified Names}
 
-Reusing the same name withing the same module.
+A name is said to be \emph{overloaded} if it is used to label several
+different things.
 
-Reusing the same name as exported by a different module.
+\subsection{Naming Different Things}
+
+Within the same module, the same name can be reused for predicates,
+functions, types, data constructors, insts and modes without confusion.
+That is, the name @foo/1@, say, can be used in the same module to label
+each of these things without ambiguity.  The following is an example of
+overloading gone mad within the same module:
+\begin{myverbatim}
+:- type foo(T) ---> foo(T).
+:- inst foo(I) ---> foo(I).
+:- mode foo(I) ==   (foo(I) >> foo(I)).
+:- func foo(T) =    T.
+:- pred foo(T).
+\end{myverbatim}
+
+\subsection{Same Name, Different Arity}
+
+The same name can also be used to name more than one type, inst, mode
+and so forth within the same module, provided the arity is different in
+each case.  In other words, Mercury will not get confused if you define
+types with names @foo@, @foo/1@, @foo/2@ et cetera in the same module.
+The following is perfectly acceptable:
+\begin{myverbatim}
+:- type foo(T1, T2) ---> ...
+:- type foo(T1)     ==   foo(T1, int).
+:- type foo         ==   foo(string).
+\end{myverbatim}
+The \emph{only} situation where the same name can be used with the same
+arity for the same type of thing is as a data constructor for
+\emph{different} types.  The following is therefore legal
+\begin{myverbatim}
+:- type foo ---> quux ; ...
+:- type bar ---> quux ; ...
+:- type baz ---> quux ; ...
+\end{myverbatim}
+although the next is illegal because @quux/1@ is used for two data
+constructors in the \emph{same} type:
+\begin{myverbatim}
+:- type foo ---> quux(int) ; quux(string).
+\end{myverbatim}
+
+\subsection{Qualifying Names}
+
+Different modules can reuse the same name for the same type of thing.
+Ambiguity is avoided because every name can be \emph{qualified} with its
+module name.  Consider the following modules:
+\begin{myverbatim}
+:- module a.
+:- interface.
+:- type foo ---> ...
+\end{myverbatim}
+and
+\begin{myverbatim}
+:- module b.
+:- interface.
+:- type foo ---> ...
+\end{myverbatim}
+Another module importing @a@ and @b@ can differentiate between the two
+types named @foo@ by using the module qualified versions of their names:
+@a.foo@ and @b.foo@ respectively.
+
+Mercury will, for the most part, be able to decide which module
+qualified name is meant when an \emph{unqualified} overloaded data constructor
+or predicate or function name is used in a clause.  However, sometimes
+it is necessary to provide the compiler with extra information, either
+by using module qualified names or via explicit type qualification (see
+@with_type/2@ in chapter \XXX{} on types.)  However, it is almost always
+necessary to qualify the names of types, modes and insts.
+
+\subsection{Use and Misuse of Overloading}
+
+Overloading can aid the readability of programs, particularly where
+infix operators are used (for instance, the infix operator @(++)/2@ is
+used by the @list@, @string@ and @cord@ modules in the Mercury standard
+library to denote concatenation while @(*)/2@ is used by both the @int@
+and @float@ modules in the Mercury standard library to denote
+multiplication.)
+As with all things, though, it is
+possible to have too much of a good thing.  Amongst other things, it
+would be a bad idea to overload the list data constructors @[]@ and
+@[|]/2@ because having to module qualify these names to avoid ambiguity
+(lists are ubiquitous in declarative programs) would lose the benefit of
+having syntactic sugar for lists in the first place.
+
+A good rule of thumb that maximizes readability while minimizing
+ambiguity is this:
+\begin{itemize}
+\item module qualify every imported predicate name;
+\item module qualify every imported function name whose purpose is not
+completely obvious from its name;
+\item don't module qualify names of imported types or data constructors
+unless absolutely necessary.
+\end{itemize}
 
 \section{The Top-Level Module}
 
 Every program must have a top-level module that exports a @main/2@
 predicate with the following signature:
 \begin{myverbatim}
-:- pred main(io, io).
-:- mode main(di, uo) is det.
+:- pred main(io.state, io.state).
+:- mode main(di,       uo      ) is det.
 \end{myverbatim}
-(where @io@ is a non-module qualified synonym for @io.state@.)
-@main/2@ is the starting point for any Mercury program.
+The @main/2@ predicate is the starting point for any Mercury program
+(not that @main/2@ may be declared @is cc_multi@ instead -- see chapter
+\XXX{} on modes.)
 
 If the top-level module is called @foo@, say, then one can compile the
 program into an executable with just
@@ -175,26 +274,289 @@ program into an executable with just
 This will recompile only the modules that have been changed since the
 last time they were compiled, along with any modules that import them.
 In this way, recompilation time for large projects is kept to a minimum.
-
-Chapter \XXX{} discusses the Mercury compiler and related tools in
-detail.
-
-
+(Chapter \XXX{} discusses the Mercury compiler and related tools in
+detail.)
 
 \section{Abstract Types}
 
+It's not always a good to reveal the \emph{definition} of a type to its
+users.  For one thing, doing so means one cannot later change the
+definition of the type without the risk of breaking other programs that use
+it.  It is a good engineering principle to hide implementation detail
+from users wherever possible.
 
+The @dict/2@ dictionary data type we defined in chapter \XXX{} on basic
+types is a good candidate for a library module that we can re-use over and
+over again.  Users should not be allowed to depend upon details of the
+implementation -- in particular we should retain the freedom to change
+the definition of @dict/2@ at some later point, either to extend its
+functionality or to use a more efficient representation.  We also want
+to be able to do so without requiring existing users of our @dict@
+module to make changes to their code.
+
+The solution to the problem is to make @dict/2@ an \emph{abstract type}.
+\begin{myverbatim}
+:- module dict.
+:- interface.
+
+
+:- type dict(K, V).     % Abstract type.
+
+:- func new_dict = dict(K, V).
+
+:- func insert(K, V, dict(K, V)) = dict(K, V).
+
+:- pred lookup(dict(K, V), K,  V  ).
+:- mode lookup(in,         in, out) is semidet.
+
+
+:- implementation.
+
+
+:- type dict(K, V)      % Definition of abstract type.
+    --->    empty
+    ;       branch(K, V, dict(K, V), dict(K, V)).
+
+new_dict = empty.
+
+insert(K, V, Dict) = ...
+
+lookup(Dict, K, V) :- ...
+\end{myverbatim}
+The line @:- type dict(K, V).@ declares @dict/2@ to be an abstract type.
+An abstract type is just one whose type \emph{declaration} appears in
+the interface section of a module, but omits the \emph{definition}.
+Instead, the full type definition appears in the implementation section.
+
+Since the users of an abstract type have no idea how it is defined, they
+can neither create values of that type directly via construction nor
+examine them via deconstruction.  The only way
+to manipulate such values is to use the operations exported by the
+module defining the abstract type.
+
+Our @dict@ module includes the function @new_dict@ so that users can create
+empty @dict/2@ values in the first place (a function of arity zero is just
+a fixed value.) Users can only extend @dict/2@ values with @insert/3@
+and examine them with @lookup/3@.  The following code in a module using
+module @dict@ is legal:
+\begin{myverbatim}
+:- import_module dict.
+
+this_will_compile :-
+    Dict0 = new_dict,
+    Dict1 = dict.insert("Gateau", 'x', Dict0),
+    ...
+\end{myverbatim}
+However, the next excerpt is not legal because the data
+constructors for @dict/2@, namely @empty@ and @branch/4@, do not appear in
+module @dict@'s interface section and therefore cannot be used by any
+importing module:
+\begin{myverbatim}
+:- import_module dict.
+
+this_wont_compile :-
+    Dict0 = empty,
+    Dict1 = branch("Gateau", 'x', Dict0, Dict0),
+    ...
+\end{myverbatim}
 
 \section{Submodules}
 
-
+It is possible to make one module a \emph{submodule} of another.  This
+is useful for two purposes.  The first is a means of overloading
+function, predicate and type names with the same arity in the same
+parent module.  The second is to structure a large project in a
+single, hierarchical name space.
 
 \subsection{Nested Submodules}
 
+Imagine we wish to define a representation for complex numbers and the
+corresponding arithmetic operations (addition, multiplication and so
+forth) in such a way that floating point numbers and complex numbers can
+be seamlessly combined in expressions.
 
+To do this we need something like the following:
+\begin{myverbatim}
+:- module complex.
+:- interface. 
+:- import_module float.
+
+:- type complex.
+
+:- func i = complex.
+
+:- func float   + complex = complex.
+:- func complex + float   = complex.
+:- func complex + complex = complex.
+
+:- func float   * complex = complex.
+:- func complex * float   = complex.
+:- func complex * complex = complex.
+...
+\end{myverbatim}
+This, of course, breaks the overloading rule that a given name and arity
+cannot be used to define multiple functions (or predicates or types) in
+a module.
+
+The solution is to use a \emph{nested submodule} for each combination
+of @float@ and @complex@:
+\begin{myverbatim}
+:- module complex.
+:- interface.
+:- import_module float.
+
+:- type complex.
+
+:- func i = complex.
+
+    :- module float_complex.    % Nested submodule.
+    :- interface.
+    :- func float   + complex = complex.
+    :- func float   * complex = complex.
+    :- end_module float_complex.
+
+    :- module complex_float.    % Nested submodule.
+    :- interface.
+    :- func complex + float   = complex.
+    :- func complex * float   = complex.
+    :- end_module complex_float.
+
+    :- module complex_complex.  % Nested submodule.
+    :- interface.
+    :- func complex + complex = complex.
+    :- func complex * complex = complex.
+    :- end_module complex_complex.
+...
+
+:- implementation.
+
+:- type complex ---> complex(re :: float, im :: float).
+
+i = complex(0.0, 1.0).
+
+    :- module float_complex.    % Nested submodule.
+    :- implementation.
+    A + complex(Re, Im) = complex(A + Re,     Im).
+    A * complex(Re, Im) = complex(A * Re, A * Im).
+    :- end_module float_complex.
+
+    :- module complex_float.    % Nested submodule.
+    :- implementation.
+    complex(Re, Im) + A = complex(A + Re,     Im).
+    complex(Re, Im) * A = complex(A * Re, A * Im).
+    :- end_module complex_float.
+
+    :- module complex_complex.  % Nested submodule.
+    :- implementation.
+    complex(ReA, ImA) + complex(ReB, ImB) =
+        complex(ReA + ReB, ImA + ImB).
+    complex(ReA, ImA) + complex(ReB, ImB) =
+        complex((ReA * ReB) - (ImA * ImB),
+                (ReA * ImB) + (ReB * ImA)).
+    :- end_module complex_complex.
+...
+\end{myverbatim}
+Each nested submodule section begins with a @:- module modulename@
+declaration and ends with an @:- end_module modulename@ declaration.
+
+If, as above, the sections are separate, with the interface section
+appearing in the interface section of the parent module and the
+implementation section appearing in the implementation section of the
+parent module, then the submodule may be imported by any other module
+that \emph{also} imports the parent module.  Importing the parent
+module, @complex@, \emph{does not} automatically grant access to the
+names exported by the submodules.  Use of the submodules depends upon
+them also being explicitly imported.  This even goes for the parent
+module: if module @complex@ needs to use any of its submodules, then it
+too has to import them in the appropriate section.
+
+If the submodule sections are not separate, then they must appear as a
+unit in the interface section of the parent.  A private submodule can
+only be imported by the parent module or other submodules of the parent
+module.
+
+The module qualified names of the operators defined in the @complex@
+module above and its submodules are
+\begin{myverbatim}
+    complex.complex
+    complex.i
+    complex.float_complex.(+)/2
+    complex.float_complex.(*)/2
+    complex.complex_float.(+)/2
+    complex.complex_float.(*)/2
+    complex.complex_complex.(+)/2
+    complex.complex_complex.(*)/2
+\end{myverbatim}
+Where ambiguity is not an issue, Mercury allows any suffix of
+a fully qualified name to be used.  That is, in context the following
+may all refer to the same thing:
+\begin{myverbatim}
+    complex.float_complex.(+)/2
+    float_complex.(+)/2
+    (+)/2
+\end{myverbatim}
+Thanks to type inference, it is very rare that one would expect to need
+any qualification of @(+)/2@.
+Mercury has no trouble
+working out which operator comes from which (sub)module in an expression
+such as
+\begin{myverbatim}
+    ((2.0 * 2.0) + 3.0*i) * (4.0 + 5.0*i)
+\end{myverbatim}
+which (moving from left to right) uses @float.(*)/2@ and then
+@float_complex.(+)/2@, @float_complex.(*)/2@,
+@complex_complex.(*)/2@, @float_complex.(+)/2@ and
+@float_complex.(*)/2@ from the submodules of the @complex@ module.
 
 \subsection{Separate Submodules}
+
+Where a submodule is too large to sensibly include in the file
+containing the parent module, it can be placed in a \emph{separate
+submodule}.
+
+A module declares parenthood of a separate submodule via an
+@include_module submodulename@ declaration.  If the @include_module@
+declaration appears in the interface section of the parent module, then
+the submodule is public.  If it appears in the implementation section,
+then the submodule is private.
+
+Consider the following three files.  File @a.m@ contains
+\begin{myverbatim}
+:- module a.
+:- interface.
+:- include_module a.b.
+...
+:- implementation.
+...
+\end{myverbatim}
+Module @a.b@ is public because it is included in the interface section.
+
+
+
+File @a.b.m@ contains
+\begin{myverbatim}
+:- module a.b.
+:- interface.
+...
+:- implementation.
+:- include_module a.b.c.
+...
+\end{myverbatim}
+and file @a.b.c.m@ contains
+\begin{myverbatim}
+:- module a.b.c.
+:- interface.
+...
+:- implementation.
+...
+\end{myverbatim}
+The 
+
+
+\subsection{Importing Submodules}
 
 
 
 \section{Conclusion}
+
+\XXX{Some sort of summary.}

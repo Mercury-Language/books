@@ -1,0 +1,865 @@
+% vim: ft=tex ff=unix ts=4 sw=4 et tw=76
+
+\chapter{Mercury By Example}
+
+%include 01-mercury-by-example.polytex.date
+
+This chapter aims to convey through examples a basic feeling for how
+Mercury works.  Because this is the first chapter, we may gloss over some
+fine detail and allow ourselves a certain latitude in precision, but this
+will not worry us as we will correct these deficiencies in later chapters.
+The approach taken here is to start by presenting the ``obvious'' solution
+to a problem and then introduce features of Mercury that allow for more
+elegant or efficient programs --- although we are not necessarily trying to
+write the most efficient programs possible at this point! \XXX{Is this last
+point even necessary?}
+
+
+
+\section{Hello, World!}
+
+It is slightly unfortunate that the ``Hello, World!'' program introduces
+no less than three advanced Mercury concepts, but since tradition
+dictates that tutorial texts start with ``Hello, World!'' we'll just
+have to jump straight in with the knowledge that things will get easier
+thereafter.
+
+We'll start by presenting the complete program which we'll assume we've
+typed into a file called #hello.m#:
+%startcode
+:- module hello.
+:- interface.
+:- import_module io.
+:- pred main(io::di, io::uo) is det.
+:- implementation.
+main(IOState_in, IOState_out) :-
+    io.write_string("Hello, World!\n", IOState_in, IOState_out).
+%endcode
+Let's go through this line by line.
+%startcode
+:- module hello.
+%endcode
+Every module must start with a declaration like this giving the name of the
+module; the Mercury compiler will expect a module called #hello# in
+a file called #hello.m#.
+%startcode
+:- interface.
+%endcode
+An #interface# declaration introduces the part of module describing the
+things we are going to export (\ie allow people to see).
+%startcode
+:- import_module io.
+%endcode
+This #import_module# declaration says that we need to use some of the names
+exported by the #io# module, which is part of the standard Mercury library.
+%startcode
+:- pred main(io::di, io::uo) is det.
+%endcode
+This says that we are going to define a \emph{predicate} called #main# with
+two arguments of type #io# (which happens to be defined in the #io#
+module), the first of which is a \emph{destructive input} argument, and the
+second of which is a \emph{unique output} argument; the #is det# part
+tells us that #main# is a \emph{deterministic} predicate --- that is,
+#main# always succeeds and will always compute the same output given the
+same input (we will see later that in Mercury some predicates can fail and
+some can have more than one solution).
+
+Every Mercury program needs to export a predicate called #main#, which the
+compiler takes as the starting point for the Mercury program as a whole.
+%startcode
+:- implementation.
+%endcode
+Everything after an #implementation# declaration is considered private
+implementation detail not visible to other users of the module.
+%startcode
+main(IOState_in, IOState_out) :-
+    io.write_string("Hello, World!\n", IOState_in, IOState_out).
+%endcode
+Finally, we have a \emph{clause} defining #main#.  A clause comprises a
+\emph{head} and \emph{body} separated by a #:-# symbol.  The \emph{head} of
+this clause tells us that this is a definition for #main# and names its two
+arguments #IOState_in# and #IOState_out#.  The body of the clause, which is executed
+when #main# is called, consists of a single \emph{goal} calling
+#io.write_string# (\ie the #write_string# predicate defined in the #io#
+module) with a message (Mercury interprets the #\n# sequence in the string
+argument as a literal newline character) and the two #IOState# arguments.
+
+Program variables in Mercury always start with a capital letter or
+underscore, while names of predicates, types, modules and so forth do not.
+
+We can compile and run #hello.m# as follows (#$# indicates the command line
+prompt):
+%startcode
+$ mmc --make hello
+Making Mercury/int3s/hello.int3
+Making Mercury/cs/hello.c
+Making Mercury/os/hello.o
+Making hello
+$ ./hello
+Hello, World!
+%endcode
+Et voila!  (By default, #mmc --make# will construct a local #Mercury#
+directory, if necessary, to hold intermediate files generated during
+compilation.)
+\XXX{Check for consistency throughout whether we're using a #Mercury#
+subdirectory or not when compiling.}
+
+At this point the reader is probably wondering about the meaning of the #io#
+type arguments #IOState_in# and #IOState_out#, and the strange #di# and #uo#
+\emph{argument modes}.  The short answer is that every predicate that
+performs I/O has to have an #io# type input argument describing
+the state of the world at the time the predicate is called and an #io# type
+output argument describing the state of the world after the call.  This is
+how Mercury allows programs to communicate with the outside world without
+compromising its mathematical integrity.
+
+Because it doesn't make much sense to try reusing an old #io# state --- once
+the print job has finished, you can't get the ink back off the
+paper and into the toner cartridge again --- #io# states are \emph{unique}.
+This is where the #di# and #uo# argument modes come in: they are just like
+the ordinary #in# and #out# argument modes we'll meet in the next section,
+except that they also specify uniqueness.  The Mercury compiler will not
+allow programs to copy unique values or reuse dead ones, which means that
+programs that do I/O are guaranteed to behave in the way we expect them to.
+
+So what if we want to do more than one I/O operation?  In this case we have
+to give names to each of the intermediate #io# states:
+%startcode
+main(IOState_in, IOState_out) :-
+    io.write_string("Hello, ", IOState_in, IOState_tmp1),
+    io.write_string("World!", IOState_tmp1, IOState_tmp2),
+    io.nl(IOState_tmp2, IOState_out).
+%endcode
+The first call to #io.write_string# takes #IOState_in# as an input, destroys it
+in the process of writing its string argument, and produces #IOState_tmp1# as its
+result.  Then the second call to #io.write_string# destroys #IOState_tmp1#
+and produces #IOState_tmp2#.  Finally, #io.nl# (which just writes out a newline),
+destroys #IOState_tmp2# and returns #IOState_out#, which is the result of the call to
+#main#.
+
+Naming all these intermediate states quickly becomes tedious, so Mercury
+provides us with syntactic sugar in the form of \emph{state variables}:
+%startcode
+main(!IO) :-
+    io.write_string("Hello, ", !IO),
+    io.write_string("World!", !IO),
+    io.nl(!IO).
+%endcode
+This code is transformed by the compiler into something equivalent to the
+preceding example: each occurrence of the #!IO# state variable actually
+stands for two normal variables, which are given intermediate names in the
+``obvious'' way (the full details of the state variable transformation can
+be found in the Mercury Reference Manual).  Note that there is no special
+significance in the name #IO#, we merely use #IO# by convention to stand
+for #io# state arguments.
+
+\subsection*{Points to remember}
+
+\begin{itemize}
+\item A module starts with a #module# declaration and is followed by an
+#interface# section and an #implementation# section.
+\item The interface section declares the things that are exported by the
+module.
+\item All declarations start with a #:-# symbol.
+\item Declarations and clauses always end with a full stop.
+\item We have to import a module before we can use things exported by that
+module.
+\item Every Mercury program must export a predicate called #main#.
+\item Clauses, which define predicates, go in the implementation section.
+\item Variable names start with a capital letter; names of modules, types,
+predicates and so forth start with a lower-case letter or use symbols (\eg
+the #int# module uses #+# for addition).
+\item Every predicate that performs I/O must have an #io::di# argument and an
+#io::uo# argument and must be deterministic.
+\item We use a state variable to avoid having to name every #io# state.
+\end{itemize}
+
+
+
+
+
+\newpage
+
+
+
+
+
+\section{The Fibonacci numbers}
+
+Another great tradition of computer science tutorial texts is to define a
+function to calculate numbers in the Fibonacci series.  The Fibonacci series
+starts 1 1 2 3 5 8 13 21 34\ldots  Each number after the first two is
+computed as the sum of the preceding two numbers.
+
+As before, we'll start by showing a complete program and then look at the
+interesting parts in more detail.
+%startcode
+:- module fib.
+:- interface.
+:- import_module io.
+
+:- pred main(io::di, io::uo) is det.
+
+:- implementation.
+:- import_module int.
+
+:- pred fib(int::in, int::out) is det.
+
+fib(N, X) :-
+    (  if    N =< 2
+       then  X = 1
+       else  fib(N - 1, A), fib(N - 2, B), X = A + B
+    ).
+
+main(!IO) :-
+    fib(17, X),
+    io.write_string("fib(17, ", !IO),
+    io.write_int(X, !IO),
+    io.write_string(")\n", !IO).
+%endcode
+Building and running #fib.m#, we find that\ldots
+%startcode
+$ mmc --make fib
+Making Mercury/int3s/fib.int3
+Making Mercury/cs/fib.c
+Making Mercury/os/fib.o
+Making fib
+$ ./fib
+fib(17, 1597)
+%endcode
+
+The first thing to note is the #import_module# declaration at the start
+of the implementation section.  We need to import the #int# module from the
+Mercury standard library because it defines all the operations on integers,
+such as addition and comparison.  We import it in the implementation
+section rather than the interface section because that's the only place we
+refer to names defined in the #int# module.
+
+Next the declaration
+%startcode
+:- pred fib(int::in, int::out) is det.
+%endcode
+says that we are going to define a predicate #fib# taking two #int#
+arguments, an input and an output, which always succeeds and always
+computes the same output given the same input.
+%startcode
+fib(N, X) :-
+    (  if    N =< 2
+       then  X = 1
+       else  fib(N - 1, A), fib(N - 2, B), X = A + B
+    ).
+%endcode
+The body of the #fib# definition uses an #if-then-else# goal to decide what
+to do; the #else# part is not optional; and the whole thing appears in
+parentheses.  The condition #N =< 2# succeeds if #N# is less than or equal
+to 2 and \emph{fails} otherwise (we'll learn more about #semidet# predicates
+like #=<# in later examples).  If #N =< 2# then the
+\emph{unification} #X = 1# is executed.  Otherwise #fib# is called twice to
+compute the preceding two Fibonacci numbers in #A# and #B#, and #X#
+is unified with their sum.
+
+Finally we have
+%startcode
+main(!IO) :-
+    fib(17, X),
+    io.write_string("fib(17, ", !IO),
+    io.write_int(X, !IO),
+    io.write_string(")\n", !IO).
+%endcode
+which calls #fib(17, X)#, unifying #X# with the result of computing the 17th
+Fibonacci number, then writes out the answer.
+
+Now, just as #N - 1# computes #N# minus 1 and #A + B# computes
+the sum of #A# and #B#, it is possible to define #fib# so
+that #fib(N)# computes the #N#th Fibonacci number:
+%startcode
+:- func fib(int) = int.
+
+fib(N) = X :-
+    (  if    N =< 2
+       then  X = 1
+       else  X = fib(N - 1) + fib(N - 2)
+    ).
+%endcode
+The #func# declaration introduces #fib# as a \emph{function} with an #int#
+argument computing an #int# result.  Mercury assumes that the input
+arguments to a function have mode #in# and the result has mode #out# and
+that the function as a whole #is det#.  Functions calls appear in argument
+expressions to unifications, predicate calls and other function calls;
+predicate calls, on the other hand, never appear in expressions.
+
+Having redefined #fib# as a function, we also have to change how it is
+called in #main#:
+%startcode
+main(!IO) :-
+    io.write_string("fib(17) = ", !IO),
+    io.write_int(fib(17), !IO),
+    io.nl(!IO).
+%endcode
+
+To finish, here is one last refinement we might like to make to our
+definition of #fib#:
+%startcode
+fib(N) = ( if N =< 2 then 1 else fib(N - 1) + fib(N - 2) ).
+%endcode
+By using an #if-then-else# \emph{expression} we can move the entire body
+into the head of the clause.  Since the clause now has an empty body,
+Mercury requires that we omit the #:-# part.
+
+It is worth noting that all three of our definitions are computationally
+identical and there should be no difference in the code generated by the
+Mercury compiler.  Whether to use a predicate or function is largely a
+matter of taste; a good rule of thumb is that if a predicate has a single
+output argument, and is deterministic, then it is probably better expressed
+as a function.
+
+\subsection*{Points to remember}
+
+\begin{itemize}
+\item Import modules in the implementation section if they are only referred
+to in the implementation section.
+\item Non-unique arguments (\ie non-#io# arguments) should use the #in#
+and #out# argument modes.
+\item Using functions can cut down on the number of intermediate results you
+need to name.
+\item #if-then-else# can be used as a goal and as an expression; it should
+appear in parentheses and the #else# part is mandatory.
+\item If a clause of a predicate or a function has an empty body (because
+the computation is described in the head), then the #:-# must be omitted.
+\end{itemize}
+
+
+
+
+
+\newpage
+
+
+
+
+
+\section{Simple input}
+
+We can extend our Fibonacci program to read in #N# rather than have it
+hard-coded by changing the definition of #main#:
+%startcode
+:- import_module list, string.
+
+main(!IO) :-
+    io.read_line_as_string(Result, !IO),
+    (  if
+         Result = ok(String),
+         string.to_int(string.strip(String), N)
+       then
+         io.format("fib(%d) = %d\n", [i(N), i(fib(N))], !IO)
+       else
+         io.format("That's not a number...\n", [], !IO)
+    ).
+%endcode
+The #list# and #string# standard library modules are imported because we
+will need them in the definition of #main#.
+
+#main# starts by calling #io.read_line_as_string#, which reads a whole line
+of input up to and including the next newline character.  If all goes well
+then #Result# ends up unified to a value #ok(String)#, where #String# is the
+string of characters read in and #ok# is called a \emph{data constructor}.
+Other possibilities for #Result# are #eof#, indicating the end-of-file has
+been reached, and #error(ErrorCode)#, indicating that something went wrong.
+
+Then an #if-then-else# decides what to do.  The #if# condition succeeds
+if #Result# is an #ok# value (unifying #String# with the argument) and
+if \\ #string.to_int(string.strip(String), N)# succeeds.  The #string.strip#
+function returns its argument minus any leading and trailing whitespace,
+including the terminating newline character, while the predicate
+#string.to_int# succeeds if its first argument is a string of decimal digits
+(unifying #N# with the corresponding number), and fails otherwise.
+
+It's worth taking a slightly closer look at the unification in the #if# part
+of the #if-then-else# goal:
+%startcode
+         Result = ok(String)
+%endcode
+We know that #Result# has a value at this point, so this kind of unification
+is known as a \emph{deconstruction}: it only succeeds if the value in
+#Result# matches the pattern #ok(#\emph{something}#)#, in which case it
+unifies #String# with the \emph{something}.
+
+The #then# and #else# arms of the #if-then-else# goal call the #io.format#
+predicate, which is rather like C's #printf# function.  The first argument
+is a format string (where #%d# indicates a decimal integer, #%f# indicates a
+floating point value, #%s# indicates a string, and #%c# indicates a
+character)
+and the second argument is a list of the corresponding values in #[#
+brackets #]#, tagged with #i#, #f#, #s# or #c# for #int#, #float#, #string#
+or #char# values respectively.  Thus in
+%startcode
+         io.format("fib(%d) = %d\n", [i(N), i(fib(N))], !IO)
+%endcode
+the #int# #N# is printed instead of the first #%d# in the format string
+and the #int# result of #fib(N)# is printed instead of the second #%d#.
+If #N = 17# we'd expect this goal to output
+%startcode
+fib(17) = 1597
+%endcode
+Just as the Mercury compiler doesn't know how to do anything with integers
+unless you import the #int# module, it doesn't know anything about lists
+unless you import the #list# module.  So if you want to use #io.format# then
+you have to import the #list# and #string# modules.
+
+Okay, so far so good.  What if we want to input more than one number?
+That's easy to arrange:
+%startcode
+main(!IO) :-
+    io.read_line_as_string(Result, !IO),
+    (  if
+         Result = ok(String),
+         string.to_int(string.strip(String), N)
+       then
+         io.format("fib(%d) = %d\n", [i(N), i(fib(N))], !IO),
+         main(!IO)
+       else
+         io.format("I didn't expect that...\n", [], !IO)
+    ).
+%endcode
+Now the #then# branch calls #main# recursively to read in another number.
+Being a declarative language, recursion is Mercury's only looping
+construct.  However, as with any decent declarative language compiler worth
+it's salt, tail recursion like this is just as efficient as a #while# or
+#for# loop in any other language.
+
+Firing up the compiler we get
+%startcode
+$ mmc --make fib
+Making Mercury/int3s/fib.int3
+Making Mercury/cs/fib.c
+Making Mercury/os/fib.o
+Making fib
+$ ./fib
+| 10
+fib(10) = 55
+| 17
+fib(17) = 1597
+| 20
+fib(20) = 6765
+| ^D
+I didn't expect that...
+%endcode
+(The #|#s indicate input from the user and don't actually appear on the
+screen.  #^D# indicates the user typing #Ctrl+D# to close the input stream;
+Windows users should use #^Z#.)
+
+It would be good to handle the end-of-file condition more gracefully.  The
+obvious way to do that is to add another case to the #if-then-else#:
+%startcode
+main(!IO) :-
+    io.read_line_as_string(Result, !IO),
+    (  if
+         Result = eof
+       then
+         io.format("bye bye...\n", [], !IO)
+       else if
+         Result = ok(String),
+         string.to_int(string.strip(String), N)
+       then
+         io.format("fib(%d) = %d\n", [i(N), i(fib(N))], !IO),
+         main(!IO)
+       else
+         io.format("I didn't expect that...\n", [], !IO)
+    ).
+%endcode
+Observe the deconstruction test of #Result# with #eof# --- the #eof# data
+constructor has no argument list and indeed it is a syntax error to write
+#eof()# as one might in other languages.
+
+Before we leave our #fib# example, let us introduce Mercury's \emph{switch}
+goals.  A switch goal is rather like C's #switch# statement and consists of
+a set of alternatives testing a given variable against different possible
+values it might have.  Here is #main# rewritten to use a switch goal:
+%startcode
+main(!IO) :-
+    io.read_line_as_string(Result, !IO),
+    (
+        Result = eof,
+        io.format("bye bye...\n", [], !IO)
+    ;
+        Result = ok(String),
+        (  if    string.to_int(string.strip(String), N)
+           then  io.format("fib(%d) = %d\n", [i(N), i(fib(N))], !IO)
+           else  io.format("that isn't a number\n", [], !IO)
+        ),
+        main(!IO)
+    ;
+        Result = error(ErrorCode),
+        io.format("%s\n", [s(io.error_message(ErrorCode))], !IO)
+    ).
+%endcode
+A sequence of goals separated by semicolons is called a \emph{disjunction}
+(the semicolon is usually pronounced ``or'').  If each \emph{disjunct}
+deconstructs a particular variable against a set of mutually exclusive
+possibilities, then it is called a switch.  In general it is good style to
+use a switch rather than a sequence of #if-then-else# goals since then, in
+most cases, the Mercury compiler will tell you if you've forgotten a
+possibility or counted the same possibility twice.
+
+\subsection*{Points to remember}
+
+\begin{itemize}
+\item Some types (such as the result type of #io.read_line_as_string#) use
+different data constructors for different values.  These values can be
+tested using deconstruction unifications.
+\item A data constructor with no arguments, such as #eof#, is not followed
+by an argument list.
+\item #io.format# is Mercury's version of C's #printf#.  To use it you must
+import #list# and #string# as well as the #io# module.
+\item You should omit the parentheses around an #if-then-else# that
+immediately follows the #else# part of another #if-then-else#.
+\item A disjunction is a sequence of goals separated by semicolons.
+\item A switch is a disjunction where each disjunct tests a particular
+variable against a different possibility.  Where applicable, switches are
+generally preferable to #if-then-else#s.
+\end{itemize}
+
+
+
+
+
+\newpage
+
+
+
+
+
+\section{#rot13#}
+
+Let's move on to a different example.  This time we are going to implement
+the #rot13# ``encryption'' algorithm, which works by rotating the Roman
+alphabet by 13 places --- in other words, #abcdefghijklmnopqrstuvwxyz# in
+the input becomes #nopqrstuvwxyzabcdefghijklm# in the output.  Decryption is
+simple: just use #rot13# a second time!  While #rot13# has the cryptographic
+strength of damp tissue paper, it is sometimes useful for obscuring
+information in an e-mail that the recipient may not yet wish to know,
+such as who won the Grand Final the day before.
+
+Here's a first cut at a solution:
+%startcode
+:- module rot13.
+:- interface.
+:- import_module io.
+
+:- pred main(io::di, io::uo) is det.
+
+:- implementation.
+:- import_module char, list, string.
+
+main(!IO) :-
+    io.read_char(Result, !IO),
+    (
+        Result = ok(Char),
+        io.write_char(rot13(Char), !IO),
+        main(!IO)
+    ;
+        Result = eof
+    ;
+        Result = error(ErrorCode),
+        io.format("%s\n", [s(io.error_message(ErrorCode))], !IO)
+    ).
+
+:- func rot13(char) = char.
+
+rot13(Char) =  (  if       Char = 'a'  then 'n'
+                  else if  Char = 'b'  then 'o'
+                  ...                         
+                  else if  Char = 'z'  then 'm'
+                  else if  Char = 'A'  then 'N'
+                  else if  Char = 'B'  then 'O'
+                  ...                         
+                  else if  Char = 'Z'  then 'M'
+                  else     Char
+               ).
+%endcode
+While this plainly works:
+%startcode
+$ mmc --make rot13
+Making Mercury/int3s/rot13.int3
+Making Mercury/cs/rot13.c
+Making Mercury/os/rot13.o
+Making rot13
+$ ./rot13
+| Port Adelaide beat the Brisbane Lions 113 to 73 in the Grand Final.
+Cbeg Nqrynvqr orng gur Oevfonar Yvbaf 113 gb 73 va gur Tenaq Svany.
+| Cbeg Nqrynvqr orng gur Oevfonar Yvbaf 113 gb 73 va gur Tenaq Svany.
+Port Adelaide beat the Brisbane Lions 113 to 73 in the Grand Final.
+%endcode
+it's hardly going to win prizes for elegance or efficiency.  A more
+experienced Mercury programmer might code #rot13# like this:
+%startcode
+:- func rot13(char) = char.
+
+rot13(CharIn) = ( if rot13b(CharIn, CharOut) then CharOut else CharIn ).
+
+:- pred rot13b(char::in, char::out) is semidet.
+
+rot13b('a',  'n').
+rot13b('b',  'o').
+...          
+rot13b('z',  'm').
+rot13b('A',  'N').
+rot13b('B',  'O').
+...          
+rot13b('Z',  'M').
+%endcode
+There are three new things here: the #semidet# \emph{determinism category},
+clauses with the arguments already ``filled in'', and using more than one
+clause to define a predicate.
+
+First off, the #semidet# determinism category means that #rot13b# will, for
+any given input, either fail or compute a single answer.  Looking at the
+code we might guess (correctly) that #rot13b('z', X)# should succeed
+unifying #X = 'm'# (and never anything else), while #rot13b('7', X)#
+would fail.
+
+Secondly, a clause like
+%startcode
+rot13b('a', 'n').
+%endcode
+is just syntactic sugar for
+%startcode
+rot13b(V1, V2) :- V1 = 'a', V2 = 'n'.
+%endcode
+Since we know from the #pred# declaration for #rot13b# that #V1# is an
+input and #V2# an output, the unification #V1 = 'a'# must be a
+deconstruction test and, if that succeeds, then the \emph{construction}
+unification #V2 = 'n'# is carried out (a construction unification always
+succeeds because the ``destination'' variable, #V2# in this case, does not
+have a value before this point).
+
+Finally, a sequence of clauses is syntactic sugar for a single clause whose
+body is a disjunction.  Hence our code is transformed by the compiler
+into this:
+%startcode
+rot13b(V1, V2) :-  (  V1 = 'a',  V2 = 'n'
+                   ;  V1 = 'b',  V2 = 'o'
+                      ...
+                   ;  V1 = 'z',  V2 = 'm'
+                   ;  V1 = 'A',  V2 = 'N'
+                   ;  V1 = 'B',  V2 = 'O'
+                      ...
+                   ;  V1 = 'Z',  V2 = 'M' ).
+%endcode
+The astute reader will immediately identify this as a switch on #V1# because
+each disjunct tests the input #V1# for a different possible value.  One of
+the good things about switches is that the Mercury compiler will generate
+very efficient code for them, using a lookup-table or hash-table perhaps,
+which will certainly out-perform the long chain of #if-then-else#s in our
+first attempt.
+
+(As an aside, the #is semidet# determinism declaration for #rot13b# tells
+the Mercury compiler that this predicate is expected to fail in some cases,
+so it will not warn us about missing possible values for the first argument.
+In the #fib# program the switch had to be exhaustive, so it could not fail,
+because #main# was declared to be #det#.  Had we missed a possible case out
+of that switch, the compiler would have reported the missing case as an
+error.)
+
+Note that if we felt so inclined, we could make #rot13b# deterministic by
+including the translation of every possible character!  Of course, there are
+many ways of coding #rot13# and while our implementation may not be the most
+concise, it is quite efficient and very easy to understand.  Either way, our
+aim here was to look more closely at the concept of semideterminism and
+introduce the technique of making code more readable by using multiple
+clauses to define a predicate or function.
+
+\subsection*{Points to remember}
+
+\begin{itemize}
+\item Literal character values in Mercury are normally enclosed in single
+quotes.  Some characters which the Mercury parser would normally expect to
+see used as infix function symbols, such as #+# and #*#, also need to be
+enclosed in parentheses: #('+')# and #('*')#.  Full details of how special
+characters should be written can be found in the the Mercury Reference
+Manual.
+\item The #semidet# determinism category means that a predicate can have
+at most one \emph{solution} for a given set of inputs (if it has no solution
+for the given inputs then it fails).
+\item Semideterministic predicates therefore often appear in the conditions
+of #if-then-else# goals.
+\item ``Filling in'' the arguments of a clause is just shorthand for
+omitting the equivalent unification goals.
+\item The compiler will view a predicate or function definition comprising
+several clauses as a disjunction.  Multiple clauses are often easier to read
+than the equivalent disjunction.
+\end{itemize}
+
+
+
+
+
+\newpage
+
+
+
+
+\section{Cryptarithms}
+
+In this example we try to demonstrate a little of what differentiates
+Mercury from conventional programming languages.  A cryptarithm is an
+equation (usually just an addition) where the digits of each number have
+been replaced by letters, #DOG + ANT = CAT# for example; a solution is a
+mapping from letters to digits that satisfies the equation.  Leading letters
+cannot stand for zero and each letter must stand for a distinct digit.
+Here's a Mercury program to solve this particular cryptarithm:
+%startcode
+:- module crypt.
+:- interface.
+:- import_module io.
+
+:- pred main(io::di, io::uo) is cc_multi.
+
+:- implementation.
+:- import_module int, list, string.
+
+main(!IO) :-
+    io.format("DOG + ANT = CAT\n", [], !IO),
+    ( if
+        Ds0 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],  C0  = 0,
+        pick(  Ds0, G, Ds1),
+        pick(  Ds1, T, Ds2),
+        T = (G + T + C0) mod 10,               C1  = (G + T + C0) / 10,
+        pick(  Ds2, O, Ds3),
+        pick(  Ds3, N, Ds4),
+        A = (O + N + C1) mod 10,  A \= 0,      C2  = (O + N + C1) / 10,
+        pick(  Ds4, D, Ds5),
+        pick(  Ds5, A, Ds6),
+        C = (D + A + C2) mod 10,  D \= 0,      0   = (D + A + C2) / 10,
+        pick(  Ds6, C, _)
+      then
+        DOG  =  100 * D  + 10 * O  + G,
+        ANT  =  100 * A  + 10 * N  + T,
+        CAT  =  100 * C  + 10 * A  + T,
+        io.format("%d + %d = %d\n", [i(DOG), i(ANT), i(CAT)], !IO)
+      else
+        io.format("has no solutions\n", [], !IO)
+    ).
+
+:- pred  pick(list(int)::in, int::out, list(int)::out) is nondet.
+
+pick([X | Xs], X, Xs).
+pick([X | Xs], Y, [X | Zs]) :- pick(Xs, Y, Zs).
+%endcode
+At this early stage it would be wrong to try to explain exactly \emph{how}
+this program works.  Instead, we will describe \emph{what} it does and offer
+hints as to how it does it, but leave the technical explanation to later
+chapters.
+
+The interesting part of this program is the condition of the #if-then-else#
+goal.  The trick to understanding this code fragment is to consider it as a
+set of constraints on a solution rather than as a series of computations.
+(Concentrating on the ``what'' rather than the ``how'' is a hallmark of
+declarative programming.)
+
+#Ds0# is the list of digits from 0 to 9, #Ds1# is #Ds0# with the digit for
+#G# removed, #Ds2# is #Ds1# with the digit for #T# removed, #Ds3# is #Ds2#
+with the digit for #O# removed, and so forth.  In this way we ensure that
+each of #D#, #O#, #G#, #A#, #N#, #T# and #C# are different digits.
+
+The digits for each letter are selected nondeterministically using the
+#pick# predicate.  The goal #pick(Ds0, G, Ds1)#, for instance, picks a digit
+for #G# from #Ds0# and leaves the remainder in #Ds1#.  Since #Ds0# contains
+ten members, there are ten possible solutions for #G#.
+
+#C1# is the carry left over from the units column, #C2# is the carry left
+over from the tens column, and we introduce #C0# as a ``carry in'' of
+zero just to keep the structure of the program regular.
+
+We verify that the units column works out with the goal
+#T = (G + T + C0) mod 10#.  Similarly the goal
+#A = (O + N + C1) mod 10# verifies the tens column is consistent and
+#C = (D + A + C2) mod 10# verifies the hundreds column works.
+
+The goals #A \= 0# and #D \= 0# ensure that we don't have any zeroes in the
+hundreds column, while #0 = (D + A + C2) / 10# ensures that there is no
+carry left over from the sum as a whole (#/#, the division function on
+#int#s, truncates the result towards zero).
+
+Informally, Mercury tries to find a solution to the condition goal as a
+whole by considering each subgoal in turn.  The #pick# goals are slightly
+special because they can have more than one possible solution; such goals are
+referred to as \emph{choice points}.  When the
+Mercury program executes a #pick# goal, it considers each possibility in
+turn until it finds one that works.  It does this by \emph{backtracking}
+whenever it encounters a goal that fails.  Backtracking unwinds the
+computation to the last choice point (\ie the most recent #pick# goal),
+undoing any unifications that have since occurred, and tries another
+alternative.  If all of the possibilities for a given #pick# goal lead to
+failure, then backtracking continues to the preceding #pick# goal, and so
+on.
+
+Eventually either a set of solutions to the #pick# goals will be found that
+is consistent with the other constraints or, if no such set exists, then
+this part of the program will fail.
+
+At this point we can explain the #cc_multi# determinism category for #main#,
+which is different to #det# which we've used in all the preceding examples.
+#cc_multi# stands for \emph{committed choice multideterministic}, which means
+that although this predicate may have multiple possible answers (there may
+be multiple solutions to #main#'s #if-then-else# condition) we will only be
+getting one of them!  This extra constraint is necessary to allow a
+predicate with more than one possible solution to perform I/O; since we're
+not allowed to backtrack over predicates that do I/O, we have to state that
+we're content for #main# to stick to the first solution it sees, whichever
+one that happens to be.
+
+As with #main#, we won't explain here \emph{how} #pick# works suffice to
+give plain English descriptions of the clauses:
+%startcode
+pick([X | Xs], X, Xs).
+%endcode
+This clause says that given a list whose \emph{head} is the item #X# and
+whose \emph{tail} is the list of items #Xs#, we can remove #X# from the
+input leaving #Xs# as the remainder.
+%startcode
+pick([X | Xs], Y, [X | Zs]) :- pick(Xs, Y, Zs).
+%endcode
+This clause says that given a list with head #X# and tail #Xs#, we remove an
+item #Y# from #Xs# leaving remainder #Zs# (via the recursive call to
+#pick#), and the remainder of the original input then is the list whose head
+is #X# and whose tail is #Zs#.
+
+Don't worry if much of this seems confusing: once some facility with
+thinking declaratively (\ie ``what'' rather than ``how'') is acquired, one
+will be able to look at predicates like #pick# and complicated goals like
+the condition of #main#'s #if-then-else# and immediately understand what is
+meant.  The thing to carry away from this example is the ease with which
+Mercury allows us to describe a solution to a complex search problem.  We
+have done very little more than write a logical specification of the problem
+using Mercury syntax, all the tedious operational details are handled for us
+by the compiler!  Elegance of this sort is one of the key things that makes
+Mercury such an attractive programming language.
+
+Anyway, after all that hard work, let's just prove that all this magic
+actually works:
+%startcode
+$ mmc --make crypt
+Making Mercury/int3s/crypt.int3
+Making Mercury/cs/crypt.c
+Making Mercury/os/crypt.o
+Making crypt
+$ ./crypt
+DOG  + ANT  = CAT
+420  + 531  = 951
+%endcode
+Success!
+
+\subsection*{Points to remember}
+
+\begin{itemize}
+\item Nondeterministic predicates such as #pick# can have multiple solutions
+for a given set of inputs.  Mercury handles this by backtracking to the most
+recent choice point when a later goal fails.
+\item As far as possible, try to think declaratively rather than
+operationally: focus on what it is that is being computed rather than how
+the computation should proceed.  Leave as much of that sort of detail to the
+compiler as you can.
+\item Unification goals are quite versatile: they can denote constructions,
+deconstructions, and equality tests.
+\end{itemize}

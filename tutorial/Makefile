@@ -1,31 +1,15 @@
-.PHONY: all dvi ps gz html
+.PHONY: book.dvi book.ps book.pdf
 
-DOCS = book
 
-CHAPTERS = $(wildcard *.tex)
 
-all:  pdf gz
-pdf:  $(addsuffix .pdf,${DOCS})
-dvi:  $(addsuffix .dvi,${DOCS})
-ps:   $(addsuffix .ps,${DOCS})
-gz:   $(addsuffix .ps.gz,${DOCS})
-html: $(addsuffix .html,${DOCS})
+book.dvi:
+	for i in *.polytex; do echo "$$(ls -l $$i | gawk '{print "Last edited", $$6, $$7, $$8}')" > $$i.date; done
+	create-diffs-if-necessary
+	polytex book.polytex
 
-book.dvi: book.tex $(CHAPTERS)
+book.ps: book.dvi
+	dvips book.dvi
 
-%.pdf: %.ps
-	ps2pdf $*.ps
+book.pdf: book.ps
+	ps2pdf book.ps
 
-%.ps: %.dvi
-	dvips $*.dvi
-	cat $*.ps | duplex > $*.duplex.ps
-
-%.dvi: %.tex
-	latex $*.tex
-
-%.ps.gz: %.ps
-	gzip --force $*.ps
-
-%.html: %.tex
-	expandshortverb *.tex > *.exp
-	latex2html -split 0 $*.exp

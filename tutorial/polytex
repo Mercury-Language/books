@@ -1,0 +1,41 @@
+#!/bin/sh
+#
+# usage: polytex <filename.polytex>
+#
+# converts <filename.polytex> to <filename.tex>
+# and invokes latex.
+
+set -x
+
+case $# in
+0)
+	TEXFILE=$(tempfile --dir=/tmp --suffix=.tex)
+	polytex2tex > $TEXFILE
+	latex $TEXFILE && rm $TEXFILE
+	;;
+1)
+	if [ ! -r "$1" ]
+	then
+		echo "polytex: can't open $1 for reading" >&2
+		exit 1
+	fi
+	case "$1" in
+	*.polytex)
+		TEXFILE=$(echo "$1" | sed 's/polytex$/tex/')
+		polytex2tex "$1" > $TEXFILE
+		latex $TEXFILE
+		;;
+	*.tex)
+		latex "$1"
+		;;
+	*)
+		echo "polytex: filename suffix must be .polytex or .tex" >&2
+		exit 1
+		;;
+	esac
+	;;
+*)
+	echo "usage: polytex [file.polytex|file.tex]" >&2
+	exit 1
+	;;
+esac

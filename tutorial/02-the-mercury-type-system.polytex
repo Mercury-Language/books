@@ -1,0 +1,669 @@
+% vim: ft=tex ff=unix ts=4 sw=4 et tw=76
+
+
+
+\chapter{The Mercury type system}
+
+%include 02-the-mercury-type-system.polytex.date
+
+In this chapter we describe the primitive (\ie built-in) Mercury types, and
+how to define and use new types.  The style of this chapter is a little dry,
+so we advise the reader to skim through it the first time around, and then
+dip back into it for reference as occasion demands.
+
+Mercury uses an expressive, statically checked type system similar to
+that of ML and Haskell.  The type system is expressive in the sense that the
+compiler can always infer the type held in a particular variable; apart from
+one exception, which is described below, type casts of the kind found in
+Java and C programs are unnecessary.  Static type checking means that any
+possible type violation in a program is detected at compile-time rather than
+at run-time.  Many common programming errors are, therefore, simply
+inexpressible in Mercury.  A handy secondary benefit of this approach to
+typing is that the compiler can generate highly optimized code.
+
+Mercury also supports dynamic typing and type reflection for the rare cases
+where such things are necessary.  Dynamic typing is supported by a universal
+type that can conceal values of any type at all; however, extracting a
+concealed value does require a checked run-time type cast operation.  Type
+reflection allows a program to examine the structure of values and their
+types.  By way of example, a generic function to compute hash codes for
+values of any type depends upon type reflection.
+
+\subsection*{Important!}
+
+Mercury is a purely declarative language.  This means that values are
+immutable: there is no destructive assignment.  Every computation constructs
+a new value for each output.  The compiler may well generate code that uses
+destructive assignment (\eg for efficient array updates), but such things
+are not directly available to the Mercury programmer.
+
+
+
+\section{The primitive types: #int#, #float#, #string#, and #char#}
+
+\Note The underlying representation of the primitive types
+depends upon the compiler target (C, Java, .Net etc.)  For the C targets
+#int# corresponds to #int#, #float# to #double#, #char# to #char#
+and #string# to #char *#; number ranges, representations, arithmetic
+overflow handling and so forth are dictated by the target machine.
+
+\subsection*{#int#}
+
+Fixed precision integers are represented by the #int# type.  Syntactically,
+an #int# is a sequence of digits, optionally preceded by a minus sign (there
+is no unary plus).  The sequence of digits may be decimal, hexadecimal (if
+preceded by #0x#), octal (if preceded by #0o#), or binary (if preceded by
+#0b#).
+
+Examples: decimal #-123#, #0#, #42#; hexadecimal #-0x7B#, #0x0#, #0x2A#;
+octal #-0o173#, #0o0#, #0o52#; binary #-0b1111011#, #0b0#, #0b101010#.
+
+The sequence #0'x# denotes the character code for the character #x#.  For
+example, on an ASCII system #0'a#, #0'b#, and #0'c# denote 97, 98, and 99
+respectively.
+
+The #int# standard library module must be imported to use any of the
+primitive #int# operations.
+
+\subsection*{#float#}
+
+Floating point numbers are represented by the #float# type, which
+corresponds to the C #double# type.  Syntactically, a #float# is a decimal
+floating point number (the decimal point is required), optionally preceded
+by a minus sign, optionally followed by an integer exponent.
+
+These are all equivalent: #1.414#, #1414e-3#, #.1414e1#, #0.01414e2#;
+either #e# or #E# is acceptable as the exponent separator.
+
+The #float# standard library module must be imported to use any of the
+primitive #float# operations.  Constants such as #pi# and #e# and more
+complex floating point operations, such as the trigonometric functions, are
+defined in the #math# standard library module.
+
+\subsection*{#string#}
+
+A string constant is a sequence of characters enclosed in double
+quotes.
+
+Examples: #" "#, #"Hello, World!\n"#, #"\``Lawks!\'' I declared."#.
+
+Certain characters have special syntax referred known as \emph{character
+escapes}:
+
+\begin{tabular}{llll}
+#\"# & double quote &
+#\\# & backslash \\
+#\'# & single quote &
+#\a# & alert (``beep'') \\
+#\b# & backspace &
+#\r# & carriage return \\
+#\f# & form-feed &
+#\t# & tab \\
+#\n# & newline &
+#\v# & vertical tab
+\end{tabular}
+
+
+Characters can also be specified by character code using the sequence
+#\xhh\#, where #hh# is a hexadecimal number, or #\ooo\#, where #ooo# is an
+octal number.  the ASCII character #A#, for example, can also be written
+as #\x41\# or #\101\#.
+
+\Note For arcane reasons, it is a Very Bad Idea to include the #NUL#
+character, #\x00\#, in strings.
+
+A backslash at the end of a line is ignored in string constants.  Thus
+\\#``abc\#\\#def"#\\ is equivalent to just #"abcdef"#.  Otherwise, literal
+newlines may appear in a string constant:
+\\#``pqr#\\#xyz''#\\ is equivalent to #"pqr\nxyz"#.
+
+The #string# standard library module must be imported to use any of the
+primitive #string# operations.  In particular it defines #++#, the string
+concatenatation function --- for example, #"foo" ++ "bar" = "foobar"#.
+
+\subsection*{#char#}
+
+Character constants are represented using the #char# type and,
+syntactically, are single characters (or character escapes or character
+codes as described above) enclosed in single quotes.  Characters that could
+be interpreted as infix operators, such as #+# and #*#, should be further
+enclosed in parentheses.
+
+Examples: #'A'#, #'\x41\'#, #'\101\'#, #'\''#, #'\n'#, #('+')#, #('*')#.
+
+\XXX{Are we ASCII specific?}
+
+The #char# standard library module must be imported to use any of the
+primitive operations on #char#s.
+
+
+
+\section{Tuples}
+
+A tuple is a fixed size vector of values.  Syntactically, a tuple
+\emph{type} is a comma separated sequence of type names enclosed in braces,
+whereas a tuple \emph{value} is a comma separated sequence of values enclosed in
+braces.
+
+Examples:
+#{111, 'b'}# is a value of type #{int, char}#;
+#{1.2, 3, "456"}# is a value of type #{float, int, string}#;
+#{"a", {"little", "contrived"}}# is a value of type
+#{string, {string, string}}#.
+
+\Note Unlike lists (described below), tuples are constructed
+and deconstructed as complete entities.  There is no such thing as the head
+or tail of a tuple.  \XXX{Should we include this note at all?  Or move the
+whole tuples section after lists?}
+
+Tuples are occasionally useful for aggregating small numbers of different
+types.  More often than not it is better style to use a discriminated union
+type.
+
+
+
+\section{Lists}
+
+A list is a linear sequence of values sharing the same type.  Syntactically,
+a list is a comma separated sequence of values enclosed in brackets.
+
+Examples:
+#[]# denotes the empty list, regardless of the list type;
+#[1, 2, 3]# is a value of type #list(int)#;
+#['a', 'b', 'c', 'd']# is a value of type #list(char)#;
+#[[1], [2, 3], [4]]# is a value of type #list(list(int))#.
+
+It is an error to mix values of different types inside a list because there
+is no way to give a type to values such as #[1, "2", 3.4]#.
+
+The #list# standard library module defines the #list# type and a wealth of
+list operations.  If you forget to import the #list# module then the
+compiler will issue warnings like this:
+
+\begin{small}
+\textsf{foo.m:031:   error: undefined symbol `[$|$]/2'}\\
+\textsf{foo.m:031:   (the module `list' has not been imported).}
+\end{small}
+
+Lists are actually composed of two kinds of building block: #[]# (the empty
+list) and #[|]# (the non-empty list constructor, pronounced ``cons'').  If
+#X# is an #int#, say, and #Xs# a #list(int)#, then #[|](X, Xs)# is a
+#list(int)# whose \emph{head} (first member) is #X# and whose \emph{tail}
+(list of trailing members) is #Xs#.
+
+Lists are so common that special syntactic sugar exists for them:
+#[X | Xs]# is shorthand for #[|](X, Xs)#;
+#[X, Y, Z | Ws]# is shorthand for #[X | [Y | [Z | Ws]]]#;
+and #[X, Y, Z]# is shorthand for #[X, Y, Z | []]#.
+
+
+
+\section{Discriminated union types}
+
+Discriminated unions allow the definition of new, structured types.
+This example shows a representation of playing cards using discriminated
+union types:
+%startcode
+:- type playing_card  --->  card(rank, suit) ; joker.
+:- type rank          --->  ace     ; two   ; three    ; four
+                      ;     five    ; six   ; seven    ; eight
+                      ;     nine    ; ten   ; jack     ; queen  ; king.
+:- type suit          --->  clubs ; diamonds ; hearts ; spades.
+%endcode
+The \emph{data constructors} defining the values of the discriminated union
+types appear to the right of the arrows: #suit# has four possible values,
+#rank# thirteen, and #playing_card# fifty three (fifty two possible #card#
+values from #card(ace, clubs)#, #card(two, clubs)#, all the way up to
+#card(king, spades)#, plus the #joker# option).
+
+An exhaustive switch on a discriminated union type must test for every
+possible top-level data constructor.  That is, an exhaustive switch on a
+#playing_card# value need only test for #card(_, _)# and #joker# rather
+than every specific #card# instance.
+
+(The term ``discriminated union'' is used because a type denotes a union of
+sets of possible values, each of which is distinguished by its data
+constructor.)
+
+
+
+\subsection*{Data constructors with named fields}
+
+The fields of a data constructor can be named:
+%startcode
+:- type bank_account ---> account(  name        :: string,
+                                    account_no  :: int,
+                                    funds       :: float  ).
+%endcode
+We can use field names to access fields directly without having to
+first deconstruct a #bank_account# value.  That is, rather than writing
+%startcode
+    BankAcct = account(Name, AcctNo, Funds),
+    ( if Funds >= RequestedSum then
+        ... debit RequestedSum from BankAcct ...
+      else
+        ... reject debit request ...
+    )
+%endcode
+we can write
+%startcode
+    ( if BankAcct^funds >= RequestedSum then
+        ... debit RequestedSum from BankAcct ...
+      else
+        ... reject debit request ...
+    )
+%endcode
+The Mercury compiler automatically generates a \emph{field access function}
+for every named field in a data constructor.  The #bank_account# field
+access functions would be defined like this:
+%startcode
+account(A, _, _)^name        = A.
+account(_, B, _)^account_no  = B.
+account(_, _, C)^funds       = C.
+%endcode
+Field access functions to ``update'' named fields are also generated:
+%startcode
+    ( if BankAcct^funds >= RequestedSum then
+        NewBankAcct = (BankAcct^funds := BankAcct^funds - RequestedSum)
+      else
+        ... reject debit request ...
+    )
+%endcode
+The expression #(BankAcct^funds := X)# returns a value identical to
+#BankAcct# except the #funds# field will contain #X#.
+The #bank_account# field access update functions would be defined like this:
+%startcode
+( account(_, B, C)^name        := A  ) = account(A, B, C).
+( account(A, _, C)^account_no  := B  ) = account(A, B, C).
+( account(A, B, _)^funds       := C  ) = account(A, B, C).
+%endcode
+Note that you do not have to name every field of a data constructor; unnamed
+fields can only be ``read'' or ``updated'' by explicitly deconstructing or
+constructing the entire data constructor value.
+
+\emph{You are not allowed to use the same field name in
+different types defined in the same module.}  This is an error:
+%startcode
+:- type cat  --->  cat(name :: string).
+:- type dog  --->  dog(name :: string).
+%endcode
+Instead use distinct field names, such as #cat_name# and #dog_name#,
+or use a single type with two data constructors (the same field
+name can be used in different data constructors of the same type.)
+
+\emph{A field access may fail if a data type has more than one data
+constructor.}  For example, given
+%startcode
+:- type playing_card ---> card(card_rank :: rank, card_suit :: suit) ; joker.
+%endcode
+A goal featuring the expression #Card^card_rank# will fail if #Card# happens
+to be a #joker#.
+
+\emph{Field accesses can be chained together.}
+%startcode
+:- type employee ---> employee(id :: int, contact :: contact_details).
+:- type contact_details ---> contact_details(address :: string, phone :: int).
+%endcode
+If #Employee# contains a value of type #employee# then the expression
+#Employee^contact^address# is the #address# field of the #contact#
+field of the #employee# constructor.
+
+\emph{Nested fields can be updated.}
+The expression #Employee^contact^address := NewAddr# denotes a copy of
+#Employee# with the #address# field of the #contact# field of the #employee#
+data constructor updated to hold #NewAddr#.
+
+Parentheses can change the meaning of an update expression:\\
+#(Employee^contact)^address := NewAddr# denotes an updated copy of the
+#contact# field of the #employee# data constructor (\ie the type of this
+expression is #contact_details#, not #employee#.)
+
+One final remark: it is also possible to explicitly define field access
+functions, for instance for ``virtual fields'' that are computed rather than
+stored in a data constructor or for update functions that perform sanity
+checks on their arguments.  User defined field access functions are
+described fully in Chapter \XXX{}.
+
+
+
+\section{Polymorphic types}
+
+\emph{Polymorphic} types are types parameterised by
+\emph{type variables}.  A polymorphic binary tree type carrying values at
+the branches could be defined like this:
+%startcode
+:- type tree(T) ---> leaf ; branch(tree(T), T, tree(T)).
+%endcode
+This is just a discriminated union type with a type argument, #T#.  #T# can
+match any type at all, so #tree(int)#, #tree(string)#, #tree(list(char))# are
+all refinements of #tree(T)#.
+
+Examples:
+#branch(branch(leaf, 1, leaf), 2, branch(leaf, 3, leaf))#
+is a value of type #tree(int)#;
+#branch(leaf, {'a', 65}, branch(leaf, {'b', 66}, leaf))#
+is a value of type #tree({char, int})#; and
+#leaf# is a value of every #tree# type.
+
+The canonical example of a polymorphic data type is the #list# type defined
+in the #list# standard library module:
+%startcode
+:- type list(T) ---> [] ; [T | list(T)].
+%endcode
+The #maybe# type defined in the #std_util# standard library module is
+another useful polymorphic type:
+%startcode
+:- type maybe(T) ---> no ; yes(T).
+%endcode
+This type is commonly used to represent optional values (had the
+database community known about #maybe# types they never would have invented
+#NULL#s and wrecked the relational model\ldots)
+
+Once one has polymorphic types, it is natural to want to define polymorphic
+predicates and functions.  The #list# module #length# function works for
+lists of every type thanks to the type argument in its signature (it is
+just convention that we have reused the name #T# here --- any variable name
+would do):
+%startcode
+:- func length(list(T)) = int.
+
+length([])        = 0.
+length([_ | Xs])  = 1 + length(Xs).
+%endcode
+The first clause
+defines the length of the empty list to be #0#; the second clause defines
+the length of a non-empty list #[_ | Xs]# to be #1# for the head (the
+underscore says we don't care what that happens to be) plus the length of
+the tail, #Xs#.
+
+Here is an example of a polymorphic predicate to decide whether a given
+value resides in an ordered binary tree of the type we defined at the start
+of this section (by ordered we mean that smaller values appear to the left
+of larger values in the tree):
+%startcode
+:- pred search(tree(T)::in, T::in) is semidet.
+
+search(branch(L, X, R),  Y) :-
+    O = ordering(X, Y),
+    (   O = (<),    search(R, Y)
+    ;   O = (=)
+    ;   O = (>),    search(L, Y)
+    ).
+%endcode
+The #ordering# function is built-in to Mercury and compares any two values
+of the same type, returning a result of type #comparison_result#:
+%startcode
+:- type comparison_result ---> (<) ; (=) ; (>).
+%endcode
+As you can see, data constructor names don't necessarily have to be
+alphanumeric.  These data constructor names must appear in parentheses to
+stop the Mercury parser from interpreting them as infix operators.  This is
+also an example of \emph{overloading}, where the same name may be used for
+more than one purpose provided there is no ambiguity.
+
+After calling #ordering#, #search# switches on #O# to decide what to do
+next: if the value at the current #branch#, #X#, is less than the value we
+are searching for, #Y#, then search should procede down the right subtree,
+#R#.  If #X = Y# then the search terminates successfully.  Otherwise, #X# is
+greater than #Y# and the search should procede down the left subtree, #L#.
+The absence of a clause for #leaf# values means that any search that reaches
+a #leaf# will fail.
+
+
+
+\section{Equivalence types}
+
+Readability is often improved by giving simple names to complex types or
+by using more meaningful names for a specific uses of general types:
+%startcode
+:- type height  == float.  % In metres.
+:- type radius  == float.  % In metres.
+:- type volume  == float.  % In cubic metres.
+
+:- func volume_of_cylinder(height, radius)  = volume.
+:- func volume_of_sphere(radius)            = volume.
+%endcode
+\XXX{Move this stuff about comments to chapter 1.}
+(The #%# sign introduces a comment, which extends to the end of the line.)
+Here we define the types #height#, #radius# and #volume# to be equivalent to
+(\ie interchangeable with) type #float#.  We could have just declared
+#volume_of_cylinder# using
+%startcode
+:- func volume_of_cylinder(float, float) = float.
+%endcode
+but then we would be morally obliged to include a comment explaining which
+arguments correspond to which measurements.
+
+Equivalence types can also be parameterized.  For example:
+%startcode
+:- type dictionary(Key, Value)  == list({Key, Value}).
+
+    % search(Dict, Key, Value) unifies Value if there is an association
+    % for Key in Dict, but fails otherwise.
+    %
+:- pred search(dictionary(Key, Value)::in, Key::in, Value::out) is semidet.
+
+search([{K, V} | Dict], Key, Value) :-
+    ( if Key = K then Value = V else search(Dict, Key, Value) ).
+
+    % set(Dict, Key, Value) returns an updated version of Dict
+    % associating Key with Value.
+    %
+:- func set(dictionary(Key, Value), Key, Value) = dictionary(Key, Value).
+
+set(Dict, Key, Value) = [{Key, Value} | Dict].
+%endcode
+
+
+
+\section{Abstract types}
+
+It is virtually always a Bad Idea to reveal implementation detail to the
+user of a module.  Mercury ensures that predicate and function
+\emph{definitions} are private to a module because they cannot appear in the
+#interface# section of a module.  Abstract types allow the same kind of
+information hiding for types.  An abstract type is one that is
+\emph{declared} in the #interface# section of a module, but \emph{defined} in
+the #implementation# section.
+
+Here's how we would use abstract types if we wanted to export the
+#dictionary# type defined above:
+%startcode
+:- module dictionary.
+:- interface.
+
+:- type dictionary(Key, Value).
+
+:- pred search(dictionary(Key, Value)::in, Key::in, Value::out) is semidet.
+:- func set(dictionary(Key, Value), Key, Value) = dictionary(Key, Value).
+
+:- implementation.
+:- import_module list.
+
+:- type dictionary(Key, Value) == list({Key, Value}).
+
+search([{K, V} | Dict], Key, Value) :-
+    ( if Key = K then Value = V else search(Dict, Key, Value) ).
+
+set(Dict, Key, Value) = [{Key, Value} | Dict].
+%endcode
+Observe the #type# declaration in the #interface# section: it gives the name
+of the type and its arguments, but nothing else.  Further down, in the
+#implementation# section, we give a definition for #dictionary#.  At some
+later point we may reimplement #dictionary# as an ordered list or
+binary tree or some other more efficient structure.  Such a change would not
+affect the interface of the #dictionary# module (because #dictionary# is an
+abstract type), so no changes would be required by users of the module.
+
+
+
+\section{Higher order types}
+
+Mercury considers functions and predicates to be values just as much as it
+does #int#s, #string#s and #list#s.  Consider the higher order #map#
+function (as defined in the #list# standard library module) which takes a
+function from #T1# values to #T2# values, a list of #T1# values, and returns
+a list of #T2# values:
+%startcode
+:- func map(func(T1) = T2, list(T1)) = list(T2).
+
+map(_, [])        = [].
+map(F, [X | Xs])  = [F(X) | map(F, Xs)].
+%endcode
+The first clause says that mapping over the empty list returns the empty
+list.  The second clause says that mapping the function #F# over the
+non-empty list #[X | Xs]# is the list whose head is #F(X)# (\ie the result
+of applying #F# to #X#) and whose tail is the result of mapping #F# over
+#Xs#.
+
+The thing to observe here is the argument type #func(T1) = T2#, which
+illustrates the syntax for function types.
+
+This next example illustrates the syntax for predicate types (this predicate
+is also defined in the #list# standard library module):
+%startcode
+:- pred  filter(pred(T),                  list(T),  list(T),  list(T)  ).
+:- mode  filter(in(pred(in) is semidet),  in,       out,      out      ) is det.
+
+filter(_, [], [], []).
+filter(P, [X | Xs], Ys, Zs) :-
+    filter(P, Xs, Ys0, Zs0),
+    (  if    P(X)  then  Ys = [X |  Ys0],  Zs =       Zs0
+                   else  Ys =       Ys0,   Zs = [X |  Zs0]
+    ).
+%endcode
+the goal #filter(P, As, Bs, Cs)# unifies #Bs# with the list of members of
+#As# that satisfy #P# and unifies #Cs# with the list of members of #As#
+that don't.  The first clause says that filtering the empty list yeilds two
+empty lists.  The second clause says that filtering #[X | Xs]# through the
+predicate #P# is the result of filtering #Xs# through #P# and adding #X# to
+the first result if #P(X)# (\ie if #P# succeeds given #X#), or adding #X# to
+the second result if it doesn't.
+
+The first new thing here is the separation of \emph{type}
+information from \emph{mode} information in the declarations for #filter#.
+Mercury requires a separate #mode# declaration if you do not supply mode and
+determinism details in the #pred# declaration.
+The two declarations could be combined thus
+%startcode
+:- pred filter(  pred(T)::in(pred(in) is semidet),
+                 list(T)::in, list(T)::out, list(T)::out) is det.
+%endcode
+However, having separate #pred# and #mode# declarations 
+highlights that the \emph{type} of #filter#'s higher order argument
+is written #pred(T)#.  (Separate #mode# declarations are examined in more
+detail in Chapter \XXX{}.)  \XXX{Do I need to explain the parameterised #in#
+mode?}
+
+In general, higher order programming with predicates is more complicated
+than with functions because of the need to also specify the modes for the
+higher order arguments.
+
+
+
+\section{#univ#, the universal type}
+
+The #univ# type provides support for dynamically typed programming.
+Mercury's type system is so expressive that #univ# is hardly ever necessary.
+However, should you require it, here is (a slightly abridged version of) the
+interface to #univ# as defined in the #std_util# standard library module:
+%startcode
+:- type  univ.
+:- func  univ(T) = univ.
+:- pred  univ_to_type(univ::in, T::out) is semidet.
+%endcode
+The #univ# function turns an argument of any type into a #univ# value (this
+is an example of overloading a name for a type and a function).  The
+#univ_to_type# predicate turns a #univ# value into a value of type #T# (what
+#T# denotes depends upon the context of the call to #univ_to_type#) if that
+is the type of value contained in the #univ#, and fails otherwise.
+
+We said earlier that a value like #[1, "2", 3.4]# would be rejected because
+it cannot be given a type.  This is true, but we can achieve much the same
+end by writing #[univ(1), univ("2"), univ(3.4)]#, which does have a type,
+#list(univ)#.
+
+To illustrate the use of #univ_to_type#, here is a program to print out
+#univ#s:
+%startcode
+:- module print_univs.
+:- interface.
+:- import_module io.
+
+:- pred main(io::di, io::uo) is det.
+
+:- implementation.
+:- import_module list, std_util, string.
+
+main(!IO) :-
+    print_univ(univ(1),          !IO),
+    print_univ(univ("2"),        !IO),
+    print_univ(univ(3.4),        !IO),
+    print_univ(univ({5, 6, 7}),  !IO).
+%endcode
+%startcode
+:- pred print_univ(univ::in, io::di, io::uo) is det.
+
+print_univ(U, !IO) :-
+    ( if       univ_to_type(U, C)  then io.format("a char, %c\n",          [  c(C)  ], !IO)
+      else if  univ_to_type(U, S)  then io.format("a string, \``%s\''\n",  [  s(S)  ], !IO)
+      else if  univ_to_type(U, I)  then io.format("an int, %d\n",          [  i(I)  ], !IO)
+      else if  univ_to_type(U, F)  then io.format("a float, %f\n",         [  f(F)  ], !IO)
+      else     io.format("no idea...\n", [], !IO)
+    ).
+%endcode
+Compiling and running this program, we get
+%startcode
+> mmc --make print_univs
+Making Mercury/int3s/print_univs.int3
+Making Mercury/cs/print_univs.c
+Making Mercury/os/print_univs.o
+Making print_univs
+> ./print_univs
+an int, 1
+a string, ``2''
+a float, 3.400000
+no idea...
+%endcode
+So how does #univ_to_type# know that #C# is a #char#, #S# a string, and so
+forth?  The answer is the compiler automatically infers these types from
+context: the argument of a #c# data constructor in an #io.format# argument
+list must be a #char#; the argument of an #s# data constructor must be a
+#string#; similarly #I# must be an #int# and #F# a #float#.  Information
+about each result type is supplied to the #univ_to_type# calls via extra
+arguments inserted by the Mercury compiler.
+
+Full details of the run-time type information (RTTI) scheme are beyond the
+scope of this book.  The interested reader is referred to the documentation
+for the #std_util# module in the Mercury Library Reference Manual and the
+relevant parts of the Mercury Reference Manual.
+
+
+
+\section{Useful types defined in the Mercury standard library}
+
+The Mercury standard library defines many useful types, the most common of
+which are examined in more detail in Chapter \XXX{}.  These include #bool#
+for boolean values, #graph# for graph processing, #list# for stacks and
+sequences, #map# for dictionaries, #queue# for first-in first-out (FIFO)
+queues, #pqueue# for priority queues, #random# for random numbers, and #set#
+for sets.  The #std_util# module defines miscellaneous utility types such as
+#univ#, #maybe#, #unit# (the ``dummy'' type), and #pair#.  Many more types
+are defined in the standard library, but the above suffice for the majority
+of data structures.
+
+
+
+\section{More advanced types\ldots}
+
+Mercury's type system includes two more advanced aspects each with a
+separate chapter.  Chapter \XXX{} describes type classes and existentially
+quantified types which exist to support object oriented programming styles.
+Chapter \XXX{} describes types with user-defined equality and comparison
+relations; these are so-called \emph{non-canonical} types in which a given
+semantic value may be represented in more than one way.
+
+
+
+\XXX{I haven't really mentioned type inference, nor have I mentioned
+explicit type qualification of local vars.}

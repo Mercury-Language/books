@@ -1,0 +1,647 @@
+% vim: ft=tex ff=unix ts=4 sw=4 et tw=76
+
+
+
+\chapter{The Mercury mode system}
+
+%include 03-the-mercury-mode-system.polytex.date
+
+Mercury programs are really just logical formulae written down using a
+particular syntax.  The Mercury compiler, however, needs extra information
+to turn these logical formulae into something the computer can execute.
+Specifically, it needs to know which arguments of a predicate 
+can be inputs and which outputs.  This information is conveyed using
+\emph{argument modes} and \emph{determinism categories}.
+
+This chapter explains the mode system and how it is used.
+
+\section{Predicates and procedures}
+
+Every predicate must have a declaration specifying which arguments can be
+inputs and which outputs.  Consider the following implementation of a
+telephone directory in which phone numbers can be looked-up by name:
+%startcode
+:- pred  phone(string::in, int::out) is semidet.
+
+phone("Ian",        66532).
+phone("Julien",     66532).
+phone("Peter",      66540).
+phone("Ralph",      66532).
+phone("Zoltan",     66514).
+%endcode
+The style of #pred# declaration used here is called a #pred#-#mode#
+declaration and is syntactic sugar for two separate declarations:
+%startcode
+:- pred  phone(string,  int).
+:- mode  phone(in,      out)  is semidet.
+%endcode
+The plain #pred# declaration tells us the argument types; the #mode#
+declaration tells us the \emph{argument modes} (#in# or #out#) and the
+corresponding \emph{determinism category} (#semidet#).
+
+It is natural to want to call some predicates in more than one way --- if we
+want to use #phone# to perform ``reverse look-ups'', for instance.  In such
+cases more than one #mode# declaration is necessary (#pred#-#mode# shorthand
+can only be used for singly-moded predicates).
+
+To allow reverse look-ups with #phone# all that is necessary is to (a) use
+separate #pred# and #mode# declarations and (b) add an extra #mode#
+declaration:
+%startcode
+:- pred  phone(string,  int).
+:- mode  phone(in,      out)  is semidet.
+:- mode  phone(out,     in)   is nondet.
+%endcode
+
+The first #mode# declaration
+%startcode
+:- mode  phone(in, out) is semidet.
+%endcode
+says that if we call #phone# giving its first argument as an input and
+taking its second as an output, then the result is semideterministic: every
+name in the directory appears exactly once, but not all names are
+listed.  The goal #phone("Harald", HaraldsNum)# will obviously fail, but
+#phone("Ralph", RalphsNum)# will succeed unifying #RalphsNum# with #66532#.
+
+The second #mode# declaration
+%startcode
+:- mode  phone(out, in) is nondet.
+%endcode
+says that if we call #phone# with its second
+argument given as input and take its first argument as output, then the
+result is nondeterministic: it can fail because the goal
+#phone(Person, 12345)# will fail, but the goal #phone(Person, 66532)#
+has no less than three possible solutions --- #Person = "Ian"#,
+#Person = "Julien"#, and #Person = "Ralph"# --- each of which will be
+computed on backtracking.
+
+\Note Each #mode# declaration specifies a \emph{procedure} to be derived
+from the predicate definition.  The compiler generates code separately for
+each procedure of a predicate, reordering goals to ensure that every
+variable is instantiated (\eg by some earlier unification or call) before it
+is used in an input in a unification or call.  Mode information is also used
+to decide whether a unification with a data constructor is a construction or
+deconstruction.
+
+The compiler verifies that the determinism category for a procedure
+properly describes the behaviour of the procedure.  The compiler will
+issue an error if a procedure can fail or have multiple solutions when its
+declared determinism category says otherwise.  Moreover, the compiler will
+report an error if a deterministic switch is incomplete, telling you
+which cases have been missed (Prolog programmers dream of having error
+detection like this\ldots)
+
+\subsection*{Implied modes}
+
+An \emph{implied mode} is one where an output argument is supplied as
+an input in a procedure call.  Consider the goal #phone("Ralph", 66540)#.
+The compiler gets around this situation by placing a new, temporary variable
+in the output position and then adding a unification goal, giving
+#phone("Ralph", Tmp), Tmp = 66540#.
+
+\section{The determinism categories}
+
+A determinism category tells us whether a particular procedure can fail and
+whether it may have more than one solution:
+
+\begin{tabular}{lr}
+Determinism category    & Number of solutions \\
+\hline
+#det#                   & $1$ \\
+#semidet#               & $\leq 1$ \\
+#multi#                 & $\geq 1$ \\
+#nondet#                & $\geq 0$ \\
+#failure#               & $0$ \\
+\end{tabular}
+
+There are three other determinsm categories that are only occasionally
+needed: #erroneous#, which is used for predicates that only terminate by
+throwing an exception (exceptions are described in Chapter \XXX{}), and
+#cc_multi# and #cc_nondet# which are used for committed-choice
+nondeterminism (see Chapter \XXX{}).
+
+\subsection*{Some examples}
+
+%startcode
+:- pred square(int::in, int::out) is det.
+square(X, X * X).
+%endcode
+#square# is #det#: it cannot fail and every input has a single solution for
+the output.
+
+%startcode
+:- pred absolute_square_root(float::in, float::out) is semidet
+absolute_square_root(X, AbsSqrtX) :-
+    X >= 0.0,
+    AbsSqrtX = math.sqrt(X).
+%endcode
+#absolute_square_root# is #semidet#: it fails for negative inputs while
+non-negative inputs each have a single solution.
+
+%startcode
+:- pred small_prime(int::out) is multi.
+small_prime(2).
+small_prime(3).
+small_prime(5).
+small_prime(7).
+%endcode
+#small_prime# is #multi#: it cannot fail and it has more than one solution.
+
+%startcode
+:- pred small_prime_factor(int::in, int::out) is nondet.
+small_prime_factor(X, P) :-
+    small_prime(P),
+    X mod P = 0.
+%endcode
+#small_prime_factor# is #nondet#: #small_prime_factor(11, A)#, for instance,
+will fail, but #small_prime_factor(6, A)# has solutions #A = 2# and #A = 3#.
+
+Finally, the built-in predicate #false#, which takes no arguments, has
+determinism #failure#: it never succeeds.  The opposite of #false# is the
+built-in predicate #true# which has no arguments and always succeeds (and is
+therefore #det#).
+
+\Note The determinism category of a goal with no output arguments is either
+#det#, #semidet#, or #failure#.  Consider the following:
+%startcode
+:- pred has_small_prime_factor(int::in) is semidet.
+has_small_prime_factor(X) :-
+    small_prime(P),
+    X mod P = 0.
+%endcode
+Because there are no outputs, Mercury ensures that the goal
+\\#has_small_prime_factor(15)#, say, will not succeed more than once, even
+though #small_prime(P)# has two solutions, #P = 3# and #P = 5#, satisfying 
+#15 mod P = 0#.
+
+\section{Determinism}
+
+These rules specify how determinism categories for compound goals are
+derived (with a little experience this quickly becomes second nature).
+The determinism category of a goal is derived from the instantiation state
+of its arguments at the time the goal is executed.
+
+\Note Remember that the compiler reorders the goals in a predicate
+separately for each #mode# declaration for the predicate.  A running program
+does not make decisions about which procedures should be executed when
+calling predicates; this is decided in advance by the Mercury compiler.
+
+\subsection*{Unifications}
+
+Whether a unification is a construction, deconstruction, assignment or
+equality test depends upon which variables are instantiated and which are
+not at the time the unification is executed.
+
+A unification #X = data_ctor(Y1, Y2, Y3)# is a \emph{construction} if #Y1#,
+#Y2#, and #Y3# are initially instantiated and #X# is not.  Constructions are
+always #det#.  Afterwards, #X# will be instantiated.
+
+A unification #X = data_ctor(Y1, Y2, Y3)# is a \emph{deconstruction} if #X#
+is initially instantiated.  Afterwards, #Y1#, #Y2#, and #Y3# will be
+instantiated.  Deconstructions are almost always #semidet# (in certain
+circumstances a deconstruction may have determinism category #det# if it is
+guaranteed to succeed or #failure# if it is guaranteed to fail).
+
+A unification #X = Y# is an \emph{assignment} if precisely one of #X# or #Y#
+is initially instantiated.  Afterwards, both variables will be instantiated.
+Assignments are always #det#.
+
+A unification #X = Y# is an \emph{equality test} if both #X# and #Y# are
+initially instantiated.  Equality tests are always #semidet#.
+
+\subsection*{Procedure calls}
+
+For a predicate call #p(X1, X2, X3)#, which procedure of #p# is executed
+depends upon which #mode# declaration for predicate #p# best matches the
+instantiation states of #X1#, #X2#, and #X3# at the time the call is
+executed.  The determinism category of the goal is that of the called
+procedure, adjusted for any implied modes (\ie extra unifications added
+because some output arguments of the procedure are already instantiated at
+the time of the call).
+
+For example, the goal #phone("Zoltan", ZoltansNumber)# is compiled as a call
+to the #(in, out) is det# procedure of #phone#.  The goal
+#phone(Person, 66540)# is compiled as a call to the #(out, in) is nondet#
+procedure of #phone#.  The goal #phone("Ralph", 66532)# requires an implied
+mode and may be compiled either as #phone("Ralph", Tmp), Tmp = 66532# or
+#phone(Tmp, 66532), Tmp = "Ralph"#, both of which are #semidet#.
+
+\subsection*{Conjunction}
+
+A sequence of goals separated by commas, #G1, G2, G3, ...#, is called a
+\emph{conjunction}.  The commas are pronounced ``and'' and each subgoal is
+called a \emph{conjunct}.
+
+A conjunction can fail if any conjunct can fail.
+
+A conjunction can succeed if every conjunct can succeed.
+
+A conjunction can have multiple solutions if it can succeed
+and one or more conjuncts have multiple solutions.
+
+\Note These rules are a conservative (\ie safe) approximation.  For example,
+the compiler will conclude that conjunction #small_prime(X), X = 4# is
+#semidet#, even though we can see that this goal has to fail.
+
+\subsection*{Disjunction}
+
+A sequence of goals separated by commas, #(G1 ; G2 ; G3 ; ...)#, is called a
+\emph{disjunction}.  The commas are pronounced ``or'' and each subgoal is
+called a \emph{disjunct}.
+
+A disjunction can succeed if any disjunct can succeed.
+
+A disjunction can have multiple solutions if more than one disjunct can
+succeed or one or more disjuncts can have multiple solutions.
+
+\Note Switches are a special case.  A switch is a disjunction that
+deconstructs a particular variable against a different data constructor in
+each disjunct.  If, apart from the deconstructions, every disjunct is #det#,
+then the switch is #det# if the set of deconstructions is exhaustive and
+#semidet# if not.
+
+For example, even though both #p# and #q# (below) define switches on #X#,
+#p# is #det# because its switch is exhaustive, whereas #q# is #semidet#
+because its switch is not:
+%startcode
+:- type ott ---> one ; two ; three.
+
+:- pred p(ott::in, int::out) is det.
+p(X, Y) :-  ( X = one, Y = 1 ; X = two,    Y = 2 ; X = three, Y = 3 ).
+
+:- pred q(ott::in, int::out) is semidet.
+q(X, Y) :-  ( X = one, Y = 1 ; X = three,  Y = 3 ).
+%endcode
+
+\Note Disjunction binds less tightly than conjunction:
+\\#( G11, G12 , G13 ; G21 ; G31, G32 )#
+\\is equivalent to
+\\#( (G11, G12, G13) ; G21 ; (G31, G32) )#.
+
+\Note A definition spanning multiple clauses is equivalent to a
+definition using a single clause containing a disjunction.  That is
+%startcode
+p(one,    1).
+p(two,    2).
+p(three,  3).
+%endcode
+is semantically and operationally identical to
+%startcode
+p(X, Y) :-  ( X = one, Y = 1 ; X = two, Y = 2 ; X = three, Y = 3 ).
+%endcode
+
+\Note If any disjunct instantiates a variable that is used outside the
+disjunction, then every disjunct in the disjunction must also instantiate
+that variable.  That is, the Mercury compiler will report a mode error if a
+program contains a disjunction that instantiates #X# in some disjuncts, but
+not others, and #X# is also needed outside the disjunction.  For instance,
+the following is illegal because #Y#, which appears outside the disjunction,
+is instantiated in the first and second disjuncts, but not the third:
+
+%startcode
+:- pred p(number::in, int::out) is det.
+p(X, Y) :-  ( X = one, Y = 1 ; X = two, Y = 2 ; X = three ).
+%endcode
+
+\subsection*{Negation}
+
+A goal #(not G)# is called the \emph{negation} of #G#.  The negation fails
+if #G# succeeds, and vice versa.  The negation succeeds if #G# fails and
+fails if #G# succeeds.
+
+\Note #G# is said to occur inside a \emph{negated context} and is
+not allowed to instantiate variables that also occur outside the negation.
+
+\Note Negation binds more tightly than conjunction, hence
+#not G1, G2, ...# is equivalent to #(not G1), G2, ...#.  To negate a
+conjunction, put the conjunction in parentheses: #not (G1, G2, ...)#
+
+\Note #X \= Y# is syntactic sugar for #not (X = Y)#.
+
+\subsection*{If-then-else goals}
+
+The declarative semantics for a goal #( if Gc then Gt else Ge )# are
+identical to those of #( Gc, Gt ; (not Gc), Ge )#.  The operational
+semantics are more efficient, though: if there are no solutions to #Gc#,
+the program immediately executes #Ge#.
+
+If any of #Gc#, #Gt#, or #Ge# can fail then the #if#-#then#-#else# can fail.
+
+If any of #Gc#, #Gt#, or #Ge# can have multiple solutions then the
+#if#-#then#-#else# can have multiple solutions.
+
+\Note #Gc# is not allowed to instantiate variables that are used outside the
+#if#-#then#-#else#.  This is because, semantically, #Gc# appears in a
+negated context.  It is all right, however, for #Gc# to instantiate
+variables that are used by #Gt#.
+
+\Note Execution can backtrack into #Gc#.  For example,
+
+#( if small_prime(X), X > 2 then Y = X * X else Y = -1 )#
+
+has solutions #Y = 9#, #Y = 25#, and #Y = 49#.
+
+\Note #( Gc -> Gt ; Ge )# is an alternative, albeit old-fashioned, syntax for
+#( if Gc then Gt else Ge )#.
+
+\section{Procedures and code reordering}
+
+The aim of this section is to give the reader some understanding of code
+reordering.  This knowledge is not required to write Mercury programs, but
+it can help the programmer understand mode-related error messages from the
+compiler.
+
+We will illustrate using the #append# predicate defined in the #list#
+standard library module.  The declarative semantics of
+#append(Xs, Ys, Zs)# is that the list #Zs# is the concatentation of lists
+#Xs# and #Ys#.  So #append([1], [2, 3], [1, 2, 3])# is true, but
+#append([2, 3], [1], [1, 2, 3])# is not.
+
+%startcode
+:- pred  append(list(T),  list(T),  list(T)).
+:- mode  append(in,       in,       out)  is det.
+:- mode  append(out,      out,      in)   is multi.
+
+append(Xs, Ys, Zs) :-
+    (
+        Xs = [], Zs = Ys
+    ;
+        Xs = [X | Xs0], append(Xs0, Ys, Zs0), Zs = [X | Zs0]
+    ).
+%endcode
+
+This code needs no reordering for the #(in, in, out) is det# mode, where
+#Xs# and #Ys# start off instantiated and #Zs# starts off uninstantiated.
+The first disjunct works like this:
+
+\begin{tabular}{lp{0.3\linewidth}l}
+1 & #Xs = []# & Deconstruct #Xs#\\
+2 & #Zs = Ys# & Assign #Zs#\\
+\end{tabular}
+
+and the second disjunct works like this:
+
+\begin{tabular}{lp{0.3\linewidth}p{0.6\linewidth}}
+1 & #Xs = [X | Xs0]# & Deconstruct #Xs#, instantiating #X# and #Xs0#\\
+2 & #append(Xs0, Ys, Zs0)# & Call the #(in, in, out)# procedure, instantiating
+#Zs0#\\
+3 & #Zs = [X | Zs0]# & Construct #Zs#\\
+\end{tabular}
+
+Because each disjunct deconstructs #Xs# in a different way, this disjunction
+is a switch.  Because the switch is exhaustive, and the other goals in each
+disjunct are #det#, the switch as a whole is #det#.
+
+The #(out, out, in) is multi# mode, where only #Zs# is initially
+instantiated, does require some reordering in order to ensure that every
+variable is instantiated before it is needed.  The first disjunct becomes
+
+\begin{tabular}{lp{0.3\linewidth}l}
+1 & #Xs = []# & Construct #Xs#\\
+2 & #Zs = Ys# & Assign #Ys#\\
+\end{tabular}
+
+and the second disjunct becomes
+
+\begin{tabular}{lp{0.3\linewidth}p{0.6\linewidth}}
+1 & #Zs = [X | Zs0]# & Deconstruct #Zs#, instantiating #X# and #Zs0#\\
+2 & #append(Xs0, Ys, Zs0)# & Call the #(out, out, in)# procedure, instantiating
+#Xs0# and #Ys#\\
+3 & #Xs = [X | Xs0]# & Construct #Xs#\\
+\end{tabular}
+
+Since this disjunction is not a switch and the first disjunct always leads
+to a solution, the disjunction as a whole is #multi# in this case.
+
+\Note The Mercury compiler reorders code as little as possible.  However,
+programmers should not write code that depends upon any particular order of
+evaluation --- code can also be reordered by various optimizations!  In
+particular, it is a bad idea to write something like
+#( if X \= 0, Z = Y / X then ... else ... )#, assuming that the test for #X#
+being non-zero will guarantee that this code cannot lead to a
+division-by-zero error at run-time.  It is certainly possible that the test
+and the division may be compiled the other way around.
+
+\section{Insts and subtypes}
+
+So far we have only talked about variables going from being uninstantiated
+to being instantiated.  It turns out to be useful to also keep track of the
+possible values a variable can have when it is instantiated.  Mercury uses
+#inst#s for this purpose.  An #inst# represents the possible
+instantiantiation states of a variable at a particular point in a program.
+
+The most basic #inst#s are #free#, meaning a variable is uninstantiated, and
+#ground#, meaning a variable is instantiated with some unknown value of the
+appropriate type.
+
+The built-in #mode#s #in# and #out# are defined using the following syntax:
+
+%startcode
+:- mode in   == (ground  >> ground).
+:- mode out  == (free    >> ground).
+%endcode
+
+That is, an #in# mode argument of a goal must be #ground# (\ie be
+instantiated with some value) before the goal is executed and will also be
+#ground# afterwards, while an #out# mode argument must be #free# (\ie not
+instantiated) before the goal is executed, but will be #ground# afterwards.
+
+\Note If a goal fails or backtracks then the #inst#s of its arguments stay
+the same as they were before the goal was tried.
+
+\subsection*{Specialised insts}
+
+It is occasionally useful to define new #inst#s matching only subsets of
+possible values that a variable might have.  Consider the following:
+
+%startcode
+:- inst non_empty_list == bound([ground | ground]).
+
+:- pred  head(list(T), T).
+:- mode  head(in,                  out) is semidet.
+:- mode  head(in(non_empty_list),  out) is det.
+
+head(Xs, X) :- Xs = [X | _].
+%endcode
+
+The #inst# declaration defines #non_empty_list# to mean ``bound to the list
+data constructor #[|]# whose first argument has inst #ground# and whose
+second argument has inst #ground#''.
+
+The first mode for #head# tells us that if all we know about the first
+argument is that it is #ground# (\ie it could be bound to any value of type
+#list(T)#, including #[]#) then a call to #head# is semidet.
+
+The second mode for #head# says that if we know the first argument is a
+non-empty list (\ie whatever value it has, it's top-most data constructor
+must be #[|]# with two #ground# arguments) then a call to #head# is
+guaranteed to succeed.
+
+The second #mode# declaration uses the built-in parameterised form of the
+#in# argument mode, which is defined like this:
+
+%startcode
+:- mode in(I) == (I >> I).
+%endcode
+
+where #I# is an #inst# parameter.  #in(non_empty_list)# is therefore
+equivalent to writing #(non_empty_list >> non_empty_list)#.  There is also a
+built-in parameterised #out# argument mode, defined thus:
+
+%startcode
+:- mode out(I) == (free >> I).
+%endcode
+
+When compiling the procedure for the second mode of #head#, the Mercury
+compiler uses the information about the inst of the first argument, #Xs#, to
+infer that the goal #Xs = [X | _]# must (a) be a deconstruction and (b) must
+succeed because whatever value #Xs# has matches the pattern #[_ | _]#.
+
+\Note A value with a #bound(...)# #inst# can always be used in a context
+where a #ground# value is expected, but not the other way around.
+
+\XXX{Mention the alternative #inst# definition syntax.}
+
+\subsection*{Recursively defined insts}
+
+It is possible to describe quite complicated instantiation states.  The
+following #inst#s, for instance, describe lists of even and odd lengths
+respectively:
+
+%startcode
+:- inst even_length_list  == bound([] ; [ground | odd_length_list]).
+:- inst odd_length_list   == bound([ground | even_length_list]).
+%endcode
+
+The first #inst# declaration defines #even_length_list# to mean ``bound
+\emph{either} to #[]# \emph{or} to #[|]# with two arguments, the first
+having #inst# #ground# and the second having #inst# #odd_length_list#
+(multiple possibilities in a #bound# expression are separated by
+semicolons).
+
+The second #inst# declaration defines #odd_length_list# to mean ``bound to
+#[|]# with two arguments, the first having #inst# #ground# and the second
+having inst #even_length_list#.''
+
+\subsection*{Partial instantiation}
+
+A partially instantiated value is one whose #inst# is #bound(...)# where
+the #...# part contains #free# sub-insts, either directly or indirectly.
+
+Partial instantiation is not currently supported for several reasons,
+including the difficulty of analysing such code, the difficulty of
+maintaining such code, and the difficulty of compiling such code
+efficiently.
+
+\section{Uniqueness}
+
+A #bound(...)# inst is said to be \emph{shared} --- that is, it corresponds
+to a value that may be referred to, directly or indirectly, by more than one
+variable at a given point in the program.
+
+Mercury has a special inst, #unique#, which is like #ground#, but it means
+that there is precisely one reference to the #unique# data at this point in
+the program.  The counterpart to #unique#, is #clobbered#.  A variable with
+#inst# #clobbered# may never be used again (\eg because the value it refers
+to is now out-of-date or has been overwritten with something else).
+
+The most common use of uniqueness is for managing IO.  All the IO operations
+defined in the #io# standard library module include two arguments of type
+#io#, with modes #di# and #uo# respectively.  #di# stands for ``destructive
+input'' and #uo# stands for ``unique output''.  These #mode#s are built-in
+and defined thus:
+
+%startcode
+:- mode di  == (unique  >> clobbered).
+:- mode uo  == (free    >> unique).
+%endcode
+
+To illustrate, consider these #pred# declarations taken from the #io#
+module:
+
+%startcode
+:- pred io.write_string(string::in, io::di, io::uo) is det.
+:- pred io.write_int(int::in, io::di, io::uo) is det.
+:- pred io.nl(io::di, io::uo) is det.
+%endcode
+
+and the following code snippet:
+
+%startcode
+    io.write_string("The meaning of life is ", IO0, IO1),
+    io.write_int(42, IO1, IO2),
+    io.nl(IO2, IO3)
+%endcode
+
+The #io# type arguments denote ``states of the world''.  These #io# states
+are updated when IO actions are performed.  One can never go back to an
+earlier state (you can't unplay a piece of music or unprint a document),
+so each IO action clobbers the #io# state passed to it and produces
+and new #io# state as its result.  Similarly, because one cannot copy the
+state of the world, #io# states have to be unique.  These constraints ensure
+that the above code snippet executes in the expected order --- that is,
+first the string #``The meaning of life is ''# will be printed
+(clobbering #IO0# and producing #IO1#), then the number #42#
+(clobbering #IO1# and producing #IO2#), and finally a newline (clobbering
+#IO2# and producing #IO3#).
+
+Say we were to accidentally reuse #IO0# in the second goal:
+
+%startcode
+    io.write_string("The meaning of life is ", IO0, IO1),
+    io.write_int(42, IO0, IO2),
+    io.nl(IO2, IO3)
+%endcode
+
+The Mercury compiler will report the following error
+(line 27 in file #foo.m# is the call to #io.write_string#):
+
+%startcode
+foo.m:027: In  clause for `main(di, uo)':
+foo.m:027:     in argument 2 of call to predicate `io.write_string/3':
+foo.m:027:     unique-mode error: the called procedure would clobber
+foo.m:027:     its argument, but variable `IO0' is still live.
+%endcode
+
+\Note Procedures that can clobber arguments must have determinism category
+#det# or #cc_multi#.  They must always succeed and produce a single result.
+The reason for this is that once an argument is clobbered, which could
+happen at any point during the execution of the procedure, there is no way
+of un-clobbering it on failure or backtracking.  Consequently it is also an
+error for code to backtrack into such procedures.  For the rare cases where
+one needs to do such things, the reader is referred to the section on
+backtrackable destructive update in the Mercury reference manual which
+discusses ``mostly uniqueness''.
+
+Other modules in the standard library that use uniqueness are #array# and
+#store#.  The #array# module implements arrays with $O(1)$ look-up and set
+operations.  It achieves this by using destructive update for the array set
+operation.  This is quite safe because arrays are unique: the `old' version
+of the array is clobbered by the update operation so it can never
+be referred to again; the `new' version of the array is simply the updated
+`old' version.  The #store# module allows one to construct safe,
+pointer-based structures.  Pointer referents can be accessed and updated in
+$O(1)$ time by using the same technique as for arrays.  Chapter XXX
+describes these modules in more detail.
+
+\section{Higher-order modes}
+
+\XXX{Fill this out.}
+
+\section{Committed-choice nondeterminism}
+
+\XXX{Fill this out.}
+
+The #cc_nondet# and #cc_multi# modes.  There may be multiple solutions to a
+cc predicate, but you will only get one of them.
+
+The compiler will report an error if a program can backtrack into a
+committed-choice goal: all goals following a committed-choice goal must be
+\emph{guaranteed} to succeed.  Programming under this restriction is quite
+burdensome.
+
+If all solutions to a committed-choice predicate are equivalent, in the
+sense that, no matter which solution you get, the observable behaviour of
+your program will be the same, then you can use the built-in function
+#promise_only_solution# to escape from the committed-choice context.
+
