@@ -78,14 +78,15 @@ We would start by defining a type class that supported the basic set of
 operations (or methods) we require:
 \begin{verbatim}
 :- typeclass number(T) where [
-	func zero          = T,
-	func one           = T,
-	func from_int(int) = T,
-	func    -T         = T,
-	func T + T         = T,
-	func T - T         = T,
-	func T * T         = T,
-	func T / T         = T
+    func zero          = T,
+    func one           = T,
+    func from_int(int) = T,
+    func    -T         = T,
+    func T + T         = T,
+    func T - T         = T,
+    func T * T         = T,
+    func T / T         = T
+].
 \end{verbatim}
 We include the nullary methods @zero@ and @one@ because they are so
 useful and will have different representations in each \emph{instance}
@@ -121,7 +122,7 @@ argument.
 Next, let's look at how we define @int@ as an instance of @number@:
 \begin{verbatim}
 :- instance number(int) where [
-	zero        = 0,
+    zero        = 0,
     one         = 1,
     from_int(X) = X,
     -X          = 'int__-'(X),
@@ -154,7 +155,7 @@ declaration.
 Making @float@ an instance of @number@ is very similar:
 \begin{verbatim}
 :- instance number(float) where [
-	zero        = 0.0,
+    zero        = 0.0,
     one         = 1.0,
     from_int(X) = X,
     -X          = 'float__-'(X),
@@ -239,7 +240,7 @@ lookup(K, HT) = HT ^ elem(index(K, HT)) ^ elem(K).
 
 index(K, HT) = hash(K) `mod` size(HT).
 \end{verbatim}
-\XXX{Make sure we add @elem@ and @det_elem@ to @assoc_list@.}
+\XXX{Make sure we add @elem@ and @det\_elem@ to @assoc\_list@.}
 
 We can construct hash functions for all our favourite types:
 \begin{verbatim}
@@ -283,10 +284,10 @@ are constructing an hierachy of type classes.
 
 As an example, for many applications, the most efficient type of hash
 table uses double hashing, rather than chaining buckets off a single
-hash generated index.  For double hashing we probe at indices @h1(K) + I
-* h2(K)@ (modulo the size of the hash table) for $@I@ \in \{0, 1, 2,
-\ldots\}$, looking for the correct entry or an empty slot, depending
-upon whether we are performing an insertion or a lookup.
+hash generated index.  For double hashing we probe at indices
+@h1(K) + I * h2(K)@ (modulo the size of the hash table) for
+$@I@ \in \{0, 1, 2, \ldots\}$, looking for the correct entry or an empty
+slot, depending upon whether we are performing an insertion or a lookup.
 
 We want to add a new type class for types with a second hash function:
 \begin{verbatim}
@@ -422,7 +423,7 @@ generally pay a cost everywhere for such a facility, even if you don't
 use it) and can lead to real code maintenance problems.
 \XXX{Do I need to substantiate these claims?}
 
-Several languages, such as Java and C#, have included the notions of
+Several languages, such as Java and \Csharp, have included the notions of
 \emph{interfaces}, which serve much the same purpose as type classes.
 Since we are only allowed to inherit method signatures, there is no
 problem (provided we insist that no method in a sub-type class may have the
@@ -628,7 +629,7 @@ write_strings([X | Xs], !IO) :-
 \end{verbatim}
 because this would restrict the first argument to all members of the
 same type.  What we want to be able to say is, given @X = 10@,
-@Y = " green bottle", Z = @'s'@ is to just call
+@Y = " green bottle"@, Z = @'s'@ is to just call
 @write_strings([X, Y, Z])@ and see @10 green bottles@ appear in the
 output.
 
@@ -658,7 +659,7 @@ quantifier, @some@.  This is what allows us to construct heterogeneous
 collections of @stringable@ instance values.
 
 The constraint @=> stringable(T)@ has the arrow pointing in a different
-deirection, because existentially quantified types place a burden on the
+direction, because existentially quantified types place a burden on the
 \emph{caller's} ability to handle a value, rather than the
 \emph{callee's}.  Because of this directionality, existentially
 quantified types are generally ``outputs'' since a caller has no way of
@@ -669,7 +670,7 @@ The compiler cannot work out without help \XXX{(Is this in general or
 just hard or just a SMOP?)} whether an occurrence of an existentially
 quantified data constructor is meant as a construction or
 deconstruction.  To solve this problem, we insist that
-\emph{constructions} be preceeded with `@new ' (note the space), while
+\emph{constructions} be preceeded with `@new @' (note the space), while
 \emph{deconstructions} are not.  Thus, to construct our heterogeneous
 list of @stringable@s, we would write
 \begin{verbatim}
