@@ -22,7 +22,7 @@ powerful optimization techniques.  [XXX REF why weakly typed languages
 suck?]
 
 Mercury comes with a number of built-in primitive types and provides a
-mechanism for the programmer to construct more complex types.
+mechanism for constructing more complex types.
 
 
 
@@ -47,4 +47,166 @@ MERCURY'S PRIMITVE TYPES
 
 -   The "string" type contains all sequences of "char"s.  Strings are
     written enclosed in "quotes".
+
+
+
+COMPOUND TYPES
+
+Say we want to construct a new type to represent the suits in a deck
+of cards.  We can construct a new type for just this purpose:
+
+    :- type suit ---> clubs ; diamonds ; hearts ; spades.
+
+Here "suit" is the name of our new type, which has four possible
+values: "clubs", "diamonds", "hearts" and "spades" (these are known as
+the type /constructors/ for "suit").  The "--->" separates the type
+name from its constructors, and the constructors are separated by ";"
+(in Mercury, ";" is usually read as "or", so this declaration says
+that a value of type "suit" must be either "clubs" or "hearts" or
+"diamonds" or "spades".)
+
+With the above declaration we can now use these new values in our
+program just as if they were built-in to the language.
+
+For example, say we also want a type to represent the cards in a deck;
+we could define
+
+    :- type card ---> card(int, suit).
+
+This says that a value of type "card" is any structure "card(X, Y)"
+where "X" is an "int" and "Y" is a "suit".  (By convention in our
+program we would probably want to restrict "X" to be a number in the 
+range 1 to 13.)  Thus, the seven of hearts would be represented as
+"card(7, hearts)" while "card(1, spades)" would represent the ace of
+spades.
+
+Compound types are not restricted to having a single constructor.
+For example, we might define
+
+    :- type wheel ---> inflated ; flat ; burst.
+
+        % Each wheeled vehicle constructor has one argument for each
+        % wheel.
+        %
+    :- type vehicle
+        --->    boat
+        ;       bicycle(wheel, wheel)
+        ;       car(wheel, wheel, wheel, wheel)
+        ;       lorry(wheel, wheel, wheel, wheel, wheel, wheel).
+
+
+
+RECURSIVE TYPES
+
+Frequently, we need to be able to represent recursive types such as
+lists and trees.  We can do this by using the name of the type being
+defined as a constructor argument.  For example, a list of "int"s
+could be defined as
+
+    :- type int_list ---> nil ; cons(int, int_list).
+
+("cons" is the name conventionally used to mean "list constructor";
+"nil" denotes the empty list.)  So, an "int_list" is either the empty
+list, "nil" or a non-empty list "cons(X, Y)" where "X" is an "int" and
+"Y" is an "int_list".  The following are all examples of "int_list"
+values:
+
+    nil
+    cons(3, nil)
+    cons(3, cons(1, nil))
+    cons(3, cons(1, cons(4, nil)))
+    cons(3, cons(1, cons(4, cons(1, nil))))
+
+We can have a type for lists of "string"s by defining
+
+    :- type string_list ---> nil ; cons(string, string_list).
+
+and so forth.
+
+We could go on to construct, say, binary trees of "int"s:
+
+    :- type int_tree ---> leaf ; branch(int, int_tree, int_tree).
+
+or even binary trees of "int_list"s:
+
+    :- type int_list_tree
+        --->    leaf
+        ;       branch(int_list, int_list_tree, int_list_tree).
+
+
+
+PARAMETRIC TYPES AND EQUIVALENCE TYPES
+
+Since the various list types are so similar, it would be tedious if we
+had to write the same boiler-plate each time we needed a new list
+type.  The solution to this is to use parametric types, where the name
+of the type being defined takes one argument for each type of value we
+might want to vary.
+
+For example, our parametric list type would be defined as
+
+    :- type list(T) ---> nil ; cons(T, list(T)).
+
+That is, a value of type "list(T)", for any type "T", is either "nil"
+or something of the form "cons(X, Y)" where "X" has type "T" and "Y"
+has type "list(T)".  Type parameters are /type variables/ and, like
+all variables in Mercury, should begin with a capital letter.
+
+Now "list(int)", "list(string)", "list(list(int))", or any combination
+we care to think of, are all perfectly good types.
+
+To give another example, the binary tree datatype would be generalized
+to
+
+    :- type tree(T) ---> leaf ; branch(T, tree(T), tree(T)).
+
+We may want to abbreviate some of these complex type names in order to
+simplify our programs.  Equivalence types exists for just this
+purpose and are defined as in the following examples:
+
+    :- type ints == list(int).
+    :- type strings == list(string).
+    :- type ints_tree == tree(ints).
+
+The left hand side of the "==" gives the name of the new equivalence
+type and the right hand side supplies the definition.
+
+Parametric types can take more than one argument if required;
+equivalence types can also take parameters.  For example, the "map"
+module in the standard library defines a type "map(K, V)"; a "map"
+value is rather like a dictionary that can be used to associate values
+of type "V" with keys of type "K".  A "map(string, int)" might be used
+to represent a simple telephone directory, mapping names (as
+"string"s) to phone numbers (represented as "int"s).  We might define
+an array data type as follows:
+
+    :- type array(T) == map(int, T).
+
+and use it thus:
+
+    :- type int_array == array(int).
+    :- type string_array == array(string).
+
+The key constraint on parametric and equivalence type declarations is
+that all type variables appearing in the definition must also be
+parameters of the type being defined.  Hence the following is not
+allowed because the type variable "T" is not a parameter of
+"any_list":
+
+        % This is illegal!
+        %
+    :- type any_list == list(T).
+
+The reason for this is that the mercury compiler must be able to work
+out what type each value belongs to.  If types like "any_list" were
+permitted then by transitivity we would have to accept that
+"list(int)" and "list(string)" were equivalent, which would mean
+losing all the valuable properties of a strong type system!  (Note
+that this does not mean that we cannot write code that deals with both
+"list(int)" values, "list(string)" values and, indeed, any "list(T)"
+value at all - such things will be explained in the chapter on REF
+polymorphic programming.  We can also have lists in which each list
+item may have a different type; this is explained in the chapter on
+REF existential types.)
+
 
