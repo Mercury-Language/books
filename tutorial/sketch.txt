@@ -639,9 +639,9 @@ PREDICATES
 
             [end code]
 
-        We can now define an ancestor of a Person as being either a
-        parent of that Person or an ancestor of a parent of the
-        Person.
+        We can now define an ancestor of a Person as being either
+        - a parent of that Person or
+        - an ancestor of a parent of that Person.
 
         Since parent/2 is nondet, so is ancestor/2.
 
@@ -812,13 +812,17 @@ PREDICATES
         variable bindings we might have made one the way from the
         /choice point/.)
 
+            [begin code]
+
             parent(cissy, Parent)
             p1 =>
                 father(cissy, Parent)
-                f1 => fail because betty \= cissy
-                f2 => fail because carl  \= cissy
+                f1 => FAIL because betty \= cissy
+                f2 => FAIL because carl  \= cissy
                 f3 =>
                     Parent = bill
+
+            [end code]
 
         So one solution to parent(cissy, Parent) is Parent = bill.  We
         obtained this by first expanding the goal according to p1 and
@@ -831,85 +835,221 @@ PREDICATES
         clause for parent/2 (since there are no more clauses for
         father/2):
 
+            [begin code]
+
             parent(cissy, Parent)
             p2 =>
                 mother(cissy, Parent)
-                m1 => fail because bill \= cissy
-                m2 => fail because bill \= cissy
+                m1 => FAIL because bill \= cissy
+                m2 => FAIL because bill \= cissy
                 m3 => Parent = betty
 
+            [end code]
+
         Now, say we wanted to ask the question "which ancestor of
-        carl, if any, is also a parent of betty?"  Here's how things
+        carl, if any, is also a parent of bill?"  Here's how things
         would proceed:
 
-            ancestor(carl, X), parent(betty, Y), X = Y
+            [begin code]
+
+            ancestor(carl, X), parent(bill, Y), X = Y
             a1 =>
-                parent(carl, X), parent(betty, Y), X = Y
+                parent(carl, X), parent(bill, Y), X = Y
                 p1 =>
-                    father(carl, X), parent(betty, Y), X = Y
-                    f1 => fail because betty \= carl
-                    f2 => 
-                        X = bill, parent(betty, Y), X = Y
-                        <=>
-                        parent(betty, Y), bill = Y
-                        p1 =>
-                            father(betty, Y), bill = Y
-                            f1 =>
-                                Y = arthur, bill = Y
-                                <=>
-                                bill = arthur
-                                   => fail because bill \= arthur
-                            f2 => fail because carl \= betty
-                            f3 => fail because cissy \= betty
-                        p2 =>
-                            mother(betty, Y), bill = Y
-                            m1 => fail because bill \= betty
-                            m2 => fail because carl \= betty
-                            m3 => fail because cissy \= betty
-                    f3 => fail because cissy \= carl
-                p2 =>
-                    mother(carl, X), parent(betty, Y), X = Y
-                    m1 => fail because bill \= carl
-                    m2 =>
-                        X = betty, parent(betty, Y), X = Y
-                        <=>
-                        parent(betty, Y), betty = Y
-                        p1 =>
-                            father(betty, Y), betty = Y
-                            f1 =>
-                                Y = arthur, betty = Y
-                                <=>
-                                betty = arthur
-                                    => fail because betty \= arthur
-                            f2 => fail because carl \= betty
-                            f3 => fail because cissy \= betty
-                        p2 =>
-                            mother(betty, Y), betty = Y
-                            ... this will fail similarly
-            a2 =>
-                parent(carl, Z), ancestor(Z, X), parent(betty, Y), X = Y
-                [we have to rename Parent in the expansion; here we used Z]
-                p1 =>
-                    father(carl, Z), ancestor(Z, X), parent(betty, Y), X = Y
-                    f1 => fail because betty \= carl
+                    father(carl, X), parent(bill, Y), X = Y
+                    f1 => FAIL because betty \= carl
                     f2 =>
-                        Z = bill, ancestor(Z, X), parent(betty, Y), X = Y
-                        <=>
-                        ancestor(bill, X), parent(betty, Y), X = Y
+                        X = bill, parent(bill, Y), X = Y
+                       =>
+                        parent(bill, Y), bill = Y
+                        p1 =>
+                            father(bill, Y), bill = Y
+                            f1 => FAIL because betty \= bill
+                            f2 => FAIL because carl  \= bill
+                            f3 => FAIL because cissy \= bill
+                        p2 =>
+                            mother(bill, Y), bill = Y
+                            m1 =>
+                                Y = alice, bill = Y
+                               =>
+                                bill = alice
+                               => FAIL because bill  \= alice
+                            m2 => FAIL because carl  \= bill
+                            m3 => FAIL because cissy \= bill
+                p2 =>
+                    mother(carl, X), parent(bill, Y), X = Y
+                    m1 => FAIL because bill \= carl
+                    m2 =>
+                        X = betty, parent(bill, Y), X = Y
+                       =>
+                        parent(bill, Y), betty = Y
+                        p1 =>
+                            father(bill, Y), betty = Y
+                            f1 => FAIL because betty \= bill
+                            f2 => FAIL because carl  \= bill
+                            f3 => FAIL because cissy \= bill
+                        p2 =>
+                            mother(bill, Y), betty = Y
+                            m1 =>
+                                Y = alice, betty = Y
+                               =>
+                                betty = alice
+                               => FAIL because betty \= alice
+                            m2 => FAIL because carl  \= bill
+                            m3 => FAIL because cissy \= bill
+            a2 =>
+                [footnote: we have to supply fresh local vars in each
+                 expansion - here Ancestor in the definition of a2 has
+                 been replaced with a new variable Z.]
+                parent(carl, Z), ancestor(Z, X), parent(bill, Y), X = Y
+                p1 =>
+                    father(carl, Z), ancestor(Z, X), parent(bill, Y), X = Y
+                    f1 => FAIL because betty \= carl
+                    f2 =>
+                        Z = bill, ancestor(Z, X), parent(bill, Y), X = Y
+                       =>
+                        ancestor(bill, X), parent(bill, Y), X = Y
                         a1 =>
-                            parent(bill, X), parent(betty, Y), X = Y
+                            parent(bill, X), parent(bill, Y), X = Y
                             p1 =>
-                                father(bill, X), parent(betty, Y), X = Y
-                                f1 => fail because betty \= bill
-                                f2 => fail because betty \= bill
-                                f3 => fail because betty \= bill
+                                father(bill, X), parent(bill, Y), X = Y
+                                f1 => FAIL because betty \= bill
+                                f2 => FAIL because carl  \= bill
+                                f3 => FAIL because cissy \= bill
+                            p2 =>
+                                mother(bill, X), parent(bill, Y), X = Y
+                                m1 =>
+                                    X = alice, parent(bill, Y), X = Y
+                                   =>
+                                    parent(bill, Y), alice = Y
+                                    p1 =>
+                                        father(bill, Y), alice = Y
+                                        f1 => FAIL because betty \= bill
+                                        f2 => FAIL because carl  \= bill
+                                        f3 => FAIL because cissy \= bill
+                                    p2 =>
+                                        mother(bill, Y), alice = Y
+                                        m1 =>
+                                            Y = alice, alice = Y
+                                           =>
+                                            alice = alice
+                                           => TRUE
 
-            XXX Bollocks.  This example doesn't work - there is no
-            common ancestor!  Have to add some more names to the
-            database.  Also need a briefer way to report the failures?
+            [end code]
 
+        So our program concludes that a solution to 
+
+            [begin code]
+
+            ancestor(carl, X), parent(bill, Y), X = Y
+
+            [end code]
+
+        is
+
+            [begin code]
+
+            X = alice, Y = alice
+
+            [end code]
+
+        (As was indicated earlier, in practice we'd be more likely to
+        write the goal as just
+
+            [begin code]
+
+            ancestor(carl, X), parent(bill, X)
+
+            [end code]
+
+        and let Mercury work out where the implicit unification should
+        go.)
+
+        [The above example might give the impression that Mercury is a term
+        rewriting system.  This is not true (although conceivably a very
+        slow Mercury implementation might use such a technique...)  What
+        happens behind the scenes is much more efficient, albeit
+        computationally equivalent.]
+
+        In practice, ninety per cent of the code one writes is
+        deterministic and the majority of what's left will be
+        semi-deterministic.  However, there are times (like in the example
+        above) when non-determinism can be used to write very clear,
+        concise programs.  Support for backtracking and unification is
+        what distinguishes Mercury and other logic programming languages
+        from functional languages.
 
     RECURSION
+
+        Imperative languages like C and Java provide a whole slew of
+        mechanisms for supporting iterative (looping) control flow -
+        while loops, repeat-until loops, for loops and so forth.
+
+        Declarative languages typically provide but one mechanism for
+        such things: recursion.  A recursive predicate is simply one
+        that calls itself.  (Later on we will discover /higher order/
+        predicates and observe that the standard library supplies
+        predicates that stand in for the common iterative mechanisms
+        found in imperative languages.)
+
+        Some simple examples:
+
+            [begin code]
+
+            :- func factorial(int) = int.
+
+            factorial(N) =
+                ( if N = 0 then 1 else N * factorial(N - 1) ).
+
+            :- func fibonacci(int) = int.
+
+            fibonacci(N) =
+                ( if N =< 2 then 1
+                            else fibonacci(N - 1) + fibonacci(N - 2) ).
+
+            [end code]
+
+        These are examples of what is sometimes called "middle
+        recursion" where the recursive call is /not/ the last thing
+        that the predicate (or function) does when looping.  Here,
+        calls to factorial/1 finishes with a multiplication and calls
+        to fibonacci/1 finish with an addition.
+
+        Although middle recursion is easy to read, it incurrs some
+        performance penalty in that each iteration has to record
+        something extra on the stack in order to finish up the
+        computation (that said, the compiler can in many cases turn
+        middle recursive predicates into equivalent tail recursive
+        predicates that do not incurr a stack overhead.)
+
+        Tail recursion describes the situation where the last thing a
+        predicate does is call itself.  Since there is nothing left to
+        do after the call, the compiler can reuse the current call's
+        stack space for the recursive call, allowing the predicate to
+        execute using only a fixed amount of stack space.  For
+        example, tail recursive implementations of the above
+        functions are
+
+            [begin code]
+
+            factorial(N) = fac(N, 1).
+
+            fac(N, X) = ( if N = 0 then X else fac(N - 1, N * X) ).
+
+
+
+            fibonacci(N) = fib(1, 1, N).
+
+            fib(FN_2, FN_1, N) =
+                ( if N =< 2 then FN_1
+                            else fib(FN_1, FN_1 + FN_2, N - 1) ).
+
+            [end code]
+
+
+
+
+
     IF-THEN-ELSE
     DISJUNCTION
     SWITCHES
