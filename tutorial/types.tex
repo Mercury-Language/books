@@ -1,431 +1,874 @@
-% vim: ft=tex ff=unix ts=4 sw=4 et wm=8 tw=0
+% vim: ft=tex ff=unix ts=4 sw=4 et tw=76
 
 \chapter{Types}
 
-Mercury is strongly typed.  Every value has a type and every
-predicate associates a particular type with each argument.
+Mercury is both strongly and statically typed.  Strong typing ensures
+that a program does not inadvertently compare apples with oranges, while
+the purpose of static typing is to inform the programmer \emph{at
+compile time} if a given program may attempt such a thing.  Types also
+exist to provide a systematic way to structure data.
 
-\section{Primitive Types}
+\XXX{Are the following paragraphs too pejorative?  Relevant this
+early?  Needed at all?  Examples required?}
 
-The primitive Mercury types are @int@, @float@, @char@ and @string@ --
-examples are @123@, @3.141@, @('x')@, and @"foo"@,
-respectively.\footnote{Mercury also includes tuples, such as @\{"Route",
-66\}@, and higher order values, namely predicates and functions, among
-its primitive types; however, we can ignore these for now.}
+By way of comparison with other languages, C is not
+strongly typed, since C allows unchecked casts between values of
+different types (a \emph{cast} is a way of telling the compiler to
+treat a particular value as if it had a different type.)
 
-While primitive types are recognised by the compiler, no
-operations are.  Operations on the primitive types are defined in
-modules of the same name in the Mercury standard library.
+Python is strongly typed, but not statically type checked: every time a
+Python program performs an addition, for instance, the arguments have to
+be tested to verify that they are indeed numbers.
 
-\section{Algebraic Types}
+Java, on the other hand, \emph{is} both strongly and statically typed.
+Unfortunately, though Java's type system is weak: \emph{checked} run time
+casts are frequently necessary, meaning that many type errors will only
+be spotted when a running program aborts with an exception.
 
-You can define new types in Mercury:
-\begin{verbatim}
-:- type primary_colour
-    --->    red
-    ;       green
-    ;       blue.
+Mercury does have these problems.  All type errors in
+a Mercury program are identified at compile time, making it harder to
+ship buggy programs.  An expressive type system makes Mercury programs more
+efficient, since no type checks are necessary at run time.  The extra
+information also allows the compiler to perform optimizations that would
+otherwise be impossible.
 
-:- type rgb_colour
-    --->    rgb(float, float, float).   % red, green, blue.
-\end{verbatim}
+There are three different sorts of type in Mercury: discriminated
+unions, equivalence types and abstract types.  A \emph{discriminated
+union} is a collection of values.  An
+\emph{equivalence type} is simply a different name for another type.  An
+\emph{abstract type} is one whose definition is hidden from its users.
 
-Here @primary_colour@ is the name of the new type and its
-\emph{data constructors} (possible values) are @red@, @green@ and @blue@.
+Because Mercury's type system is rich there is a danger of confusing the
+reader with too much, too soon.  Explanation of the more esoteric aspects of
+the type system, namely existentially quantified types and type classes, is
+deferred to chapter \XXX{}.
 
-Similarly @rgb_colour@ is a type with only one constructor,
-@rgb/3@, which in this case takes three float arguments.\footnote{Some languages require you to add empty parentheses
-after function symbols, such as @red@, @green@, and @blue@ above,
-that have no arguments; Mercury, on the other hand, requires
-that the parentheses be omitted alltogether if the functor has
-no arguments.}
+\section{The Primitive Types}
 
-You can define parametric types
-\begin{verbatim}
-:- type binary_tree(T)
-    --->    leaf
-    ;       branch(T, binary_tree(T), binary_tree(T)).
-\end{verbatim}
+Mercury's built-in types are @int@, @float@, @char@, @string@, tuples and
+the predicate and function types.
 
-@T@ is a \emph{type variable} that can stand for any type at all.
-The type @binary_tree(T)@ has two constructors: @leaf/0@ and
-@branch/3@ which takes a value of type @T@ (for any choice of
-type), a @binary_tree(T)@ and a @binary_tree(T)@ as arguments
-respectively.
+\subsection{Integers}
 
-We can have instances of @binary_tree(T)@ for any type @T@ -- for
-example, @binary_tree(int)@, @binary_tree(string)@ or even
-@binary_tree(binary_tree(...))@.
+The @int@ type represents the integers -- @123@, @-9@, @42@ and so forth -- that
+will fit into a machine word on the target computer (the range is from
+about $-2$ billion to $+2$ billion on a 32-bit machine.)
 
-\begin{itemize}
-\item @T@ here is said to be a type variable.
-\item Variables of any kind in Mercury are distinguished by
-  starting with a capital letter.
-\item A type may have several type parameters.
-\item Any variables that appear in the constructor definitions
-  must also appear in the head of the type declaration.
-\item All type variables in the head must be distinct.
-\end{itemize}
+All the core operations one can perform on @int@s, including the basic
+arithmetic functions, are defined in the @int@ module in the Mercury
+standard library.
 
-You can use other types in your definitions.  For example, we
-could define a more general tree type with
-\begin{verbatim}
-:- type tree(T)
-    --->    tree(T, list(tree(T))).
-\end{verbatim}
-So the type @tree(T)@ has a single constructor @tree/2@ which
-takes a @T@ and a @list(tree(T))@ as arguments, respectively
-(@list(T)@ is defined in the @list@ module in the standard
-library.)
+Like most languages, Mercury has syntax for hexadecimal, octal, and binary
+numbers, as well as for the integer codes for characters.  The interested
+reader can find the details in the Mercury Reference Manual \XXX{}.
 
-(Note that Mercury doesn't get confused if you use the same
-name for both type and data constructor.)
+\subsection{Floating Point Numbers}
 
-\XXX{Tyson suggests that diagrams would make this section
-easier to understand.}
+Floating point values such as @2.718@ and @3.0e8@ ($3.0\times10^8$) are
+encoded by the @float@ type.  (The decimal point must always
+appear in a floating point number and be preceded and followed by at
+least one digit.)
 
-\section{Pattern Matching}
+The core @float@ operations are defined in the @float@ module in the
+Mercury standard library.  Mathematical constants such as $\pi$ and $e$, and
+things like trignometric functions, are defined in the @math@ module in the
+Mercury standard library.
 
-Pattern matching is the primary means of identifying which
-constructor is used for a particular type value.  The
-following function definition illustrates:\footnote{Functions are a useful shorthand for predicates
-that have a single output and can therefore appear as
-sub-expressions.}
-\begin{verbatim}
-:- func insert(binary_tree(T), T) = tree(T).
-:- mode insert(in, in) = out is det.
+\subsection{Characters}
 
-insert(leaf, X) =
-    branch(X, leaf, leaf).
+The @char@ type represents single characters.  Unfortunately, due to the
+Mercury's heritage, there is no special syntax for single character
+values.  Some characters, @a@, @b@, @c@, @1@, @2@, @3@ and so forth,
+need no special quoting.
+For others (space, tab and newline, for instance), one has to use
+single quotes and write @' '@, @'\t'@ and
+@'\n'@ -- single quote and backslash are @'\''@ and
+@'\\'@ respectively.
+Finally, some characters need to be enclosed in parentheses since
+otherwise they might be confused with infix operators: @(+)@ and
+@(*)@, for example.
+The safest method is to use both parentheses \emph{and} quoting, as in
+@('/')@.  We apologise for the inconvenience.
 
-insert(branch(A, L, R), X) =
-    ( if      X < A then branch(A, insert(L, X), R)
-      else if A < X then branch(A, L, insert(R, X))
-      else               branch(X, L, R)
+The core @char@ operations are defined in the @char@ module in the
+Mercury standard libarary.
+
+\subsection{Strings}
+
+Mercury strings are immutable sequences of characters.  Examples include
+@"bodacious"@ and @"new\nline"@.  To embed certain characters in a
+string -- double quotes, backslashes, tabs and newlines
+et cetera -- one has to \emph{escape} them with a preceding backslash:
+@\"@, @\\@, @\t@ and @\n@.
+
+If a string contains an explicit newline, as in
+\begin{myverbatim}
+    "there's a newline in here
+there it is"
+\end{myverbatim}
+then the newline character is actually part of the string, just as
+if we had written
+\begin{myverbatim}
+    "there's a newline in here\nthere it is"
+\end{myverbatim}
+However, if the \emph{last} character on a line is a non-escaped backslash
+then the trailing newline is not taken to be part of the string, hence
+\begin{myverbatim}
+    "I see \
+no newline"
+\end{myverbatim}
+is the same as
+\begin{myverbatim}
+    "I see no newline"
+\end{myverbatim}
+
+\XXX{I don't really want to mention the double-double quotes in a string
+thing.}
+
+It is even possible to include characters in a string by giving the
+appropriate character code, although the reader is referred to the Mercury
+Reference Manual \XXX{} for details.
+
+The core @string@ operations are defined in the @string@ module in the
+Mercury standard library.
+
+\subsection{Tuples}
+
+Tuples are the only primitive compound type in Mercury.  A tuple is a
+vector of values between braces:
+\begin{myverbatim}
+    {"the base of natural logarithms", 'e', 2.718}
+\end{myverbatim}
+Tuples are useful for parcelling up data in situations where it would be
+annoying to have to create a special-purpose type to do the job.
+Tuples can have any number of arguments.
+
+There is no tuple-specific library module: one can construct and
+deconstruct them, and that's it.
+
+\subsection{Function and Predicate Types}
+
+Functions and predicates are first class citizens in the Mercury type
+system: they can be passed as arguments, returned as results
+and stored in other data structures.  This aspect of Mercury is
+discussed in detail in chapter \XXX{} on higher order programming.
+
+Function and predicate types look just like the corresponding @func@ and
+@pred@ declarations with the name is omitted.
+The @func@ declaration for @math.sqrt/1@, for example, is given as
+\begin{myverbatim}
+:- func sqrt(float) = float.
+\end{myverbatim}
+The type of @math.sqrt/1@ is therefore @func(float) = float@.
+
+The @pred@ declaration for @set.contains/2@, which tests whether a
+particular value is a member of a set, is declared as
+\begin{myverbatim}
+:- pred contains(set(T), T).
+\end{myverbatim}
+so @set.contains/2@ has the type @pred(set(T), T)@.
+The @T@ is a \emph{type parameter} (about which we will say more
+in a little while) meaning we can substitute any type at all for @T@ and
+the predicate will still work.
+
+Although we haven't yet covered higher order programming (see chapter
+\XXX{}), we should still be able to understand higher order type
+signatures.  @string.words/2@, for instance, has the type
+\begin{myverbatim}
+    func(pred(char), string) = list(string)
+\end{myverbatim}
+indicating that its first argument is a predicate over characters.
+(Note that the \emph{type} of a function or predicate says nothing about
+its \emph{mode} -- which arguments are inputs and its determinism and so
+forth.  Modes are the subject of chapter \XXX{}.)
+
+\section{Discriminated Union Types}
+
+One can think of a discriminated union as being a set of values, each of
+which is distinguishable from the others.  At their core, virtually all
+Mercury types are distributed unions.
+(Equivalence types are simply a means of giving convenient names to
+complicated types and abstract types are used to hide the
+definition of a type.)
+\XXX{Should I qualify this by saying that types implemented in foreign
+code aren't strictly DUs?}
+
+We can define a new type to represent the suits in a deck of playing
+cards like this:
+\begin{myverbatim}
+:- type suit ---> spades ; hearts ; diamonds ; clubs.
+\end{myverbatim}
+The new type is called @suit/0@ and it has four 
+\emph{data constructors}, or possible values: @spades@, @hearts@,
+@diamonds@ and @clubs@.  The goal
+\begin{myverbatim}
+    X = spades
+\end{myverbatim}
+will, assuming @X@ is uninstantiated, bind @X@ to the value @spades@ which
+is of type @suit/0@.
+
+Data constructors can take arguments, as illustrated by the following type
+for binary trees of @int@s:
+\begin{myverbatim}
+:- type int_tree ---> empty ; branch(int, int_tree, int_tree).
+\end{myverbatim}
+The code for insertion and the membership test can be written like
+this:
+\begin{myverbatim}
+:- func insert(int, int_tree) = int_tree.
+
+insert(X, empty          ) = branch(X, empty, empty).
+
+insert(X, branch(Y, L, R)) =
+    (      if X =< Y then branch(Y, insert(X, L), R)
+      else /* X  > Y */   branch(Y, L, insert(X, R))
     ).
-\end{verbatim}
-\XXX{This is wrong -- we should either use @compare/3@ (ugh) or make @<@
-etc. synonyms for @compare/2@ closures in the language.}
 
-The first clause matches when the first argument is a @leaf/0@
-and the second clause matches when the first argument is a
-@branch/3@, unifying @A@, @L@, and @R@ respectively with the
-corresponding arguments of the @branch/3@ value.
+:- pred int_tree `contains` int.
+:- mode in       `contains` in is semidet.
 
-(Here we using if-then-else expressions where what follows the
-@then@ or @else@ is the result of the whole if-then-else
-expression.)
-
-Note that all function clauses must compute results of the
-same type.  Similarly, the results of the then- and else-arms
-of an if-then-else expression must have the same type.
-
-Another way of writing @insert/2@ is to use explicit unification
-to find out what data constructor was used for a particular
-argument:
-\begin{verbatim}
-:- func insert(binary_tree(T), T) = tree(T).
-:- mode insert(in, in) = out is det.
-
-insert(T0, X) = T :-
-    (
-        T0 = leaf,           T  = branch(X, leaf, leaf)
-    ;
-        T0 = branch(A, L, R),
-        ( if      X < A then T = branch(A, insert(L, X), R)
-          else if A < X then T = branch(A, L, insert(R, X))
-          else               T = branch(X, L, R)
-        )
+branch(X, L, R) `contains` Y :-
+    (   Y = X
+    ;   Y < X,  L `contains` Y
+    ;   Y > X,  R `contains` Y
     ).
-\end{verbatim}
-Here we follow the function head with a @:-@ and a \emph{goal} that
-computes the result.  (In fact, this is exactly how the
-compiler would see the original implementation of @insert/2@.)
+\end{myverbatim}
+(Observe the C-style @/*@ comment @*/@ in the definition of @insert/2@.)
 
-The goal in this case is a special kind of disjunction
-(``choice'') called a \emph{switch}.  In this case, the argument @T0@
-is unified with @leaf/0@ in the first disjunct and @branch/3@ in
-the second.  Since @T0@ is an @in@ mode argument, the compiler
-knows that only one of these disjuncts will succeed (if two or
-more disjuncts could succeed at the same time then this
-wouldn't be a switch.)  Switches are also very common choice
-structures in Mercury.\footnote{The convention is to name a sequence of related
-values as @X0@, @X1@, @X2@, \ldots, @X@.}
+As we've seen before, a data constructor in a program denotes either a
+construction or a deconstruction -- exactly which is determined by the
+modes and the context.  In @insert/2@, occurrences of @branch/3@ and
+@empty/0@ in the head are deconstructions, while occurrences in the body are
+constructions.
 
-(Note that in this version we are using if-then-else \emph{goals},
-as opposed to if-then-else \emph{expressions}.)
+The definition for @contains/2@ uses a plain disjunction, not a switch:
+it reads ``a @branch(X, L, R)@ contains @Y@ \emph{iff} @Y = X@
+\emph{or} @Y < X@ and @L@ contains @Y@ \emph{or} @Y > X@ and @R@
+contains @Y@.''
+If any arm of the disjunction succeeds then the predicate as a
+whole succeeds.  A clause for the @empty@ case is not necessary since it
+would always fail.
 
-The third way we could implement insert/2 is to use an
-if-then-else to decide what to do:
-\begin{verbatim}
-:- func insert(binary_tree(T), T) = tree(T).
-:- mode insert(in, in) = out is det.
+It is quite common for a type to have a single constructor of the same
+name:
+\begin{myverbatim}
+:- type date ---> date(int, int, int).  % Year, month, day.
+\end{myverbatim}
+Mercury will never get the type and the data constructor confused since
+the type name can only appear in type declarations and the constructor
+name can only appear in clauses.
 
-insert(T0, X) = T :-
-    ( if T0 = branch(A, L, R) then
-        ( if      X < A then T = branch(A, insert(L, X), R)
-          else if A < X then T = branch(A, L, insert(R, X))
-          else               T = branch(X, L, R)
-        )
-      else                   T = branch(X, leaf, leaf)
-    ).
-\end{verbatim}
-This is also fine, although where possible it is often a
-better idea to use pattern matching or switches, since then
-the compiler generally has better scope for optimisation.
+\subsection{Data Constructors with Named Fields}
 
-\section{Algebraic Types with Fields}
-Just as with many languages, it is possible to give names to
-the fields in data constructors, which can be used to access
-just those fields.\footnote{Not all fields have to be named, although one has
-to use pattern matching or unification to access unnamed
-fields.}
-\begin{verbatim}
-:- type rgb_colour
-    --->    rgb(
-                red   :: float,
-                green :: float,
-                blue  :: float
+Like most languages, Mercury supports data structures with named fields.
+Consider a type used to keep track of the tally of votes:
+\begin{myverbatim}
+:- type tally ---> tally(ayes :: int, nayes :: int).
+\end{myverbatim}
+naming the fields of the @tally/2@ data constructor @ayes/0@ and
+@nayes/0@ respectively.  We can still construct and deconstruct @tally/2@
+values as if it had been defined without named fields.  However, having
+named fields also allows us to refer to them \emph{without} the need for an
+explicit deconstruction.
+
+\subsubsection{Accessing Fields}
+
+If we have @X = tally(12, 7)@ then we can refer to the values of the fields
+of the value bound to @X@ using @X ^ ayes@ and @X ^ nayes@:
+\begin{myverbatim}
+    X ^ ayes  = 12,
+    X ^ nayes =  7
+\end{myverbatim}
+The expression @X ^ ayes@ is just syntactic sugar for @ayes(X)@.  The
+function @ayes/1@ is automatically constructed from the field name in the
+type definition and will be defined as
+\begin{myverbatim}
+ayes(tally(A, _)) = A.
+\end{myverbatim}
+
+\subsubsection{Updating Fields}
+
+We can ``update'' a particular field like this:
+\begin{myverbatim}
+    Y = ( X ^ ayes := 13 )
+\end{myverbatim}
+giving @Y = tally(13, 7)@.  This, of course, does not affect the value
+of @X@: we still have @X = tally(12, 7)@.  
+@X ^ ayes := 13@ should be read as ``the value of @X@ with @13@
+substituted in the @ayes@ field.''
+
+The expression @X ^ ayes := 13@ is just syntactic sugar for
+@'ayes :='(X, 13)@.  The function @'ayes :='/2@ is also automatically
+constructed from the type definition.  (Anything at all can be used as a
+functor name if it is enclosed in @'@single quotes@'@, which is why the
+extra characters in the name do not lead to trouble.)  The definition of
+the automatically created @'ayes :='/2@ would be
+\begin{myverbatim}
+'ayes :='(tally(_, B), A) = tally(A, B).
+\end{myverbatim}
+
+Updating several fields in one go is straightforward:
+\begin{myverbatim}
+    Z = (( Y ^ ayes  := Y ^ ayes  + 2 )
+             ^ nayes := Y ^ nayes + 3 )
+\end{myverbatim}
+giving @Z = tally(15, 10)@.
+
+\subsubsection{Fields Within Fields}
+
+Consider the following:
+\begin{myverbatim}
+:- type car
+    --->    car(
+                make            :: string,
+                registration    :: string,
+                owner           :: person
             ).
-\end{verbatim}
-Now, say @X@ is a value of type @rgb_colour@.  Then @X ^ red@,
-@X ^ green@ and @X ^ blue@ are expressions that return the values
-of the corresponding fields.  If we have
-\begin{verbatim}
-    X = rgb(0.1, 0.2, 0.3)
-\end{verbatim}
-then
-\begin{verbatim}
-    X ^ red   = 0.1,
-    X ^ green = 0.2,
-    X ^ blue  = 0.3
-\end{verbatim}
-A field can be ``updated'' in the following way:
-\begin{verbatim}
-    Y = ( X ^ red := 0.4 )
-\end{verbatim}
-results in
-\begin{verbatim}
-    Y = rgb(0.4, 0.2, 0.3)
-\end{verbatim}
-What we're actually doing here is applying a substitution to
-a field and obtaining a new value -- @X@ is unaffected by the
-substitution.
 
-We can chain several substitutions together like this:
-\begin{verbatim}
-    Y = ((( X ^ red   := 0.4 )
-              ^ green := 0.5 )
-              ^ blue  := 0.6 )
-\end{verbatim}
-Fields can also nest:
-\begin{verbatim}
-:- type rgb_point
-    --->    xyrgb(
-                x   :: float,
-                y   :: float,
-                rgb :: rgb_colour
+:- type person
+    --->    person(
+                name            :: string,
+                date_of_birth   :: date,
+                address         :: string
             ).
-\end{verbatim}
-Now, if we have
+\end{myverbatim}
+and the bindings
+\begin{myverbatim}
+    Fred = person(
+               "Fred Bloggs",
+               date(1965, 7, 4),
+               "11 Strangetrousers Terrace"
+           ),
+    Car  = car( 
+               "Ford Escort",
+               "PQR 123",
+               Fred
+           )
+\end{myverbatim}
+We can obtain the @name@ of the @owner@ of @Car@ with
+\begin{myverbatim}
+    Car ^ owner ^ name = "Fred Bloggs"
+\end{myverbatim}
+@Car ^ owner ^ name@ is the same as writing @(Car ^ owner) ^ name@.
+
+If Fred moves house and we need to update his address then we can write
+\begin{myverbatim}
+    Car1 = (Car ^ owner ^ address := "42 Strawberry Fields")
+\end{myverbatim}
+which is the same as if we'd written
+\begin{myverbatim}
+    Owner  = Car ^ owner,
+    Owner1 = (Owner ^ address := "42 Strawberry Fields"),
+    Car1   = (Car   ^ owner   := Owner1                )
+\end{myverbatim}
+So the parentheses matter.  If we just wanted an updated version of the
+@owner@ field of @Car@, rather than an updated version of @Car@ itself,
+we'd write
+\begin{myverbatim}
+    Owner1 = ((Car ^ owner) ^ address := "42 Strawberry Fields")
+\end{myverbatim}
+which this time is the same as having written
+\begin{myverbatim}
+    Owner  = Car ^ owner,
+    Owner1 = (Owner ^ address := "42 Strawberry Fields")
+\end{myverbatim}
+
+\subsubsection{Mixing Named and Unnamed Fields}
+
+It is not necessary to name every field in a data constructor:
+\begin{myverbatim}
+:- type person
+    --->    person(
+                name            :: string,
+                date_of_birth   :: date,
+                address         :: string,
+                children        :: list(child),
+                /* secrets */      list(secret)
+            ).
+\end{myverbatim}
+The @list(secret)@ field is not named and, unlike the named fields, can
+therefore only be accessed by deconstruction and ``updated'' by
+construction.
+
+\subsubsection{User-Defined Field Access Functions}
+
+It can be useful to explicitly define functions to be used for field access,
+either to provide ``virtual'' fields that are computed rather than stored
+(C$\sharp$ calls such things \emph{properties}), or to provide sanity checks
+on accesses and updates, or to define ``indexed fields''.
+
+Say we want to add a ``virtual'' field to the @person/0@ type, computing the
+number of children a particular individual has.
+(Virtual field access functions do not represent real fields, of course, and
+so don't appear as field names in the type definition.)
+To do this we simply write
 \begin{verbatim}
-    X = xyrgb(3.0, 2.0, rgb(0.1, 0.2, 0.3))
+:- func person ^ num_children = int.
+
+Person ^ num_children = list.length(Person ^ children).
 \end{verbatim}
-then
+
+We can add a sanity check to the @children@ field's update function
+ensuring that a person never \emph{loses} children when the list is updated:
+(here we are just providing our own definition for the @children/2@ field
+access function; Mercury will not construct a definition for a field access
+or update function if we have already provided one)
 \begin{verbatim}
-    X ^ rgb ^ red = 0.1
+:- func (person ^ children := list(child)) = person.
+
+(person(A, B, C, D0, E) ^ children := D) = Person :-
+    ( if all [Child] (
+            list.member(Child, D0) => list.member(Child, D)
+      ) 
+      then Person = person(A, B, C, D, E)
+      else exception.throw("you can't unhave children!")
+    ).
 \end{verbatim}
-and
+(The condition of the conditional goal reads ``for all @Child@, \emph{if}
+@Child@ is a member of @D0@ \emph{then} @Child@ is a member of @D@.'')
+
+We can also add ``virtual, indexed'' fields.  Say, for example, we wish to
+access a @person@'s @children@ by number.  Then we might write
 \begin{verbatim}
-    Y = ( X ^ rgb ^ red := 0.4 )
+:- func person ^ child(int) = child.
+
+Person ^ child(N) = list.index0_det(Person ^ children, N).
 \end{verbatim}
-results in
+where @list.index0_det(Children, N)@ returns the @N@th member of @Children@,
+(counting the first as zero, in traditional computer science style) or
+throws an exception if @N@ is out of range.
+
+(The expression @Person ^ child(N)@ is syntactic sugar for
+@child(N, Person)@.)
+
+\XXX{Should I mention @map.elem/2@ etc. here as examples?}
+
+Virtul indexed fields may have any number of arguments.  For example, the
+two-dimensional array module, @array2d@ in the Mercury standard library,
+defines @Array2D ^ elem(Row, Column)@ to access elements of the array.
+
+\subsubsection{Restrictions on Field Names}
+
+At the time of writing, Mercury requires that no field name be defined twice
+in the same module in order to avoid problems with ambiguity.  The following
+are therefore all errors.
+
+This example is illegal because it uses the same field name twice in the
+same data constructor:
 \begin{verbatim}
-    Y = xyrgb(3.0, 2.0, rgb(0.4, 0.2, 0.3))
+:- type foo ---> foo(a :: int, a :: int).
 \end{verbatim}
-Note that it is an error for the same field name to be used in
-data constructors for different \emph{types} defined in the same
-module.  However, different \emph{constructors} of a type may have
-fields with the same name.  For example:\footnote{@foo@, @bar@, @baz@ and @quux@ are traditional programming
-names used in much the same way as Tom, Dick and Harry are often
-used to name arbitrary individuals.}
+The next example uses the same field name in two different data
+constructors and is therefore illegal, despite the fact that they belong to
+the same type:
+\begin{verbatim}
+:- type foo ---> foo1(a :: int)
+            ;    foo2(a :: int).
+\end{verbatim}
+Finally, one cannot use the same field name twice, even in different types:
 \begin{verbatim}
 :- type foo ---> foo(a :: int).
-
 :- type bar ---> bar(a :: int).
 \end{verbatim}
-would lead to the compiler flagging an error since the types
-@foo@ and @bar@ are both defined in the same scope and both have
-constructors with a common field name.  The following is
-acceptable, however, since all the data constructors with the
-same field name belong to the same type:
+There is no problem with different \emph{modules} using the same field name
+since the module qualified forms of the name will be different.
+
+(The names @foo@, @bar@, @baz@ and @quux@ are conventionally used by
+computer scientists when they can't think of anything better to use in an
+example.)
+
+\subsubsection{Semideterministic Field Access}
+
+Consider the following type:
+\begin{myverbatim}
+:- type data ---> empty ; datum(payload :: int, rest :: data).
+\end{myverbatim}
+Given an @X@ of type @data/0@, the expression @X ^ payload@, may
+\emph{fail}.  The field access @X ^ payload@ can only succeed if @X@ is
+bound to a @datum/2@ value -- if @X@ is bound to @empty@ then there is no
+@payload@ field.
+
+Field accesses for field names that do not occur in all the data
+constructors of a type are therefore \emph{semideterministic}.  Be aware of
+his point, as it can from time to time lead to confusing error messages from
+the compiler.
+
+\XXX{Do I need to say anything about using pattern matching to resolve the
+issue?}
+
+\subsection{Parameterised Discriminated Union Types}
+
+So far we've only described ``concrete'' types.  It turns out to be very
+useful to generalise over whole families of types.  The binary
+tree \emph{structure} used in @int_tree/0@, for instance, would also work
+fine for strings, floating
+point numbers and pretty much anything else.  Rather than defining
+nearly identical types (\eg @string_tree/0@ and @float_tree/0@) every time
+we need them, it is far better to \emph{parameterise} our definition, thus:
 \begin{verbatim}
-:- type baz
-    --->    constructor1(a :: int, ...)
-    ;       constructor2(a :: int, ...)
-    ;       constructor3(a :: int, ...).
+:- type tree(T) ---> empty ; branch(T, tree(T), tree(T)).
 \end{verbatim}
-Field access syntax is just syntactic sugar for functions that
-are automatically created by the compiler.  It is also
-possible to write your own functions that can be used as field
-names (for example, if you wanted to compute a value rather
-than storing it in the data constructor, but make it look like
-a field.)  We will go into this in more detail later on \XXX{}.\footnote{\emph{Syntactic sugar}: syntax that makes life easier,
-without otherwise adding anything new to the language.}
+A value of type @tree(T)@, then, is either @empty@ or a @branch(X, Y, Z)@
+where @X@ is of type @T@ and @Y@ and @Z@ are of type @tree(T)@.
+
+Since we are now working over arbitrary types rather than plain @int@s, we
+need to use \emph{generic} comparison predicates for the insert and look-up
+operations:
+\begin{verbatim}
+:- func insert(T, tree(T)) = tree(T).
+
+insert(X, empty          ) = branch(X, empty, empty).
+
+insert(X, branch(Y, L, R)) =
+    (      if X @=< Y then branch(Y, insert(X, L), R)
+      else /* X @>  Y */   branch(Y, L, insert(X, R))
+    ).
+
+:- pred tree(T) `contains` T.
+:- mode in      `contains` in is semidet.
+
+branch(X, L, R) `contains` Y :-
+    O = ordering(X, Y),
+    (   O = (=)
+    ;   O = (<),    R `contains` Y
+    ;   O = (>),    L `contains` Y
+    ).
+\end{verbatim}
+The predicates, \verb!@<!, \verb!@=<!, \verb!@>=!, and \verb!@>!, 
+compare two terms in Mercury's \emph{standard ordering}.
+It doesn't matter what that ordering is for our purposes here, although the
+curious reader can find out more from the Mercury Reference Manual
+\XXX{Put this documentation in the Refence Manual!}.
+The function
+@ordering(X, Y)@ returns @(=)@ if @X = Y@, @(<)@ if \verb!X @< Y!, and
+@(>)@ if \verb!X @> Y!.
+
+We can substitute any type we like for the parameter @T@ in @tree(T)@:
+@tree(int)@ is a binary tree of integers, @tree(string)@ is a binary tree of
+strings, and so on.  The implementations for @insert/2@ and @contains/2@
+will work regardless of which type is substituted for @T@, something we
+could not have managed if we'd stuck to using @int_tree/0@, @string_tree/0@
+and so forth.
+Moreover, Mercury will tell us at compile time if we ever attempt to insert
+a @string@, say, into a @tree(int)@ (compare this with Java, say, where such
+a problem would only become apparent when the running program threw an
+exception.)
+
+A type may have more than one parameter.  We might want to
+generalise our @tree/1@ type to store arbitrary key-value mappings to form a
+dictionary structure:
+\begin{verbatim}
+:- type dict(K, V)
+    --->    empty
+    ;       branch(K, V, dict(K, V), dict(K, V)).
+\end{verbatim}
+The insert and lookup operations are similar to their @tree/1@ counterparts:
+\begin{verbatim}
+:- func insert(K, V, dict(K, V)) = dict(K, V).
+
+insert(Ka, Va, empty) =
+    branch(Ka, Va, empty, empty).
+
+insert(Ka, Va, branch(Kb, Vb, L, R)) = Tree :-
+    O = ordering(Ka, Kb),
+    (   O = (=),    Tree = branch(Ka, Va, L, R)
+    ;   O = (<),    Tree = branch(Kb, Vb, insert(Ka, Va, L), R)
+    ;   O = (>),    Tree = branch(Kb, Vb, L, insert(Ka, Va, R))
+    ).
+
+:- pred lookup(dict(K, V), K,  V).
+:- mode lookup(in,         in, out) is semidet.
+
+lookup(branch(Ka, Va, L, R), Kb, Vb) :-
+    O = ordering(Ka, Kb),
+    (   O = (=),    Vb = Va
+    ;   O = (<),    lookup(R, Kb, Vb)
+    ;   O = (>),    lookup(L, Kb, Vb)
+    ).
+\end{verbatim}
+It is a requirement that any type variables appearing in a data constructor
+in a type definition must be parameters of the type.  The following
+violates the rule and would be reported as an error:
+\begin{verbatim}
+:- type awful ---> mistake(T).
+\end{verbatim}
+The justification is that Mercury has to be able to work out what type @X@
+has in @mistake(X)@ in every deconstruction.
+This definition,
+were it legal, says that @X@ could be anything at all
+-- there is, in general, simply no way for the compiler to work out the
+actual type ahead of time.
+(Chapter \XXX{} explains existentially quantified types which \emph{can} be
+used to construct heterogeneous collections.)
+
+\XXX{Should I mention the shadow-types ``pattern''?}
 
 \section{Equivalence Types}
 
-For documentation and brevity it is also useful to be able to
-declare type synonyms:
+Imagine we are writing a personnel database relating people to lists of
+various attributes and that we have already defined the types @person/0@ and
+@attribute/0@.
+The @dict/2@ type defined above is a likely candidate for the job.
+Specifically, we'd want to use
 \begin{verbatim}
-    :- type int_tree == tree(int).
+    dict(person, list(attribute))
 \end{verbatim}
-Mercury makes no distinction between @int_tree@ and
-@tree(int)@.
+This is something of a mouthful.  Typing this everywhere we needed it would be
+tiring and, worse, a maintenance problem if we later decide that, say,
+@set(attribute)@ is a better idea than @list(attribute)@.
 
-Equivalence types can also take parameters:
+The Mercury solution to the problem is to use an equivalence type:
 \begin{verbatim}
-            :- type list_tree(T) == tree(list(T)).
-            :- type ints_tree    == list_tree(int).
+:- type persattrs == dict(person, list(attribute)).
+\end{verbatim}
+and hereafter we can write @persattrs@ as shorthand for the type on the
+right hand side of the @==@ symbol.  It makes no difference to Mercury
+whether you use @persattrs@ or the full type name.
+
+A common idiom is to use equivalence types to give use-specific names
+to primitive types.  For instance
+\begin{verbatim}
+:- type name         == string. % Must be non-empty.
+:- type age          == int.    % Must be non-negative.
+:- type num_children == int.    % Must be non-negative.
+\end{verbatim}
+@type@, @pred@ and @func@ declarations that use these names
+appropriately become much more readable.
+
+Equivalence types may also be parameterised.  For example, the following
+describes a suitable representation for graph structures with labelled
+vertices:
+\begin{verbatim}
+:- type graph(T) == map(vertex(T), list(vertex(T))).
+\end{verbatim}
+(We assume the type @vertex/1@ has been defined elsewhere.)
+\XXX{Do we need more explanation of this type?  Or a simpler example?}
+
+Note that, as with discriminated union types, any type variable appearing on
+the right hand side of the @==@ must also appear as a parameter on the left
+hand side.  Thus the following is in error:
+\begin{verbatim}
+:- type woeful == list(T).
 \end{verbatim}
 
 \section{Abstract Types}
 
-Often one wants to export a type from a module, but hide its
-definition so that users of the module can only manipulate
-values of the type in question via the predicates exported by
-the module interface.
+It's not always a good to reveal the \emph{definition} of a type to its
+users.  For one thing, doing so means one cannot later change the
+definition of the type without the risk of breaking other programs that use
+it.  It is a good engineering principle to hide 
+implementation detail from users wherever possible.
 
-Abstract types are used for this purpose:\footnote{Mercury supports \emph{overloading}, where the same name can
-be used for several different things; the compiler uses type and
-contextual information to work out which is really meant.  This is how
-we can use the functor @(+)/2@ for addition for @int@s, @float@s,
-complex numbers etc., despite the fact that these operations have
-different implementations.}
-\begin{verbatim}
-:- module complex.
+The @dict/2@ dictionary data type we defined earlier is a good candidate
+for a library module that we can re-use over and over again.  The
+implementation details of @dict/2@ are not important to the users of the
+module: they will only be interested in the functionality on offer.
+Furthermore, we want the freedom to change the definition of @dict/2@ at
+some later point if we find a more efficient representation -- and we want
+to be able to do so without requiring existing users to make changes to
+their code.
+
+The solution to the problem is to make @dict/2@ an \emph{abstract type}.
+\begin{myverbatim}
+:- module dict.
 :- interface.
-:- import_module float.
 
-:- type complex.                        % Abstract type.
 
-    % Constructor functions for complex numbers.
-    %
-:- func rect(float, float) = complex.   % re, im.
-:- func polar(float, float) = complex.  % r, theta.
+:- type dict(K, V).     % Abstract type.
 
-    % Operations on complex numbers.
-    %
-:- func complex + complex = complex.
-:- func complex * complex = complex.
-...
+:- func new_dict = dict(K, V).
+
+:- func insert(K, V, dict(K, V)) = dict(K, V).
+
+:- pred lookup(dict(K, V), K,  V  ).
+:- mode lookup(in,         in, out) is semidet.
+
 
 :- implementation.
 
-    % This implementation uses a single, rectangular
-    % representation.
-    %
-:- type complex                         % Concrete type.
-    --->    re_im(float, float).
+
+:- type dict(K, V)      % Definition of abstract type.
+    --->    empty
+    ;       branch(K, V, dict(K, V), dict(K, V)).
+
+new_dict = empty.
+
 ...
-\end{verbatim}
-The abstract type declaration in the module interface must be
-matched by a concrete type definition (an algebraic or
-equivalence type) in the implementation section.
+\end{myverbatim}
+The line @:- type dict(K, V).@ declares @dict/2@ to be an abstract type:
+an abstract type is just one whose type declaration omits the definition.
+The full type definition instead appears in the implementation section.
 
-The definition of the abstract type is hidden from users of
-the complex module.
+Since the users of an abstract type have no idea how it is defined, they can
+neither create values of that type directly via construction nor examine
+them with pattern matching (deconstruction).  The only way to manipulate
+such values is to use the operations exported by the module defining the
+abstract type.
 
-Finally, abstract types may also take parameters:
-\begin{verbatim}
-:- module set.
+This module includes the function @new_dict/0@ so that users can create new,
+empty @dict/2@ values in the first place (functions of arity zero are just
+fixed values.)
+Other than that, users can only extend @dict/2@ values with @insert/3@ and
+examine them with @lookup/3@.
+The following is therefore wrong:
+\begin{myverbatim}
+:- import_module dict.
+
+this_wont_compile :-
+    Dict0 = empty,
+    Dict1 = branch("Gateau", 'x', Dict0, Dict0),
+    ...
+\end{myverbatim}
+because the implementation section of the @dict@ module is the \emph{only}
+place that knows what the @dict/2@ data constructors are.  This, however, 
+is fine:
+\begin{myverbatim}
+:- import_module dict.
+
+this_will_compile :-
+    Dict0 = new_dict,
+    Dict1 = dict.insert("Gateau", 'x', Dict0),
+    ...
+\end{myverbatim}
+
+\section{Explicit Type Qualification}
+
+The types of the \emph{head variables} in a clause (\ie those appearing in
+the clause head) are given in the corresponding @pred@ or @func@
+declaration.  The compiler deduces the types of the \emph{local} variables
+via a process known as \emph{type inference}.  Very occasionally, type
+inference alone is not sufficient to unambiguously decide the type of a
+local variable.
+
+\subsection{Name Ambiguity}
+
+Sometimes these problems arise due to overloading.  Say we have a module
+@a@ exporting a predicate called @num/1@,
+\begin{myverbatim}
+:- module a.
 :- interface.
 
-:- type set(T).                     % Abstract type.
-
-:- func empty = set(T).
-:- func union(set(T), set(T)) = set(T).
-...
+:- pred num(int).
+:- mode num(out) is multi.
 
 :- implementation.
-:- import_module list.
 
-    % This implementation uses lists to represent sets.
-    %
-:- type set(T) == list(T).          % Concrete type.
+num(1).
+num(2).
+num(3).
+\end{myverbatim}
+and a module @b@ also exporting a predicate called @num/1@,
+\begin{myverbatim}
+:- module b.
+:- interface.
 
-empty       = [].
-union(A, B) = A ++ B.
-...
-\end{verbatim}
+:- pred num(float).
+:- mode num(out) is multi.
 
-\section{* Types with Programmer-Defined Equality}
+:- implementation.
 
-\XXX{Defer explanation until later.}
+num(1.414).
+num(2.718).
+num(3.141).
+\end{myverbatim}
+and a module that imports both @a@ and @b@, defining a predicate @p/0@
+testing whether there are solutions for @num/1@ whose sum is also a
+solution:
+\begin{myverbatim}
+:- import int, float, a, b.
 
-\section{Explicit Type Constraints}
+:- pred p.
+:- mode p is semidet.
 
-Occasionally the compiler needs the programmer to specify what the type
-of a particular variable is in order to resolve an ambiguous situation.
-For example, the predicate @io__print/3@ endeavours to write out a human
-readable form of its first argument, regardless of its type (this is
-made possible through the magic of run-time type information, or
-\emph{RTTI}, which we will discuss later \XXX{}.) Normally the compiler
-has no problem working out the type of the argument, but occasionally
-the programmer has to state the type explicitly.
-\begin{verbatim}
+p :-
+    num(X),
+    num(Y),
+    num(X + Y).
+\end{myverbatim}
+Since the code here does not module qualify @num/1@, the compiler cannot
+decide if the programmer means @a.num/1@ and @int.(+)/2@ or @b.num/1@ and
+@float.(+)/2@.
+
+There are two ways to solve the problem: either one can explicitly module
+qualify the names (not always convenient) or one can add explicit type
+qualifiers to local variables and/or expressions to provide the compiler
+with sufficient information to solve the problem.  Explicit type
+qualification connects an expression to a type via the @with_type@ keyword.
+The type ambiguity in @p/0@ above can be fixed with
+\begin{myverbatim}
+p :-
+    num(X `with_type` int),
+    num(Y `with_type` int),
+    num((X + Y) `with_type` int).
+\end{myverbatim}
+although that would be overkill.  In fact only one type qualification is
+necessary, for instance
+\begin{myverbatim}
+p :-
+    num(X),
+    num(Y),
+    num((X + Y) `with_type` int).
+\end{myverbatim}
+The compiler will reason that since the result of @X + Y@ must be an
+@int@, then what is meant here is @int:(+)/2@.  This means that @X@ and @Y@
+must also have type @int@ (since the type of @int:(+)/2@ is
+@func(int, int) = int@) and therefore that the calls to @num/1@ must refer
+to @a.num/1@ (and not @b.num/1@ which has type @pred(float)@.)
+
+\subsection{Type Ambiguity}
+
+Here is an example of type ambiguity that arises for different reasons:
+\begin{myverbatim}
 main(!IO) :-
-    io__print(123, !IO),
-    io__print(length("abcd"), !IO).
-\end{verbatim}
-The compiler complains about the second call to @io__print/3@
-with
-\begin{verbatim}
-foo.m:028: In clause for predicate `foo:main/2':
-foo.m:028:   error: ambiguous overloading causes type ambiguity.
-foo.m:028:   Possible type assignments include:
-foo.m:028: V_6 :: (pred int) or int
-\end{verbatim}
-where @V_6@ is the type of the variable that the compiler has
-introduced to unify with @length("abcd")@ and then pass to
-@io__print/3@.
+    io.read(Result, !IO),
+    (
+        Result = ok(X),
+        io.print(X, !IO)
+    ;
+        Result = eof
+    ;
+        Result = error(_, _),
+        throw(Result)
+    ).
+\end{myverbatim}
+The predicates @io.read/3@ and @io.print/3@ read and write values of
+virtually \emph{any} type.  However, the compiler needs to be able to work
+out the type of @X@ before it can compile @main/2@ (chapter \XXX{} on
+run-time type information explains why this is the case.)  Our program,
+however, gives no clue as to what type @X@ is supposed to have and the
+compiler will issue an error message of the form
+\begin{myverbatim}
+oops.m:017: In predicate `oops.main/2':
+oops.m:017:   warning: unresolved polymorphism.
+oops.m:017:   The variables with unbound types were:
+oops.m:017:       X :: T
+oops.m:017:       Result :: (io.read_result(T))
+\end{myverbatim}
+\XXX{I think the compiler should use @`with\_type`@ rather than @::@.}
 
-The problem is that (for hysterical raisins \XXX{}) the Mercury
-standard library @string@ module includes both a function of
-arity one and a predicate with the same name of arity two:
-\begin{verbatim}
-:- func length(string) = int.
-
-:- pred length(string, int).
-:- mode length(in,     out) is det.
-\end{verbatim}
-Both perform the same task, but are called in different ways.
-The problem that the expression @length("abcd")@ presents the
-compiler, in the absence of other typing information, is that
-it could be either the result of function application, in
-which case the type of @V_6@ would be int, or the closure formed
-by applying the predicate @length/2@ to a single argument (this
-is called \emph{currying} and happens all the time in higher order
-programming; higher order programming is discussed later
-\XXX{}), in which case @V_6@ would have the higher-order type
-@pred(int)@.
-
-One way to solve the problem is to add an explicit type
-constraint to the program:
-\begin{verbatim}
+Let's say we intended @X@ to be an @int@.
+To resolve this problem we need to add an explicit type qualifier to @X@ --
+it doesn't matter where, since @X@ can never change its type -- and it's
+usually a good idea to pick the first occurrence:
+\begin{myverbatim}
 main(!IO) :-
-    io__print(123, !IO),
-    io__print(length("abcd") `with_type` int, !IO).
-\end{verbatim}
-The compiler can now deduce that the programmer means
-@length("abcd")@ to be a function application rather than a
-closure and can compile this program without further
-assistance.
+    io.read(Result, !IO),
+    (
+        Result = ok(X `with_type` int),
+        io.print(X, !IO)
+    ;
+        ...
+    ).
+\end{myverbatim}
 
-%\XXX{I'd like to have @with_type@ replaced with @:@ in the language
-%before this goes to print...}
+\section{Types with User Defined Equality}
 
-\XXX{Need a section on type representation.}
+\XXX{Should almost certainly appear later in the book.}
 
-\XXX{Need to talk about no-tag types.}
+\section{Types with User Defined Comparison}
 
+\XXX{Should almost certainly appear later in the book.}
+
+\section{Conclusion}
+
+\XXX{Some kind of summary.}
