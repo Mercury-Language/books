@@ -1343,6 +1343,12 @@ PREDICATES
         as expanding into the different clause bodies for the
         predicate definition while looking for solutions.
 
+        Two relatively important built-in predicates are true and
+        false XXX.  true always succeeds and false always fails.
+        [Footnote: false is often written as fail, which is a hangover
+        from Mercury's Prolog roots where it was sometimes more useful
+        to think procedurally than declaratively.]
+
     CONJUNCTION
 
         A goal of the form G1, G2, ..., Gn is called a conjunction
@@ -1391,6 +1397,8 @@ PREDICATES
             ( if ConditionGoal then YesGoal else NoGoal )
 
         [end code]
+
+        Note that the else part is /not/ optional.
 
         You may also see if-then-elses written as
 
@@ -1491,7 +1499,7 @@ PREDICATES
         deterministic, if-then-else goals will act in very much the
         same way as similar structures in other programming languages.
 
-        Since the condition goal is in a negated context in the "else"
+        Since the condition-goal is in a negated context in the "else"
         arm of the disjunctive form of an if-then-else, it cannot
         produce any outputs that would be used in NoGoal or anything
         outside the if-then-else as a whole.  It can, however, produce
@@ -1546,19 +1554,21 @@ PREDICATES
     DISJUNCTION
 
         Just as conjunction lets you use "and" to construct goals,
-        disjunction lets you use logical "or".  A disjunctive goal
-        takes the form (G1 ; G2 ; ... ; Gn) with the semicolons being
+        disjunction lets you use "or".  A disjunctive goal takes the
+        form (G1 ; G2 ; ... ; Gn) with the separating semicolons being
         read as "or".
 
         A disjunction succeeds iff any of its disjunct sub-goals
         succeeds.  A disjunction has as many solutions as all of its
         disjuncts put together: if one disjunct fails or backtracking
         exhausts all the solutions for one disjunct then execution
-        proceeds with the next disjunct.  Again, the compiler is
+        proceeds with another disjunct.  Again, the compiler is
         generally free to reorder disjuncts, although this should not
         have a visible impact on programs.  Disjunctions are typically
-        non-deterministic, although switch disjunctions described
-        below are a special case.
+        non-deterministic, although switches, mentioned earlier, are a
+        special case.
+
+        [XXX Need examples?]
 
         The clausal notation we have been using in the examples above
         is in fact convenient syntactic sugar for writing top-level
@@ -1576,7 +1586,7 @@ PREDICATES
 
         [end code]
 
-        could be written equivalently as
+        could equivalently be written as
 
         [begin code]
 
@@ -1590,6 +1600,9 @@ PREDICATES
 
         [end code]
 
+        Indeed, this is how the compiler sees multi-clause
+        definitions.
+
         In general it is better style to use clausal form for
         top-level disjunctions.
 
@@ -1598,7 +1611,7 @@ PREDICATES
         Mercury recognises particular forms of (semi-)deterministic
         disjunction which it can compile very efficiently.
 
-        The "string" library module defines the following type:
+        The string library module defines the following type:
 
         [begin code]
 
@@ -1611,48 +1624,18 @@ PREDICATES
         [end code]
 
         which can be used to form heterogeneous collections of the
-        primitive types (this is useful amongst other things for
-        supplying argument lists to string formatting predicates.)
+        primitive types (this is useful, amongst other things, for
+        supplying argument lists for formatted output.)
 
-        Now, say we wanted to write a predicate that would convert any
-        poly_type value into a string representation.  Here's how we
-        might write the code:
+        Say we wanted to write a predicate that would convert any
+        poly_type value into a string.  Here's how we might write the
+        code (in practice we would use a function, here we use a
+        predicate for the purposes of illustration):
 
         [begin code]
 
             :- pred poly_type_to_string(poly_type, string).
             :- mode poly_type_to_string(in, out) is det.
-
-            poly_type_to_string(Poly, String) :-
-                (   Poly = f(Float),    float_to_string(Float, String)
-                ;   Poly = i(Int),      int_to_string(Int, String)
-                ;   Poly = s(String)
-                ;   Poly = c(Char),     char_to_string(Char, String)
-                ).
-
-        [end code]
-
-        The compiler knows that since Poly is an input variable it
-        must be bound when the disjunction executes.  It will then 
-        observe that the disjunction has one arm for each possible
-        poly_type constructor (the Poly unifications) and deduce that
-        for any value of Poly, exactly one disjunct applies.  The
-        compiler can therefore emit faster, simpler code for the
-        resulting object code for this disjunction.  These kinds of
-        disjunction are called /switches/ because they are very
-        similar to switch constructs in C.  Moreover, because the rest
-        of each disjunct is deterministic, the compiler can deduce
-        that the switch (and hence the predicate as a whole) must be
-        deterministic.
-
-        Switches are a very elegant way of describing conditions based
-        on unification tests and are typically more efficient than the
-        equivalent if-then-else chains.
-
-        (Aside: in real the above code would probably be written in
-        clausal form:
-
-        [begin code]
 
             poly_type_to_string(f(F), S) :- float_to_string(F, S)
             poly_type_to_string(i(I), S) :- int_to_string(I, S)
@@ -1661,19 +1644,33 @@ PREDICATES
 
         [end code]
 
-        The switch would still be detected, of course.)
+        this is equivalent to the single clause definition
 
-    IMPLICATION
+        [begin code]
 
-        Mercury has three types of goal for describing implicative
-        relationships between goals.
+            poly_type_to_string(Poly, S) :-
+                (   Poly = f(F), float_to_string(F, S)
+                ;   Poly = i(I), int_to_string(I, S)
+                ;   Poly = s(S)
+                ;   Poly = c(C), char_to_string(C, S)
+                ).
 
-            - G1 => G2 is shorthand for (not G1 ; G2);
-            - G1 <= G2 is shorthand for (G2 => G1); and
-            - G1 <=> G2 is shorthand for ((G1 => G2), (G1 <= G2)).
+        [end code]
 
-        Note that parentheses are required around G1 and G2 if they
-        are not atomic goals.
+        The compiler knows that since Poly is an input variable it
+        must be bound when the disjunction is evaluated.  The compiler
+        also sees that each arm of the disjunction unifies Poly
+        against a different data constructor.  The compiler therefore
+        deduces that at most one disjunct can succeed on a particular
+        call (and, since all poly_type data constructors are tested
+        for, /exactly/ one must succeed.)  The compiler generates very
+        efficient code for so-called /switch/ constructs such as this.
+        [Footnote: the name /switch/ is used because of its similarity
+        to the C language construct of the same name.]
+
+        Switches are an elegant way of describing conditions based on
+        unification tests and are typically more efficient than the
+        equivalent if-then-else chains.
 
     EXISTENTIAL QUANTIFICATION
 
@@ -1707,7 +1704,30 @@ PREDICATES
 
             not (some [X, Y, Z] not G)
 
-        An example of use:
+    IMPLICATION
+
+        Mercury has three types of goal for describing implicative
+        relationships between goals.
+
+            - (G1 => G2) is shorthand for (not G1 ; G2);
+            - (G1 <= G2) is shorthand for (G2 => G1); and
+            - (G1 <=> G2) is shorthand for ((G1 => G2), (G1 <= G2)).
+
+        [Footnote: the translations are given by de Morgan's laws.]
+
+        Note that parentheses are required around G1 and G2 if they
+        are not atomic goals; it is a good idea to also put
+        parentheses around the implication as a whole to avoid
+        ambiguity in the scope of the implication.)
+
+        Implication is most often used with universal quantification
+        to test for some general property.
+
+        EXAMPLES
+
+        This example uses the predicate member(X, Xs) to
+        non-deterministically project members X from the list Xs and
+        the semidet predicate even(X) which succeeds iff X is even.
 
         [begin code]
 
@@ -1715,20 +1735,62 @@ PREDICATES
             :- mode all_even(in) is semidet.
 
             all_even(Xs) :-
-                all [X] (member(X, Xs)  =>  X `mod` 2 = 0).
+                all [X] ( member(X, Xs) => even(X) ).
 
         [end code]
+
+        [Footnote: the convention is to name a list of items, X, as
+        Xs.]
+
+        [begin code]
+
+                % Two list can be interpreted as equivalent sets if
+                % each contains the same members as the other.
+                %
+            :- pred equivalent_sets(list(T), list(T)).
+            :- mode equivalent_sets(in, in) is semidet.
+
+            equivalent_sets(Xs, Ys) :-
+                all [Z] ( member(Z, Xs) <=> member(Z, Ys) ).
+
+        [end code]
+
+        The auxiliary predicates member/2 and even/1 are defined as
+
+        [begin code]
+
+            :- pred member(T, list(T)).
+            :- mode member(out, in) is nondet.
+
+                % X is a member of a list if it is either the head of
+                % that list or a member of the tail.
+                %
+            member(X, [X | _ ]).
+            member(X, [_ | Xs]) :- member(X, Xs).
+
+
+            :- pred even(int).
+            :- mode even(in) is semidet.
+
+            even(X) :- X `mod` 2 = 0.
+
+        [end code]
+
+        [Footnote: the Mercury parser views anything in `backquotes`
+        as an infix operator.  This is the same rule as used by
+        Haskell.]
 
     HIGHER ORDER APPLICATION
 
         [XXX I'll talk about this later.]
 
-    A NOTE ON VARIABLE NAMES
+    ANONYMOUS AND SINGLETON VARIABLES
 
         Often one is not interested in a particular output variable
         from a call or unification.  In these cases you can use the
         special variable named "_" (a single underscore) which stands
-        for a different "don't care" variable every time it appears.
+        for a different anonymous or "don't care" variable every time
+        it appears.
 
         Sometimes, however, it makes programs easier to read if you do
         name don't care variables.  Since variables that only appear
@@ -1751,7 +1813,7 @@ FUNCTIONS
     make working with them easier.  One of the key advantages of
     functions is that they can be used as parts of expressions, rather
     than having to have a separate goal computing each subexpression
-    in turn.  That is, one can write
+    in turn.  That is, one can use an expression as in
 
     [begin code]
 
@@ -1759,23 +1821,20 @@ FUNCTIONS
 
     [end code]
 
-    rather than
+    rather than the somewhat opaque goal
 
     [begin code]
 
-        BSquared    = B * B,
-        FourA       = 4 * A,
-        FourAC      = FourA * C,
-        Diff        = BSquared - FourAC,
-        Sqrt        = sqrt(Diff),
-        Numerator   = B + Sqrt,
-        Denominator = 2 * A,
-        X           = Numerator / Denominator
+        square(B, BSquared),
+        multiply(4, A, FourA),
+        multiply(FourA, C, FourAC),
+        subtract(BSquared, FourAC, Diff),
+        sqrt(Diff, Sqrt),
+        add(B, Sqrt, Numerator),
+        multiply(2, A, Denominator),
+        divide(Numerator, Denominator, X)
 
     [end code]
-
-    [XXX Would a different example be better using functional preds
-    rather than traditional funcs?]
 
     DEFINITION
 
@@ -1786,6 +1845,10 @@ FUNCTIONS
             :- func length(list(T)) = int.
             :- mode length(in) = out is det.
 
+                % The length of an empty list is 0.
+                % The length of a non-empty list is 1 for the head
+                % plus the length of the tail.
+                %
             length([]      ) = 0.
             length([_ | Xs]) = 1 + length(Xs).
 
@@ -1794,33 +1857,41 @@ FUNCTIONS
         Like predicates, functions may be defined using several clauses
         and make use of pattern matching.
 
-        Functions can also use auxiliary results, including from predicates:
+        Functions can be computed from goals, where the head and goal
+        are separated by ":-" in the definition:
 
         [begin code]
 
+                % take(N, Xs) is the length min(N, length(Xs))
+                % prefix of Xs.
+                %
             :- func take(int, list(T)) = list(T).
             :- func take(in, in) = out is det.
 
             take(N, Xs) = Ys :-
                 split(N, Xs, Ys, _).
 
+                % drop(N, Xs) is the length max(0, length(Xs) - N)
+                % suffix of Xs.
+                %
             :- func drop(int, list(T)) = list(T).
-            :- func take(in, in) = out is det.
+            :- func drop(in, in) = out is det.
 
             drop(N, Xs) = Zs :-
                 split(N, Xs, _, Zs).
 
+                % split(N, Xs, Prefix, Suffix)
+                %
             :- pred split(int, list(T), list(T), list(T)).
+            :- mode split(in,  in,      out,     out    ) is det.
 
             split(N, Xs, Ys, Zs) :-
-                ( if N = 0 then
-                    Ys = [],
-                    Zs = Xs
-                  else if Xs = [X | Xs0] then
+                ( if N > 0, Xs = [X | Xs0] then
                     Ys = [X | Ys0],
                     split(N - 1, Xs0, Ys0, Zs)
                   else
-                    error("split point beyond end of list")
+                    Ys = [],
+                    Zs = Xs
                 ).
 
         [end code]
@@ -1840,15 +1911,16 @@ FUNCTIONS
 
         [XXX What exactly are the constraints on function
         determinisms?  Remember to point out (somewhere) that
-        functions may also have multiple procedures.]
+        functions may also have multiple procedures.  See the ref.
+        manual section on Determinism.]
 
     PATTERN MATCHING
 
-        [Dealt with above.]
+        [XXX Dealt with above.]
 
     RECURSION
 
-        [Dealt with above.]
+        [XXX Dealt with above.]
 
     CONDITIONAL EXPRESSIONS
 
@@ -1862,37 +1934,397 @@ FUNCTIONS
 
         where the usual rules for if-then-elses apply (in particular,
         ConditionGoal may bind output variables that are used in
-        YesExpr, but not elsewhere).
+        YesExpr, but not elsewhere), except that the then and else
+        branches are /expressions/, rather than goals.
 
-        Note that the else clause is /not/ optional in a conditional
-        expression (it would make no sense not to have one.)
+        Note that as with if-then-else goals, the else clause is /not/
+        optional in a conditional expression (it would make no sense
+        not to have one.)
 
-    OVERVIEW TO SEMIDET PREDICATES
+    * PARTIAL (SEMIDET) FUNCTIONS
 
-        [Deal with this in a later section.  It's sort-of advanced
+        [XXX Leave for later.]
+
+    OVERVIEW OF SEMIDET PREDICATES
+
+        [XXX Deal with this in a later section.  It's sort-of advanced
         stuff.]
 
     POLYMORPHISM
 
-        [Dealt with in section on types.]
+        [XXX Dealt with in section on types.]
 
-    * PARTIAL (SEMIDET) FUNCTIONS
-
-        [Leave for later.]
-
-    INFIX NOTATION AND SYNTACTIC SUGAR IN GENERAL
+    INFIX NOTATION
 
         Mercury syntax supports a number of prefix, infix and postfix
-        operators, including all the usual 
+        operators, including all the usual arithmetic operators.  This
+        is just syntactic sugar, however, and there is no difference
+        between X + Y and +(X, Y) as far as the compiler is concerned.
 
-    FUNCTION SYMBOLS TO BE AWARE OF
+        If you want to use another name as an infix operator, you can
+        simply place it in backquotes:
 
-        Integer division etc.
+        [begin code]
+
+            X `union` Y `union` Z
+
+        [end code]
+
+        is seen by the compiler as
+
+        [begin code]
+
+            union(X, union(Y, Z))
+
+        [end code]
+
+        Backquoted symbols bind more tightly than anything else and
+        associate to the right.
 
 INPUT AND OUTPUT
+
+    One unfortunate consequence of being a pure declarative language
+    is that IO becomes somewhat more complex than is the case for
+    imperative languages.
+
+    IO *IS* A SIDE EFFECT
+
+    One problem is that performing IO necessarily has an effect on the
+    outside world that cannot be backtracked over or undone - there is
+    no returning to an earlier state of the world!  This is in
+    contrast to the mathematically pure world that Mercury inhabits,
+    where there is no concept of a value (such as the state of the
+    world) "changing", only one of new such values being constructed.
+
+    ORDER IS IMPORTANT
+
+    Another problem is that since logically there is no difference
+    between the goal (G1, G2) and the goal (G2, G1), we also need to
+    find some mechanism for ensuring that IO operations happen in the
+    intended order and are not mixed up as a consequence of the
+    compiler reordering goals for optimization purposes and so forth.
+
     UNIQUENESS
+
+        A number of solutions to the IO problem have been adopted by
+        the pure, declarative languages, the main contenders being the
+        monadic approach (as exemplified by Haskell) and the
+        uniqueness approach (as exemplified by Clean and Mercury.)
+
+        The uniqueness approach works like this: we view a Mercury
+        program as a function from world states to world states.  The
+        top-level main/2 predicate of a Mercury program takes the
+        current world state as an input and computes a new world state
+        as its result.  Every IO operation does the same thing: takes
+        a world state as input and produces a new world state as
+        output - notionally updated with the effects of the IO
+        operation (and the actions of the world at large between IO
+        operations).  The so-called IO state is opaque to the Mercury
+        program; it can only be queried via the operations defined in
+        the io module.
+        [Footnote: of course, the Mercury program doesn't actually
+        pass the state of the world around in fact - the IO state
+        abstraction serves both to ensure the properties we require
+        and to give a semantics to IO in Mercury.]
+
+            Example:
+
+            [begin code]
+
+                :- pred main(io, io).
+                :- mode main(di, uo) is det.
+
+                main(IO0, IO) :-
+                    io__write_string("pi = ", IO0, IO1),
+                    io__write_float(math__pi, IO1, IO2),
+                    io__nl(                   IO2, IO ).
+
+            [end code]
+
+            The type of the IO state is called just io and is defined
+            as an abstract type in the io library module.  The
+            top-level predicate main/2 takes the initial IO state as a
+            /destructive input/ (di), and produces another as a
+            /unique output/ (uo).  The three IO operations in the body
+            show how the initial IO state, IO0, is transformed into
+            the final IO state, IO.  So, io__write_string/3 destroys
+            IO0 and produces IO1 as a unique output.  Next,
+            io__write_float/3 destroys IO1 and produces IO2 as a
+            unique output.  Finally, io__nl (which writes out a
+            newline) destroys IO2 and produces IO as a unique output.
+
+        In order to ensure that old versions of the world state cannot
+        be accessed after an IO operation, the IO state is /unique/ -
+        this means that there can only ever be one live reference to
+        it.  [Footnote: a live reference is one that will be used
+        later on in computation.]  The old version of the IO state
+        is said to be clobbered by an IO operation - the compiler will
+        report an error if the old version is still live after the IO
+        operation in question.  Similarly, it is impossible to make a
+        copy the IO state.  [Footnote: it is possible to "fork" the IO
+        state, this is necessary to support concurrency.  Concurrency
+        is dealt with in a later chapter. XXX]
+
+            Example:
+
+            [begin code]
+
+                :- pred main(io, io).
+                :- mode main(di, uo) is det.
+
+                main(IO0, IO) :-
+                    io__write_string("Hello, ",  IO0, IO1),
+                    io__write_string("world!\n", IO0, IO ).
+
+            [end code]
+
+            Here IO0 is used twice; the compiler spots the bug and
+            rejects the program with
+
+            [begin code]
+
+                In clause for `main(di, uo)':
+                  in argument 2 of call to predicate `io:write_string/3':
+                  unique-mode error: the called procedure would clobber
+                  its argument, but variable `IO0' is still live.
+
+            [end code]
+
+        The uniqueness constraint is sufficient to ensure that IO
+        operations happen in a strict order, specified by the
+        programmer, and that it is impossible to backtrack over IO or
+        refer to a dead IO state.
+
+        Note that uniqueness is not a property reserved for IO states:
+        it is used to implement destructively updated arrays, the
+        store data type which allows the construction of arbitrary
+        pointer graphs, hash tables and so forth.  Uniqueness allows
+        the compiler to use a safe form of destructive update of data
+        structures: there is no reason why a dead unique object cannot
+        be reused to create a new live unique object (since the old
+        value can never be accessed), which is exactly what happens
+        for the data types just mentioned.
+
+    STYLISTIC CONSIDERATIONS
+
+        Since passing the IO state around everywhere is a little
+        cumbersome and also quite restrictive (it can only be passed
+        into det predicates), Mercury programmers naturally find
+        themselves separating applications into two parts: the part
+        that handles all the IO and the part that handles all the
+        interesting processing.  This is good style in general, and
+        although one might find it slightly annoying not to be able to
+        insert print statements willy-nilly as is the case with impure
+        languages, one soon finds that the discipline imposed pays
+        real dividends in terms of reusability, maintainability, ease
+        of debugging and so forth.
+
     * DETERMINISM RESTRICTIONS
-    * DCG NOTATION IN DETAIL
+
+        Since IO operations cannot be backtracked across, the IO state
+        (and, indeed, unique objects in general) cannot be passed to
+        non-deterministic predicates - that is, only deterministic
+        predicates can take unique IO states as arguments.  [Footnote:
+        this is not strictly true; there is another determinism,
+        cc_multi, which is compatible with uniqueness.]
+
+    * STATE VARIABLE SYNTAX
+
+        Having to name and pass two variables around for every IO
+        operation quickly becomes tiresome.  Mercury has a special
+        /state variable/ syntax for just this purpose.  The idea is to
+        write code that looks a little more like what one would write
+        in an imperative language, but which is transformed by the
+        compiler into pure Mercury.  A state variable argument !X
+        stands for two real arguments, !.X and !:X, which in turn
+        stand for the "current" and "next" values of the state variable
+        X, respectively.  Occurrences of !.X and !:X are converted by
+        the compiler into appropriately numbered variables.
+
+        For example, the following code
+
+        [begin code]
+
+                % Writes out a list of strings, separated by
+                % commas.
+                %
+            :- pred write_strings(list(string), io, io).
+            :- mode write_strings(in,           di, uo) is det.
+
+            write_strings([],            !IO).
+
+            write_strings([S1],          !IO) :-
+                io__write_string(S1,     !IO).
+
+            write_strings([S1, S2 | Ss], !IO) :-
+                io__write_string(S1,     !IO),
+                io__write_string(", ",   !IO),
+                write_strings(Ss,        !IO).
+
+        [end code]
+
+        is transformed by the compiler into
+        [Footnote: note that the pred and mode declarations reflect
+        the fact that !IO is actually two arguments, not one.]
+
+        [begin code]
+
+                % Writes out a list of strings, separated by
+                % commas.
+                %
+            :- pred write_strings(list(string), io, io).
+            :- mode write_strings(in,           di, uo) is det.
+
+            write_strings([],            IO0, IO) :-
+                IO = IO0.
+
+            write_strings([S1],          IO0, IO) :-
+                io__write_string(S1,     IO0, IO).
+
+            write_strings([S1, S2 | Ss], IO0, IO) :-
+                io__write_string(S1,     IO0, IO1),
+                io__write_string(", ",   IO1, IO2),
+                write_strings(Ss,        IO2, IO ),
+
+        [end code]
+
+        Henceforth we will use state variable syntax rather than
+        explicitly IO states.
+
+    COMMON IO OPERATIONS
+
+        The io library module defines a plethora of useful IO
+        operations and as usual with libraries, the reader is
+        encouraged to take some time to peruse the interface section.
+        Here we will present some basic IO operations to help get the
+        ball rolling.
+
+        OUTPUT
+
+            Output is generally simpler to deal with than input,
+            because, by and large, there are no error codes to deal
+            with.
+
+            The io library module includes predicates for the output
+            of the basic types:
+
+            [begin code]
+
+                :- pred io__write_string(string, io, io).
+                :- mode io__write_string(in,     di, uo) is det.
+
+                :- pred io__write_char(char, io, io).
+                :- mode io__write_char(in,   di, uo) is det.
+
+                :- pred io__write_int(int, io, io).
+                :- mode io__write_int(in,  di, uo) is det.
+
+                :- pred io__write_float(float, io, io).
+                :- mode io__write_float(in,    di, uo) is det.
+
+            [end code]
+
+            However, it's typically easier to use the more general
+            formatted output predicate:
+
+            [begin code]
+
+                :- pred io__format(string, list(poly_type), io, io).
+                :- mode io__format(in,     in,              di, uo) is det.
+
+            [end code]
+
+            The string argument is a format string, very similar in
+            spirit to what one would pass to C's printf().  The list
+            argument is a type safe means of passing the 
+
+            Using io__format/4 one might write
+
+            [begin code]
+
+                :- pred write_record(string, int, float, io, io).
+                :- mode write_record(in,     in,  in,    di, uo) is det.
+
+                write_record(Name, Age, Children, !IO) :-
+                    io__format("%s is %d years old and has %f children.\n",
+                               [s(Name), i(Age), f(Children)], !IO).
+
+            [end code]
+
+            and then we could call
+
+            [begin code]
+
+                write_record("Joe Bloggs", 32, 2.4, !IO)
+
+            [end code]
+
+            and the program would write out "Joe Bloggs is 32 years
+            old and has 2.4 children.", followed by a newline.  The
+            implementation of write_record/5 is much simpler than the
+            functionally equivalent
+
+            [begin code]
+
+                :- pred write_record(string, int, float, io, io).
+                :- mode write_record(in,     in,  in,    di, uo) is det.
+
+                write_record(Name, Age, Children,           !IO) :-
+                    io__write_string(Name,                  !IO),
+                    io__write_string(" is ",                !IO),
+                    io__write_int(Age,                      !IO),
+                    io__write_string(" years old and has ", !IO),
+                    io__write_float(Children,               !IO),
+                    io__write_string(" children.\n",        !IO).
+
+            [end code]
+
+            In fact, io__format/4 is quite a bit more powerful, in
+            that the "%..." formatting specifications can include
+            details as to the style of formatting, precision,
+            justification and so forth.
+
+            [XXX I'm not sure I should mention io__print/3 this early.]
+
+            Another useful predicate the io library module provides is
+
+            [begin code]
+
+                :- pred io__print(T,  io, io).
+                :- mode io__print(in, di, uo) is det.
+
+            [end code]
+
+            io__print/3 is used to print a representation of arbitrary
+            Mercury values.  Be aware, though, that if you try to
+            print the results of expressions, the compiler may ask you
+            to supply more type information to help resolve what
+            exactly it is you are printing (i.e. the expression or the
+            value of the expression.)  This is subtle stuff and will
+            be dealt with in a later chapter. XXX
+
+        INPUT
+
+            Input is marginally more complex than output since
+            typically on of three things can happen:
+            1. we successfully read a value of the required type from
+            the input stream;
+            2. we hit the end-of-file;
+            3. an error of some kind occurs (e.g. the input is
+            malformed or the input source has gone away unexpectedly.)
+
+            To this end the io library module defines the following
+            type:
+
+            [begin code]
+
+                :- type io__result(T) ---> ok(T)
+                                      ;    eof
+                                      ;    error(io__error).
+
+            [end code]
+
+            XXX Here.
 
 MODES
     DIRECTION OF DATA FLOW
