@@ -2,5 +2,270 @@
 
 \chapter{Maps}
 
+The @map@ data type is provided by the @map@ module in the standard
+Mercury library.
 
+After @list@s, @map@s are perhaps the most widely used non-trivial
+Mercury data type.  A @map@ is essentially a dictionary structure
+(or \emph{associative array})
+mapping \emph{keys} to \emph{values}.  The core operations involve
+setting up a mapping from key to value, changing the mapping for a
+given key, and looking up the value associated with a given key.
 
+The @map@ data type is parameterised by the types of keys and values:
+\begin{verbatim}
+:- type map(K, V).
+\end{verbatim}
+Maps have efficient $O(log n)$ cost bounds on all the basic
+operations for a @map@ containing $n$ mappings (the reader may be
+interested to know they are currently implemented using 234-trees
+\XXX{ref}).
+
+Here is a small example of a very basic telephone directory
+application using a @map@ to store the mapping from names to
+phone numbers:
+\begin{verbatim}
+:- import_module map, list, string, std_util, assoc_list, exception.
+
+:- pred main(io, io).
+:- mode main(di, uo) is det.
+
+main(!IO) :-
+    io__read_line_as_string(Result, !IO),
+    (
+        Result = eof
+    ;
+        Result = error(_),
+        throw(Result)
+    ;
+        Result = ok(Name0),
+
+            % Chop off the trailing new line character and
+            % convert to lower case.
+            %
+        Name = to_lower(substring(Name0, 0, length(Name0) - 1)),
+
+        ( if   phone_book ^ elem(Name) = Number
+          then io__format("%d\n", [s(Number)], !IO)
+          else io__format("`%s' is not in the phone book.\n",
+                    [s(Name0)], !IO)
+        ),
+        main(!IO)
+    ).
+
+    % We memoize the result of this function since we only
+    % want to build it once.
+    %
+:- func phone_book = map(string, string).
+:- pragma memo(phone_book/0).
+
+phone_book = map__from_assoc_list([
+        "ralph" -       "9873 1234",
+        "tyson" -       "9873 4342",
+        "fergus" -      "9873 1237",
+        "zoltan" -      "9876 8754",
+        ...
+    ]).
+\end{verbatim}
+\XXX{Is this a bit too ``clever'' for a tutorial example?}
+\XXX{There's probably a better example.}
+
+\section{The Main Map Operations}
+
+An empty map is constructed by calling the nullary @init@ function:
+\begin{verbatim}
+:- func init = map(K, V).
+\end{verbatim}
+There are predicates to decide whether a given map is empty or
+contains a mapping for a particular key:
+\begin{verbatim}
+:- pred map__is_empty(map(K, V)).
+:- mode map__is_empty(in) is semidet.
+
+:- pred map__contains_key(map(K, V), K).
+:- mode map__contains_key(in,        in) is semidet.
+\end{verbatim}
+We have two field-access like functions for lookup up values
+associated with keys.  The first, @elem@, simply fails if there
+is no mapping for the given key.  The second, @det_elem@, will
+throw an exception if this is the case.
+\begin{verbatim}
+:- func elem(K, map(K, V)) = V is semidet.
+
+:- func det_elem(K, map(K, V)) = V.
+\end{verbatim}
+So the expression @Map ^ elem(Key)@ denotes the value associated
+with @key@, if any.
+
+Mappings can be added or changed using the field assignment-like
+functions @'elem :='@ and @'det_elem :='@.  The expression
+@Map ^ elem(Key) := Value@ always succeeds, returning an updated
+version of @Map@ overwriting the mapping for @Key@, if any, in @Map@
+or adding a new mapping if @Map@ does not contain one.  The expression
+@Map ^ det_elem(Key) := Value@ is similar, except that it will throw
+an exception if @Map@ does not already contain a mapping for @Key@.
+\begin{verbatim}
+:- func 'elem :='(K, map(K, V), V) = map(K, V).
+
+:- func 'det_elem :='(K, map(K, V), V) = map(K, V).
+\end{verbatim}
+
+\section{Bulk Initialisation and Update}
+
+The @map@ module provides several means of initialising and updating
+@map@s from other structures relating keys to values.
+
+\subsection{Association Lists}
+
+The simplest dictionary type is @assoc_list@.
+\begin{verbatim}
+:- func from_assoc_list(assoc_list(K,V)) = map(K,V).
+
+:- func from_sorted_assoc_list(assoc_list(K,V)) = map(K,V).
+\end{verbatim}
+These two functions both construct a new map from the @Key - Value@
+mappings in the @assoc_list@ argument.  Mappings are inserted in the
+order in which the @Key - Value@ pairs appear in the @assoc_list@.
+
+Example (the 1926 estimates of Dr Catherine Morris Cox):
+\begin{verbatim}
+    IQs = from_assoc_list([
+        "Bobby Fischer"   - 187,
+        "Galileo Galilei" - 185,
+        "Rene Descartes"  - 180,
+        "Immanuel Kant"   - 175,
+        "Charles Darwin"  - 165,
+        "Albert Einstein" - 160
+    ])
+\end{verbatim}
+If the @assoc_list@ in question is already sorted with distinct keys in
+ascending order then using @from_sorted_assoc_list@ \emph{may} be faster
+(but there's certainly no point in separately sorting the @assoc_list@
+just to use this function instead!)  \XXX{It's not clear to me that we
+really want to mention this one at all, especially since they're
+currently implemented identically.}
+
+The following function allows one to make several updates to a @map@
+from an @assoc_list@:
+\begin{verbatim}
+:- func set_from_assoc_list(map(K,V), assoc_list(K, V)) = map(K,V).
+\end{verbatim}
+
+Example (wild guesses):
+\begin{verbatim}
+    NewIQs = set_from_assoc_list(IQs, [
+        "Ralph Becket"     - 253,
+        "Fergus Henderson" - 211,
+        "Albert Einstein"  - 161,   % Revised estimate.
+        "Tyson Dowd"       -  86
+    ])
+\end{verbatim}
+
+\subsection{Corresponding Pairs in Lists}
+
+Occasionally one has keys and values in separate @list@s.  One can
+construct a @map@ from them using the following function:
+\begin{verbatim}
+:- func from_corresponding_lists(list(K), list(V)) = map(K, V).
+\end{verbatim}
+The @list@s must be the same length; if they aren't then this 
+function will throw an exception.
+
+Example:
+\begin{verbatim}
+    QualityOfPet =
+        from_corresponding_lists(
+            [cat, dog, snake], [good, bad, inadvisable]
+        )
+\end{verbatim}
+giving @QualityOfPet ^ elem(cat) = good@ and
+@QualityOfPet ^ elem(dog) = bad@ and
+@QualityOfPet ^ elem(snake) = inadvisable@.
+\XXX{This example may also need a little work.}
+
+\subsection{Other Maps}
+
+One can use the following functions to merge @map@s together:
+\begin{verbatim}
+:- func merge(map(K, V), map(K, V)) = map(K, V).
+
+:- func overlay(map(K,V), map(K,V)) = map(K,V).
+\end{verbatim}
+The @merge@ function will throw an exception if the two maps have a key
+in common.  The @overlay@ function will not, taking the values for
+common keys from the second @map@ argument in the resulting @map@.
+
+Example:
+\begin{verbatim}
+    RoutesA = from_assoc_list([
+        adelaide - melbourne,
+        perth - adelaide,
+        melbourne - canberra
+    ]),
+    RoutesB = from_assoc_list([
+        canberra - sydney,
+        sydney - brisbane,
+        brisbane - darwin,
+        melbourne - alice_springs
+    ]),
+    Routes = overlay(RoutesA, RoutesB)
+\end{verbatim}
+will result in @Routes ^ elem(perth) = adelaide@ and
+@Routes ^ elem(sydney) = brisbane@ and
+@Routes ^ elem(melbourne) = alice_springs@.
+\XXX{Another bad example.  Should use this one for @multi_map@.}
+
+\section{Miscellaneous Operations}
+
+\XXX{This section needs examples throughout.}
+
+One can delete the mappings for one or a @list@ of keys using the
+following:
+\begin{verbatim}
+:- func delete(map(K,V), K) = map(K,V).
+
+:- func delete_list(map(K,V), list(K)) = map(K,V).
+
+:- pred map__remove(map(K,V), K, V, map(K,V)).
+:- mode map__remove(in, in, out, out) is semidet.
+
+:- pred map__det_remove(map(K,V), K, V, map(K,V)).
+:- mode map__det_remove(in, in, out, out) is det.
+\end{verbatim}
+The @delete@ and @delete_list@ functions simply ignore key arguments
+that do not have mappings in the @map@ argument.
+
+The predicate @map__remove@ will fail if the given key is not present,
+otherwise it returns both the value mapping of the key and a version of
+the @map@ that does not contain a mapping for the key.
+
+The present @map__det_remove@ is similar, except that it will throw an
+exception if the given @map@ does not have a mapping for the key in
+question.
+
+One can obtain a count of the number of mappings in a map with
+\begin{verbatim}
+:- func count(map(K, V)) = int.
+\end{verbatim}
+
+One can obtain (sorted) lists of keys and values stored in a @map@:
+\begin{verbatim}
+:- func keys(map(K, V)) = list(K).
+
+:- func sorted_keys(map(K, V)) = list(K).
+
+:- func values(map(K, V)) = list(V).
+\end{verbatim}
+The functions @keys@ and @sorted_keys@ are identical, except that the
+latter guarantees to return the keys in ascending order.  The values
+returned by @values@ are not guaranteed to be in any order.
+
+The following convert @map@s to @assoc_list@s:
+\begin{verbatim}
+:- func to_assoc_list(map(K,V)) = assoc_list(K,V).
+:- func to_sorted_assoc_list(map(K,V)) = assoc_list(K,V).
+\end{verbatim}
+@to_sorted_assoc_list@ returns the corresponding @assoc_list@ with keys
+in ascending order.
+
+XXX HERE!

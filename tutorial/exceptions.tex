@@ -1,10 +1,472 @@
 % vim: ft=tex ff=unix ts=4 sw=4 et wm=8 tw=0
 
 \chapter{* Exceptions}
-\section{Throwing}
-\section{Catching}
-\subsection{Effect On Determinism}
-\subsection{Restoring (Plain) Determinism (promise\_only\_solution)}
+
+There are two ways of dealing with error conditions that are detected at
+run-time.  The first is for the operation which detected the error to
+return an error code of some sort.  This is what happens in the @io@
+library with predicates that return an @io__result@.  Return codes
+generally have to be dealt with as soon as the operation returns; in
+some situations this can mean that the underlying algorithm ends up
+hidden beneath a slew of error handling code.
+
+The other option is to \emph{throw an exception} (sometimes called
+\emph{raising} an exception).  An exception causes execution to
+immediately return to the nearest \emph{exception handler} in the call
+stack.  The exception handler must decide what to do from that point on.
+Exceptions are useful when the best place to handle an error (or rather,
+an exceptional situation) is at some higher level of abstraction -- that
+is, further up the call stack -- rather than having to worry about
+unlikely events at every point in the program.
+
+Exception based code in Mercury makes use of the modules @exception@ and
+@std_util@, the latter because exceptions are ``transmitted'' as values
+of type @univ@.
+
+\section{An Example}
+
+\XXX{I use an IO based example.  Perhaps it would be better to use a
+non-IO example and afterwards mention @try\_io@ and relatives.}
+
+In this example we want to ``translate'' one file into another.  The
+obvious code using error code handling is unfortunately ugly:
+\begin{verbatim}
+:- import_module io, string, list.
+
+main(!IO) :-
+    io__open_input("input_file", OpenInputResult, !IO),
+    (
+        OpenInputResult = error(_),
+        report_error("Couldn't open input_file", !IO)
+    ;
+        OpenInputResult = ok(Input),
+        io__open_output("output_file", OpenOutputResult, !IO),
+        (
+            OpenOutputResult = error(_),
+            io__close_input(Input, !IO),
+            report_error("Couldn't open output_file", !IO)
+        ;
+            OpenOutputResult = ok(Output),
+            translate(Input, Output, TranslateResult, !IO),
+            io__close_output(Output, !IO),
+            io__close_input(Input, !IO),
+            (
+                TranslateResult = error(_),
+                report_error("Something went wrong in translation", !IO)
+            ;
+                TranslateResult = ok
+            )
+        )
+    ).
+
+:- pred report_error(string, io, io).
+:- mode report_error(in,     di, uo) is det.
+
+report_error(ErrMsg, !IO) :-
+    io__stderr_stream(StdErr, !IO),
+    io__format(, StdErr, "%s\n", [s(ErrMsg)], !IO),
+    io__set_exit_status(1, !IO).
+
+:- pred translate(input_stream, output_stream, io__res, io, io).
+:- mode translate(in,           in,            out,     di, uo) is det.
+
+translate(Input, Output, Result, !IO) :- ...
+\end{verbatim}
+We can write more concise code that handles all the possible errors in
+one place by using exceptions:
+\begin{verbatim}
+:- import_module io, string, list, unit, exception, univ.
+
+:- pred main(io, io).
+:- mode main(di, uo) is cc_multi.
+
+main(!IO) :-
+    try_io(open_files_and_translate, Result, !IO),
+    (
+        Result = succeeded(_)
+    ;
+        Result = exception(Exception),
+
+            % Here we use mode univ(out) = in is semidet.
+            %
+        ( if   Exception = univ(ErrMsg)
+          then report_error(ErrMsg, !IO)
+          else rethrow(Result)          % These are not the droids
+                                        % we're looking for.
+        )
+    ).
+
+:- pred open_files_and_translate(unit, io, io).
+:- mode open_files_and_translate(out,  di, uo) is det.
+
+open_files_and_translate(unit, !IO) :-
+    open_in("input_file", Input, !IO),
+    open_out("output_file", Input, Output, !IO),
+    translate(Input, Output, !IO),
+    io__close_output(Output),
+    io__close_input(Input).
+
+:- pred open_in(string, input_stream, io, io).
+:- mode open_in(in,     in,           di, uo) is det.
+
+open_in(File, Input, !IO) :-
+    io__open_input(File, Result, !IO),
+    (
+        Result = ok(Input)
+    ;
+        Result = error(_),
+        throw("Couldn't open " ++ File)
+    ).
+
+:- pred open_out(string, input_stream, output_stream, io, io).
+:- mode open_out(in,     in,           out,           di, uo) is det.
+
+open_out(File, Output, !IO) :-
+    io__open_output(File, Result, !IO),
+    (
+        Result = ok(Output)
+    ;
+        Result = error(_),
+        io__close_input(Input),
+        throw("Couldn't open " ++ File)
+    ).
+\end{verbatim}
+We can see that the code in the version that uses exceptions has
+better structure, although the exception handler (the @try_io@ code) is
+forced to use some advanced mechanisms, most notably @univ@ values.  The
+code here \emph{is} slightly longer, but that is mainly an artefact of
+using a toy example.  In a real application we would expect the
+situation to be reversed (otherwise there would be little point in using
+exceptions.)
+
+It is important to observe that every exception-throwing site is
+responsible for performing clean-up operations that are not dealt with
+by the exception handler.  In this case we have to pass the @Input@
+stream handle to the @open_out@ predicate so that we can close it if we
+fail to successfully open the @Output@ stream (and, similarly, the
+@translate@ predicate should close both streams before throwing an
+exception.)
 
 
+
+\section{Throwing Exceptions}
+
+An exception @X@ is thrown by calling @throw(X)@ from the @exception@
+module (@throw/1@ exists in both predicate and function versions and, in
+the normal course of things, the compiler will be able to work out from
+context which is meant.)
+
+@throw/1@ has determinism @erroneous@, indicating to the compiler that
+this predicate does not terminate normally (@erroneous@ can also be used
+for predicates that do not return at all), hence it is not necessary to
+tie-up all loose ends.  For instance, in
+\begin{verbatim}
+    p(A, X0, X1),
+    (
+        A = ok,
+        q(X1, X2)
+    ;
+        A = ouch,
+        throw(...)
+    ),
+    r(X2, X)
+\end{verbatim}
+we do not have to include the unification @X2 = X1@ in the second
+disjunct of the switch, as would be required if @throw/1@ did not have
+determinism @erroneous@ since @X2@ is required by the call to @r/2@.
+
+Any value at all can be thrown as an exception; it is up to the
+enclosing exception handler to decide if and how to handle matters.
+
+If, in an exception handler, one has to pass the exception back up to an
+exception handler even further up the call stack then one should use
+@rethrow@.  The reason for this will be explained in the next section
+\XXX{}.
+
+\section{Handling Exceptions}
+
+Exception handling works via a call to @try@ or one of its variants:
+\begin{verbatim}
+    % try(Goal, Result)
+    %
+:- pred try(pred(T),                exception_result(T)).
+:- mode try(pred(out) is det,       out(cannot_fail)) is cc_multi.
+:- mode try(pred(out) is semidet,   out             ) is cc_multi.
+:- mode try(pred(out) is cc_multi,  out(cannot_fail)) is cc_multi.
+:- mode try(pred(out) is cc_nondet, out             ) is cc_multi.
+\end{verbatim}
+where
+\begin{verbatim}
+:- type exception_result(T)
+    --->    succeeded(T)
+    ;       failed
+    ;       exception(univ).
+
+:- inst cannot_fail
+    --->    succeeded(ground)
+    ;       exception(ground).
+\end{verbatim}
+and @univ@ is the universal type defined in the @std_util@ standard
+library module.
+
+What happens operationally with a call @try(Goal, Result)@ is that the
+closure @Goal@ is executed and @Result@ instantiated according to what
+happened:
+if @Goal@ succeeded, returning @X@, then @Result = succeeded(X)@;
+if @Goal@ failed then @Result = failed@;
+otherwise @Goal@ must have thrown an exception @E@, in which case
+@Result = exception(U)@ where @U = univ(E)@ (i.e. the encapsulation of
+the abitrary type of @E@ in the universal type @univ@.)
+
+The code that follows the call to @try@ must decide what to do depending
+upon @Result@.
+
+If @Result = succeeded(X)@ or @Result = failed@ then we can proceed as
+if we had simply called @Goal@.  Note that if @Goal@ has determinism
+@det@ or @cc_multi@ then it cannot fail, in which case the argument mode
+of @Result@ is @out(cannot_fail)@ which, in turn, means that we do not
+need to test for @Result = failed@.
+
+If @Result = exception(U)@ then we need to handle the exception.
+Sometimes this can be as simple as performing some clean-up operations
+and calling @rethrow(Result)@.  Usually, however, we are interested in
+exactly what exception was thrown, which requires a checked, dynamic
+(i.e.  run-time) \emph{cast} of @U@ from type @univ@ to the expected
+type for @E@.
+
+The @univ@ function in @std_util@ has the following signature:
+\begin{verbatim}
+:- func univ(T  ) = univ.
+:- mode univ(in ) = out is det.
+:- mode univ(out) = in is semidet.
+\end{verbatim}
+Going in the ``forwards'' direction, any value of any type can be
+converted in a value of type @univ@, as one might expect.  In the
+``reverse'' direction, however, a value of type @univ@ may or may not be
+convertible into a value of some given type @T@.
+
+So the code for handling an exception looks like this:
+\begin{verbatim}
+    try(Goal, Result),
+    (
+        Result = succeeded(X), ...
+    ;
+        Result = failed, ...
+    ;
+        Result = exception(U),
+        ( if U = univ(E) then
+                % E is the value of the exception in whatever
+                % type which deal_with_exception/1 below expects.
+                %
+            deal_with_exception(E),
+            ...
+          else
+                % Otherwise the exception is of a different type
+                % to that which we were prepared to handle, so the
+                % exception cannot be intended for us to handle.
+                % Therefore we pass it on the the next exception
+                % handler up the call stack.
+                %
+            rethrow(Result)
+        )
+    )
+\end{verbatim}
+Note that our if-then-else goal could have several arms if we are
+prepared to deal with exceptions of several different types, but we must
+still be prepared to @rethrow@ a result which we cannot handle -- simply
+dropping such things on the floor means that higher-level exception
+handlers cannot do their job.  This is particularly important for
+higher order code that deals with exceptions.
+
+\section{Effect On Determinism}
+
+To throw an exception is to effect an abnormal exit from a procedure.
+Thanks to the halting problem \XXX{} it is impossible for a compiler to
+decide whether an arbitrary piece of code will throw an exception or
+even what exceptions it may throw.  The only way to find out in general
+is to run the code and see what happens.  As a consequence, the
+determinism of @try@ is @cc_multi@: it always returns a result, but we
+have no way of knowing, analytically, whether the result will be an
+exception or a ``normal'' return.  Either way, we only get the one
+result and cannot backtrack into the computation.
+
+\section{Er, Something}
+
+\XXX{There was something I was going to say here\ldots}
+
+\section{IO States and Stores}
+
+The @io@ state and @store@ types play a special role in Mercury in as
+much as they are the main exploiters of uniqueness.  \XXX{What a
+horrible way to put it.}
+
+The usual exception handling method is not sufficient for handling
+computations that manipulate @io@ states and @store@s.  The problem is
+that we do not want an exception to cause us to lose the @io@ state or
+@store@ -- the former because then our program could no longer perform
+any IO at all (and hence not report the results of any computation) and
+the latter because we do not want to lose access to the information
+in the @store@.
+
+One might imagine that these problems could be remedied by including the
+@io@ state or @store@ as part of the exception result -- for example
+\begin{verbatim}
+:- type excn_with_io ---> excn_with_io(string, io).
+
+p(!IO) :-
+    do_something(X, !IO),
+    if   something_went_wrong(X)
+    then throw(excn_with_io("Aieee!", !.IO))
+    else carry_on_as_usual(X, !IO).
+\end{verbatim}
+The first difficulty here is that the argument to @throw@ has mode @in@,
+which means the @io@ state contained in the @excn_with_io@ will not be
+seen as @unique@ by the exception handler.
+
+The second objection is that the predicate that throws the exception may
+not be in posession of the @io@ state or @store@.  Higher order code is
+most likely to have this problem:
+\begin{verbatim}
+p(P, !IO) :-
+    P(X),       % P may throw an exception, but
+                % does not have the IO state.
+    ...
+\end{verbatim}
+while we could conceivably place our own exception handler around the
+call to @P@, catch any exception thrown by P and wrap that up in
+another exception that included the @io@ state, we then have the
+problem that any exception handler further up the call stack looking
+for exceptions thrown by @P@ will not recognise them because of our
+wrapper.  One could probably find a solution to the conundrum, but
+it seems unlikely that it would be elegant.
+
+The third problem is that the current version of the Mercury compiler
+does not yet handle nested unique objects -- that is, even if we could
+place an @io@ state or @store@ inside an exception value \emph{and}
+arrange for a mode of @try@ that preserved its @inst@ \emph{and}
+came up with a means of transmitting the requisite @inst@
+information to the exception handler, we would still have to wait for
+a version of the compiler to come along that handled nested @unique@
+objects.  \XXX{To our shame!}
+
+Unfortunately, no general solution to all these problems presents
+itself -- there remains research to be done.  It should be recognised
+that these problems are not specific to Mercury; they exist in all
+exception systems that have code that performs destructive update.
+The problems are merely highlighted by Mercury's strict type and mode
+systems, which the designers do not consider worth compromising for
+the sake of a friendlier exception system.  \XXX{Could probably put
+that more diplomatically.}
+
+The pragmatic solution currently adopted is to supply two extra
+versions of @try@:
+\begin{verbatim}
+:- pred try_io(pred(T,   io, io),             exception_result(T),
+            io, io).
+:- mode try_io(pred(out, di, uo) is det,      out(cannot_fail),
+            di, uo) is cc_multi.
+:- mode try_io(pred(out, di, uo) is cc_multi, out(cannot_fail),
+            di, uo) is cc_multi.
+
+:- pred try_store(pred(T,   store, store),       exception_result(T),
+            store, store).
+:- mode try_store(pred(out, di, uo) is det,      out(cannot_fail),
+            di,    uo) is cc_multi.
+:- mode try_store(pred(out, di, uo) is cc_multi, out(cannot_fail),
+            di,    uo) is cc_multi.
+\end{verbatim}
+These work very much like @try@, except that in this case the goal
+argument takes two extra arguments for the @io@ state or @store@ as
+appropriate and that, of course, the @io@ state or @store@ is
+preserved across the exception.
+
+So, say we have a @io@ based predicate @parse_input@ that throws
+an exception on detecting an error rather than returning an error
+code, we could handle it like this:
+\begin{verbatim}
+:- pred parse_input(parse_result, io, io).
+:- mode parse_input(out,          di, uo) is det.
+...
+    try_io(parse_input, Result, !IO),
+    (
+        Result = succeeded(Parse),
+        io__format("Parsing succeeded\n", [], !IO),
+        ...
+    ;
+        Result = exception(U),
+        io__format("Parsing exception\n", [], !IO),
+        ( if   U = univ(E)
+          then handle_parser_exception(E)
+          else rethrow(Result)
+        )
+    )
+...
+\end{verbatim}
+As pointed out earlier, were it not for @try_io@ returning the @io@
+state after catching the exception, we could not make the call to
+@io__format@ in the exception handler.
+
+It is important to be aware that it is the programmer's
+responsibility to ensure that @store@s and various aspects of the
+@io@ state are consistent with the program's logic after catching
+an exception.  That is, they will be consistent as far as Mercury
+is concerned, but various program-specific invariants concerning
+them may or may not be preserved.  This is a difficult problem
+and is what makes exception handling less attractive than it would
+at first seem.
+
+\section{All Solutions Predicates}
+
+Occasionally one may want to enumerate all the solutions of a
+nondeterministic predicate up to the point that all solutions
+have been generated or the predicate in question throws an
+exception.  This is what @try_all@ is for:
+\begin{verbatim}
+:- pred try_all(pred(T),              list(exception_result(T))).
+:- mode try_all(pred(out) is det,     out(try_all_det))     is cc_multi.
+:- mode try_all(pred(out) is semidet, out(try_all_semidet)) is cc_multi.
+:- mode try_all(pred(out) is multi,   out(try_all_multi))   is cc_multi.
+:- mode try_all(pred(out) is nondet,  out(try_all_nondet))  is cc_multi.
+\end{verbatim}
+the output argument is a list of the @exception_result@s and the last
+element in the list will contain the exception, if any was thrown.
+Otherwise, this predicate is very similar to the @builtin@
+predicate @unsorted_solutions@.
+
+Just as @unsorted_solutions@ has a companion, @unsorted_aggregate@,
+that supports interleaving processing of the results of the
+nondeterministic predicate, @try_all@ has a companion,
+@incremental_try_all@:
+\begin{verbatim}
+:- pred incremental_try_all(
+            pred(T1),
+            pred(exception_result(T1), T2, T2),
+            T2, T2).
+:- mode incremental_try_all(
+            pred(out) is nondet,
+            pred(in, di, uo) is det,
+            di, uo) is cc_multi.
+:- mode incremental_try_all(
+            pred(out) is nondet,
+            pred(in, in, out) is det,
+            in, out) is cc_multi.
+\end{verbatim}
+
+\XXX{Do I need more examples in this section?}
+
+\section{The Down Side}
+
+From the discussion above, it should be clear that exceptions are not
+silver bullets.  The cases where they \emph{may} simplify your code are
+those where there is some distance between the point where an exceptional
+case may be detected and the point where it is best handled.  Even then,
+one must be careful to ensure that the programs ``state'' (in the sense
+of unique values such as @store@s and the @io@ state) are consistent with
+the invariants of the program before leaving the exception handler.
+
+In many cases, it turns out to be simpler to return error codes and
+handle problems as locally as possible.
+
+As always, it takes experience and a little experimentation to work out
+which is the best solution in each particular situation.
 

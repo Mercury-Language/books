@@ -87,16 +87,80 @@ for the remaining variables, otherwise it is \emph{nondeterministic}.
 (We will see that in Mercury it is useful to further subdivide the
 determinism categories.)
 
+Informally, we refer to the arguments with given values as inputs and
+those whose value is not fixed as outputs.
+
 For example, @father@ is deterministic if we fix only @C@ since every child
 has exactly one father.  However, if we fix only @F@ we may get any
 number of possible bindings for @C@ depending upon how many children @F@
 has had, hence this mode of @father@ is nondeterministic.
 
+We use the term ``procedure'' (or sometimes overload ``mode'') to refer
+to a predicate restricted to a given set of argument modes.
+
+\subsection{Syntax}
+
+Mercury understands several determinisms: @erroneous@, @semidet@, @det@,
+@nondet@, @multi@, @cc_nondet@ and @cc_multi@.  These will be explained
+in detail in \XXX{}; for now it suffices to know that @semidet@ and
+@nondet@ can fail (i.e. have no solutions), @semidet@ may have a single
+solution, @det@ has exactly one solution (i.e. it describes a
+\emph{functional} relationship -- see below), and @nondet@ and @multi@
+may have more than one solution.
+
+The two most important built-in modes are @in@ and @out@, corresponding
+to input and output arguments respectively.  Modes are discussed in
+\XXX{}.
+
+The mode declarations (one per procedure) for the @father@ predicate
+described above would look like this:
+\begin{verbatim}
+    % father(Child, Father).
+    %
+:- mode father(in,  out) is det.
+:- mode father(out, in ) is nondet.
+:- mode father(in,  in ) is semidet.
+\end{verbatim}
+
+\XXX{I'm not sure how/when/where to introduce syntax in this chapter.
+It may be best to merge this chapter with the main Mercury-as-it-is-
+written chapter.}
+
 
 
 \section{Functions and Expressions}
 
+A deterministic procedure is said to describe a \emph{functional}
+relationship between its inputs and its outputs (that is, the output is
+uniquely determined for each possible input.)  For instance, the
+sum @X = Y + Z@ is functional given any two of @X@, @Y@ or @Z@.
 
+Special syntax exists for functions with a single (last) output
+argument.  The main reason for this is that it supports \emph{functional
+composition}, which allows us to avoid naming intermediate results.  For
+example, rather than writing
+\begin{verbatim}
+    Tmp1 = A    + B,
+    Tmp2 = Tmp1 - C,
+    Tmp3 = Tmp2 * D,
+    X    = Tmp3 / E
+\end{verbatim}
+we can simply write
+\begin{verbatim}
+    X = (((A + B) - C) * D) / E
+\end{verbatim}
+(in fact the precedence and associativity of the operators @+@, @-@,
+@*@, @/@ etc. has been chosen so that parentheses can often be
+avoided.)
+
+An \emph{expression} describes either a simple value or the
+\emph{application} of a function to other expressions.
+
+
+
+\section{Goals}
+
+A goal describes either a simple \emph{predicate call} or XXX HERE!
 
 
 

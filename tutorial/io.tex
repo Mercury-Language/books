@@ -1,12 +1,12 @@
 % vim: ft=tex ff=unix ts=4 sw=4 et wm=8 tw=0
 
-\section{Input and Output}
+\chapter{Input and Output}
 
 One unfortunate consequence of being a pure declarative language
 is that IO becomes somewhat more complex than is the case for
 imperative languages.
 
-\subsection{IO \emph{Is} a Side-Effect}
+\section{IO \emph{Is} a Side-Effect}
 
 One problem is that performing IO necessarily has an effect on the
 outside world that cannot be backtracked over or undone -- there is
@@ -15,7 +15,7 @@ contrast to the mathematically pure world that Mercury inhabits,
 where there is no concept of a value (such as the state of the
 world) ``changing'', only one of new such values being computed.
 
-\subsection{Order is Important}
+\section{Order is Important}
 
 Another problem is that since logically there is no difference
 between the goal @(G1, G2)@ and the goal @(G2, G1)@, we also need to
@@ -23,7 +23,7 @@ find some mechanism for ensuring that IO operations happen in the
 intended order and are not mixed up as a consequence of the
 compiler reordering goals for optimization purposes and so forth.
 
-\subsection{Uniqueness}
+\section{Uniqueness}
 
 A number of solutions to the IO problem have been adopted by
 the pure, declarative languages, the main contenders being the
@@ -112,7 +112,7 @@ be reused to create a new live unique object (since the old
 value can never be accessed), which is exactly what happens
 for the data types just mentioned.
 
-\subsection{Stylistic Considerations}
+\section{Stylistic Considerations}
 
 Since passing the IO state around everywhere is a little
 cumbersome and also quite restrictive (it can only be passed
@@ -126,7 +126,7 @@ languages, one soon finds that the discipline imposed pays
 real dividends in terms of reusability, maintainability, ease
 of debugging and so forth.
 
-\subsection{* Determinism Restrictions}
+\section{* Determinism Restrictions}
 
 Since IO operations cannot be backtracked across, the IO state
 (and, indeed, unique objects in general) cannot be passed to
@@ -134,7 +134,7 @@ non-deterministic predicates -- that is, only deterministic
 predicates can take unique IO states as arguments.\footnote{This is not strictly true; there is another
 determinism, cc-multi, which is compatible with uniqueness.}
 
-\subsection{* State Variable Syntax}
+\section{* State Variable Syntax}
 
 Having to name and pass two variables around for every IO
 operation quickly becomes tiresome.  Mercury has a special
@@ -188,7 +188,7 @@ write_strings([S1, S2 | Ss], IO0, IO) :-
 Henceforth we will use state variable syntax rather than
 explicitly numbered IO states.
 
-\subsection{Common IO Operations}
+\section{Common IO Operations}
 
 The @io@ library module defines a plethora of useful IO
 operations and as usual with libraries, the reader is
@@ -196,7 +196,7 @@ encouraged to take some time to peruse the interface section.
 Here we will present some basic IO operations to help get the
 ball rolling.
 
-\subsubsection{Output}
+\subsection{Output}
 
 Output is generally simpler to deal with than input,
 because, by and large, there are no error codes to deal
@@ -279,7 +279,7 @@ exactly it is you are printing (\ie the expression or the
 value of the expression.)  This is subtle stuff and will
 be dealt with in a later chapter. \XXX{}
 
-\subsubsection{Input}
+\subsection{Input}
 
 Input is marginally more complex than output since
 typically on of three things can happen:
