@@ -1,0 +1,157 @@
+\section{Declarative vs Imperative Programming}
+
+\subsection{Definitions}
+
+\begin{description}
+\item{Imperative:} a sequence of instructions for transforming state.
+\item{Declarative:} a specification of \emph{what} is to be computed.
+\end{description}
+
+Declarative languages typically have a simple translation into
+conventional mathematical logic, which is how the meaning of a program
+is defined.
+
+Purely declarative programming languages exhibit referential
+transparency.  In a nutshell, this means that anywhere you see a
+reference to a name, you can replace it with the body of the
+definition of the name and it will make no difference.
+
+In more formal language,
+\[
+(\text{let}\ x = e\ \text{in}\ M)  \equiv  M[e/x]
+\]
+This is clearly not true of imperative languages.  Consider
+the following C program:
+
+\begin{verbatim}
+int g = 0;
+
+int f(int x)
+{
+    g = g + 1;
+    return x + g;
+}
+
+void main(int argc, char **argv)
+{
+    int tmp = f(1);
+    int a   = tmp  + tmp;
+    int b   = f(1) + f(1);
+
+    if(a == b)
+        printf("equivalent\n");
+    else
+        printf("not equivalent\n");
+}
+\end{verbatim}
+
+According to C semantics, this program should print out "not
+equivalent", proving that the expression @f(1)@ is not equal to
+itself!  This sort of thing is great for writing buggy, hard to
+maintain code.\footnote{One can give a reasonably simple
+operational semantics to C whereby we repeatedly substitute the
+body of @f(1)@ into a sequence of \emph{instructions}, but as we
+see here, this does not necessarily support the more intuitive,
+declarative reading one might hope for.}
+
+Since referential transparency means no side-effects, you can't have
+variables that change their state as the program evolves.  Instead, the
+term \emph{variable} in a declarative programming language refers to a
+label given to a value or the result of a computation.
+
+The nearest Mercury equivalent to the function @f()@ in the C
+program above is
+
+\begin{verbatim}
+:- pred f(int, int, int, int).
+:- mode f(in,  out, in,  out) is det.
+
+f(X, Result, Old_Value_of_G, New_Value_of_G) :-
+    New_Value_of_G = Old_Value_of_G + 1,
+    Result         = New_Value_of_G + X.
+\end{verbatim}
+
+Since there are no variables in Mercury (and hence no global
+variables), any ``global'' state has to be explicitly passed
+around wherever it is needed.  In this case @f/4@ takes the old
+``state'' as its third argument and returns the new ``state'' in
+its fourth argument.
+
+\subsection{Benefits Of Declarative Style}
+
+While the lack of mutable state might seem like a serious
+drawback to programmers raised on imperative languages, in
+practice it turns out to be something of a boon.  Experienced
+imperative programmers acknowledge that fewer globals and less
+state means clearer, more maintainable, more reusable code
+with fewer bugs.
+
+The philosophy underlying declarative languages is to simplify the
+\emph{writing} of bug free programs and to leave the tedious
+business of identifying programming errors, run-time book
+keeping such as memory management, and non-algorithmic
+optimization to the compiler.  Referential transparency means
+that more optimizations can be applied in more places in a
+program than is the case with imperative programs, simply
+because proving that it is safe to apply a particular
+optimization is so much easier in the absence of side effects.
+
+Mercury was designed as a purely declarative, industrial
+strength programming language aimed at the rapid development
+of medium and large scale systems with the emphasis on
+producing fast, correct programs.
+
+To this end, Mercury doesn't support a corner-cutting
+programming style: you \emph{have} to get the types right, check
+return codes and so forth -- the quick-and-dirty fix is rarely
+an option.\footnote{Mercury does have support for impure code
+via calls to another language, but one has to label each such
+call explicitly; in the end it is often easier just to do the
+right thing.}  Very often, Mercury programmers find that once
+a program is accepted by the compiler, it also does exactly
+what was intended; in the author's long experience this almost
+never happens with imperative languages, even for small
+programs.
+
+\XXX{Place to mention types, garbage collection, polymorphism,
+pattern matching, etc etc?}
+
+\subsection{Pragmatism}
+
+\begin{quote}
+``A foolish consistency is the hobgoblin of small minds.'' \\
+\hfill --- Ralph Waldo Emmerson
+\end{quote}
+
+Purity is all very well, but the fact remains that
+occasionally one has to interoperate with code written in
+impure languages and that (very rarely and usually when that
+last drop of speed is required) some low-level algorithms may
+be best expressed as impure constructs.
+
+For the former, Mercury has a simple and well developed
+foreign language interface allowing the programmer to write
+foreign code in-line with the Mercury program (provided the
+Mercury compiler has an appropriate back-end for the foreign
+language in question -- the alternative is to use C as the
+lingua franca in the traditional style.)  It is the
+programmer's responsiblility to supply the appropriate purity
+declarations for predicates defined in terms of foreign code.
+
+The latter is handled using purity annotations.  Impure code
+(written in a foreign language) must be labelled as such.
+These labels also have to be applied to all predicates that
+use the impure code.  At some point we hope that a pure
+interface can be presented to the programmer, in which case
+the program must include a \emph{promise} to the compiler that
+impurity annotations are not required for users of the
+top-level predicate with an impure definition.
+
+\subsection{Mercury Philosophy}
+
+\XXX{I think I've already covered this one.  Tyson suggests an
+implementation philosophy section (\eg no distributed fat) in
+a much later section.}
+
+
+

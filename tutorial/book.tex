@@ -1,0 +1,188 @@
+%------------------------------------------------------------------------------%
+% book.tex
+% Ralph Becket <rafe@cs.mu.oz.au>
+% Mon Jul 15 12:11:53 EST 2002
+% vim: ft=tex ff=unix ts=4 sw=4 et wm=8 tw=0
+%
+%------------------------------------------------------------------------------%
+
+
+
+%- Preamble -------------------------------------------------------------------%
+
+\documentclass[a4paper,11pt,notitlepage,onecolumn]{article}
+    %
+	% [options]
+    %   (10|11|12)pt            -- (default 10pt)
+    %   (a4|letter)paper        -- (default letterpaper)
+    %   fleqn                   -- (default centred) left-align formulae as
+    %   leqno                   -- (default right) number formulae on the left
+    %   [no]titlepage           -- [do not] start new page after the title
+    %   (one|two)column         -- (default onecolumn)
+    %   (one|two)side
+    %   open(right|any)         -- open chapters on (right|any) pages only
+    % {class}
+    %   (article|report|book|slides)
+    %                           -- consider FoilTeX instead of slides
+
+\usepackage{doc}              % -- I want \MakeShortVerb
+\usepackage{amsmath}          % -- I want align*
+
+\pagestyle{headings}
+    %
+    % {style}
+    %   (plain|headings|empty)  -- (default plain)
+    %                           -- use \thispagestyle{} for new styles
+
+\input{defs}
+
+%- Start of Document ----------------------------------------------------------%
+
+\begin{document}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{\baselineskip}
+% \setlength{\hoffset}{}        % -- left margin is this + 1in
+% \setlength{\voffset}{}        % -- top margin is this + 1in
+% \setlength{\textheight}{}
+% \setlength{\textwidth}{}
+% \setlength{\marginparwidth}{}
+    %
+    % -- or can use \addtolength{parameter}{length}
+    % -- or can use \settoheight{parameter}{text}
+    % -- or can use \settodepth{parameter}{text}
+    % -- or can use \settowidth{parameter}{text}
+
+\title{The Art of Mercury}
+\author{Ralph Becket \\ \texttt{\small rafe@cs.mu.oz.au}}
+\date{15 October 2001}
+
+\maketitle
+
+% \begin{abstract}
+%
+% ...
+%
+% \end{abstract}
+
+\tableofcontents
+
+%- Body -----------------------------------------------------------------------%
+
+\MakeShortVerb{\@}            % -- @...@ is now shorthand for \verb@...@
+
+    % \text(rm|tt|sf|bf|it|sc|sl|up|md|normal){} \emph{}
+
+    % \math(rm|tt|sf|bf|it|sc|sl|up|md|normal){}
+
+    % \tiny \scriptsize \footnotesize \small \normalsize
+    % \large \Large \LARGE \huge \Huge
+    %                           -- also work as environments
+
+    % ~                         -- small, fixed, nonbreaking space
+    % \hspace{size}             -- soft space (may be lost at SOL or EOL)
+    % \hspace*{size}            -- hard space
+    %                           -- size may be \stretch{factor}
+    % \hfill                    -- same as \hspace{\fill}
+
+    % \vspace{size}             -- soft space (may be lost at TOP or BOP)
+    % \vspace*{size}            -- hard space
+    %                           -- size may be \stretch{factor}
+    %                           --  of \smallskip or \bigskip
+
+    % \\                        -- linebreak
+    % \\*                       -- linebreak but prohibit page break
+    % \newpage
+
+    % \rule[lift]{width}{height}
+
+    % \parbox[(c|t|b)]{width}{text}
+    % \begin{minipage}[(c|t|b)]{width} text \end{minipage}
+    % \mbox{text}               -- prevents word breaking
+
+    % \begin{(flushleft|flushright|center|quote|verse)}
+    % text
+    % \end{(flushleft|flushright|center|quote|verse)}
+
+    % \verb@verbatim text@
+    % \begin{verbatim}
+    % verbatim text
+    % \end{verbatim}
+
+    % \begin{tabular}{(l|r|c|p{width}|<bar>|@{colsep})...}
+    % datum & datum & ... \
+    % datum & datum & ... \
+    % \hline
+    % datum & datum & ... \
+    % \cline{1-2}   & ... \
+    % \multicolumn{2}{(l|c|r)}{wide datum} & ... \
+    % \end{tabular}
+
+    % \begin{(figure|table)}[[!](h|t|b|p)...]
+    % ...
+    % \caption{caption text}
+    % \end{(figure|table)}
+
+    % \label{marker}            -- set a marker
+    % \ref{marker}              -- section containing marker
+    % \pageref{marker}          -- page number of marker
+
+    % $ ... $                   -- inline mathematics
+    % \[ ... \]                 -- display mathematics
+    % \begin{equation}          -- align* suppresses numbering
+    % ...
+    % \end{equation}
+    % \begin{array}{...}        -- as tabular
+    % ...
+    % \end{array}
+    % \begin{eqnarray}          -- as {array}{rcl} but with numbering
+    % ...                       -- use \nonumber to suppress numbering of a row
+    % \end{eqnarray}
+    % \, \; \<spc> \quad \qquad -- math-mode spacing
+    % \(over|under)line{...}
+    % \(over|under)brace{...}_{...}
+    % \wide(tilde|hat)
+    % \overrightarrow
+    % \frac{top}{bottom}
+    % {... \choose ...}         -- adds parentheses
+    % {... \atop ...}           -- no parentheses
+    % \stackrel{topsym}{linesym}
+    % \left<brasym> ... \right<ketsym>
+    %                           -- use \right. for no <keysym>
+    %                           -- empty lines etc. forbidden in math mode
+
+% \includeonly{}
+% \include{}
+    %
+    % -- \includeonly takes a list of file names and filters any \includes
+    % -- \include takes a single file name, starts a new page
+    % -- \input does not start a new page
+    % -- omit the .tex suffix from the file names
+
+\include{introduction}
+\include{hello-world}
+\include{declarative-vs-imperative}
+\include{logic}
+\include{syntax-and-terminology}
+\include{types}
+\include{predicates}
+\include{functions}
+\include{io}
+\include{modes}
+\include{modules}
+\include{higher-order}
+\include{type-classes}
+\include{lists}
+\include{maps}
+\include{arrays}
+\include{compiling-programs}
+\include{stores}
+\include{exceptions}
+\include{FFI}
+\include{impure-code}
+\include{pragmas}
+\include{debugging}
+\include{optimization}
+\include{RTTI}
+
+\end{document}

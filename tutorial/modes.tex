@@ -1,0 +1,396 @@
+\section{The Mode and Determinism Systems}
+
+One of the things that distinguishes Mercury from other languages
+is its strong mode system.  In casual use, the term \emph{mode}
+encompasses both direction of data flow and determinism.
+
+\subsection{Direction of Data Flow}
+
+In logic, there is no difference between the goal @(A, B)@ and
+the goal @(B, A)@.  However, the compiler must convert the
+logical specification that is a Mercury program into an
+imperative language that can be executed on a computer.  This
+constraint means that it matters very much for efficiency and,
+in some cases, correctness, if @A@ ``produces'' values that
+are ``consumed'' by @B@, or vice versa.
+
+The mode system is what allows Mercury to compile logic
+programs so efficiently.  The body of each procedure of a
+predicate is reordered so that the producer of a value is
+guaranteed to be executed before any consumers.
+
+This scheme also allows the compiler to identify programming
+errors such as using an unbound variable as an argument to a
+procedure expecting an input value.
+
+Before we can discuss modes properly, however, we must first
+examine the notion of \emph{insts}.
+
+\subsubsection{Insts}
+
+An \emph{inst} describes the instantiation state of a variable
+at any point in a Mercury program.  Broadly speaking, a
+variable's inst will be one of the following:
+\begin{description}
+\item[@free@] where the variable has not been bound to anything yet;
+\item[@bound@] to a value (the top-level
+  data constructor of the value is fixed, but each argument has its own
+  inst);
+  \XXX{should the tutorial mention partially instantiated
+  values at all?}
+\item[@unique@] where the variable is the only live (\ie non-@dead@)
+  reference to its binding;
+\item[@dead@] where the value bound to the variable will never be
+  examined again, even on backtracking.
+\end{description}
+
+A variable's inst tells us which possible states it can be
+in at some point in the program.
+
+The need for higher order insts (which we will come to)
+and the potential for manipulating partially instantiated
+values means that insts cannot be restricted to the set
+@{free, ground, unique, dead}@.  However, it is sufficient
+to restrict ourselves to the @{free, ground}@ subset of
+possible insts in order to understand the basic ideas.
+
+\XXX{Need to include the syntax etc. for inst
+declarations.  Also mention parametric insts.}
+
+On top of the built-in insts (@free@, @ground@, @unique@, @dead@
+and the higher order insts), it is possible to define your
+own insts.  \XXX{Finish this off...}
+
+\subsubsection{Modes}
+
+A \emph{mode} describes how a variable's inst changes over the
+course of a call.  In the following, I is an inst
+variable and @(BeforeInst >> AfterInst)@ is a mode, stating
+that before the call the argument must have inst
+@BeforeInst@ and afterwards it will have inst @AfterInst@.  As
+with types, we can give names to modes and even give them
+parameters.
+
+@AfterInst@ must be a refinement of @BeforeInst@ in the sense
+that instantiated (\ie non-@free@) parts of the value in
+question must remain the same, but @free@ parts may become
+bound.  \XXX{This isn't strictly true -- the @laziness@
+module in extras uses a force implementation that changes
+the constructor of the lazy value.  Of course, this means
+lazy values require user-defined equality and so forth,
+but...}
+
+Let's take a look at some examples (these are taken from
+the built-in Mercury definitions):
+\begin{verbatim}
+:- mode in(I)  == (I    >> I).
+:- mode out(I) == (free >> I).
+
+:- mode in     == in(ground).
+:- mode out    == out(ground).
+
+    % The inst parameter for uo/1 and ui/1 should be
+    % unique.
+    %
+:- mode di(I)  == (I    >> dead).
+:- mode uo(I)  == (free >> I   ).
+:- mode ui(I)  == (I    >> I   ).
+
+:- mode di     == di(unique).
+:- mode uo     == uo(unique).
+:- mode ui     == ui(unique).
+\end{verbatim}
+
+So, a procedure parameter with mode @in(I)@ must have inst @I@
+before the call and will also have inst @I@ afterwards.  The
+most common case of this is the plain in mode, in which
+case the parameter must be ground beforehand and will be
+ground afterwards.
+
+A parameter with with mode @out(I)@ must be free before the
+call and will have inst @I@ after the call.  The common case
+is the plain out mode, in which case the parameter will
+be ground after the call.
+
+The three uniqueness modes, @di@, @uo@ and @ui@ (\emph{destructive
+input}, \emph{unique output} and \emph{unique input}, respectively)
+are similar, except that in the di case the parameter is
+dead after the call (hence no further references may be
+made to that variable in the program, even on
+backtracking), @uo@ produces a @unique@ (@ground@) value and @ui@
+preserves the @unique@ (@ground@) inst of the parameter across
+the call.
+
+\subsection{Determinism Categories}
+
+Every Mercury procedure has a determinism.  The set of
+possible determinisms and their meanings is given in the
+following table:
+
+\begin{tabular}{lll}
+\textbf{Determinism} & \multicolumn{2}{l}{\textbf{Number of Solutions}} \\
+                     & \textbf{Min} & \textbf{Max} \\
+\hline \\
+@failure@            & 0            & 0 \\
+@semidet@            & 0            & 1 \\
+@nondet@             & 0            & 1 or more \\
+@det@                & 1            & 1 \\
+@multi@              & 1            & 1 or more \\
+@cc_nondet@          & 0            & 1 \\
+@cc_multi@           & 1            & 1 \\
+@erroneous@          & never returns \\
+\end{tabular}
+
+Each determinism says something about the number of possible
+solutions a procedure can have on backtracking.  This table
+includes a number of categories we haven't seen before.
+
+@failure@ applies to procedures such as @false@ that have no
+solutions.
+
+@semidet@ applies to procedures such as @(>)/2@ or @map__search/3@
+that have at most one solution.
+
+@nondet@ applies to procedures such as @member/2@ that can have
+any number of solutions, including zero.
+
+@det@ applies to procedures such as @(+)/2@ that have precisely
+one solution.
+
+@multi@ applies to procedures such as @nat/1@ below that may have
+several solutions, but which always have at least one:
+\begin{verbatim}
+    % nat(N) enumerates the natural numbers in N.
+    %
+:- pred nat(int).
+:- mode nat(out) is multi.
+
+nat(0).
+nat(N + 1) :- nat(N).
+\end{verbatim}
+@cc_nondet@ and @cc_multi@ are \emph{committed choice} versions of
+@nondet@ and @multi@, respectively.  Committed choice
+non-determinism is described in more detail in the next
+section, suffice to say that these procedures will only
+produce (at most) one solution.
+
+Finally, @erroneous@ applies to predicates that either never
+return and/or always terminate by throwing an exception (we
+will deal with exceptions in a later chapter \XXX{}).
+
+Determinisms are useful for three main reasons:
+\begin{enumerate}
+\item determinism declarations act both as useful documentation
+  to the reader of a program and as information for the
+  compiler;
+\item the compiler will check that a procedure does indeed have
+  the declared determinism and can give helpful error messages
+  when this is not the case; and
+\item the compiler needs to know the determinism of
+\end{enumerate}
+
+\subsubsection{Modes and Determinisms}
+
+As one might expect, there is a tight relationship between
+modes and determinisms.  Essentially, for each possible
+set of argument modes, a procedure should have at most one
+possible determinism.
+
+\XXX{My brain is too foggy to say more about this right
+now.}
+
+\XXX{Clean this up and check it (esp. the cc and e entries):
+There is a partial order on determinisms (copy it from the
+reference manual?).}
+
+\begin{verbatim}
+Disjunction:
+    min-solns(@P ; Q@) = max(1, min-solns(@P@) (+) min-solns(@Q@))
+    max-solns(@P ; Q@) =        max-solns(@P@) (+) max-solns(@Q@)
+
+where
+
+     (+) |   0   |   1   |  > 1
+     ----+----------------------
+      0  |   0   |   1   |  > 1
+      1  |   1   |  > 1  |  > 1
+     > 1 |  > 1  |  > 1  |  > 1
+\end{verbatim}
+
+\begin{verbatim}
+Conjunction:
+    min-solutions(P, Q) = max(1, min-solns(P) (*) min-solns(Q))
+    max-solutions(P, Q) =        max-solns(P) (*) max-solns(Q)
+
+where
+
+     (*) |   0   |   1   |  > 1
+     ----+----------------------
+      0  |   0   |   0   |   0
+      1  |   0   |   1   |  > 1
+     > 1 |   0   |  > 1  |  > 1
+\end{verbatim}
+
+[XXX Perhaps an example or two would be better?]
+
+\subsection{Committed Choice Non-Determinism}
+
+Committed choice non-determinism is useful when you only
+require a single solution from a predicate that may have many.
+For instance, a theorem prover only needs a single proof
+(among all the possible proofs it could generate) for each
+sub-goal. \XXX{Too abstract an example?}
+
+It is also useful for describing the semantics of exceptions
+(we will discuss this in more detail later \XXX{}, but briefly
+since it is impossible in general to decide whether a
+procedure will always throw an exception, an exception handler
+is deemed to be a committed choice goal since the outcome --
+normal return or exception -- is unknown and it can only happen
+once.)
+
+\XXX{Mention relationship to Hilbert's choice operator and how cc
+declarations add axioms to the program concerning the single
+solution.}
+
+It is an error if a program attempts to backtrack over a
+committed choice goal and the compiler will detect and reject
+such programs.
+
+\XXX{Examples}
+\XXX{Probably more to say.}
+
+\subsection{* Using Insts for Subtyping}
+
+Insts can be used to define limited subtypes, where a subtype
+takes on a subset of the possible values of the supertype.
+
+Examples:
+\begin{verbatim}
+
+:- inst sign  ---> -1 ; 0 ; 1.
+
+:- func sign(int) = sign.
+:- mode sign(in)  = out(sign) is det.
+
+sign(X) = ( if      X < 0 then -1
+            else if X = 0 then  0
+            else                1 ).
+
+:- inst digit ---> 0 ; 1 ; 2 ; 3 ; 4 ; 5 ; 6 ; 7 ; 8 ; 9.
+
+:- func digit_to_char(int) = char.
+:- mode digit_to_char(in(digit)) = out is det.
+
+digit_to_char(0) = '0'.
+digit_to_char(1) = '1'.
+...
+digit_to_char(9) = '9'.
+
+:- inst non_empty_list(I) ---> [I | list(I)].
+:- inst non_empty_list    ==   non_empty_list(ground).
+
+:- pred head(list(T),            T  ).
+:- mode head(in,                 out) is semidet.
+:- mode head(in(non_empty_list), out) is det.
+
+head([X | _], X).
+
+:- type abc ---> a ; b ; c.
+:- inst ab  ---> a ; b.
+\end{verbatim}
+and so forth\ldots
+
+\XXX{Should probably add some explanation for the above.}
+
+\subsection{Higher Order Insts and Modes}
+
+
+
+\subsection{The Standard Function Mode}
+
+\XXX{NB I've already mentioned this one.}
+
+
+
+\subsection{Higher Order Mode Declarations}
+
+It is possible to specify the mode of a procedure using the
+following syntax:
+\begin{verbatim}
+:- inst test == ( pred(in) is semidet ).
+
+:- pred even(int).
+:- mode even `with_inst` test.
+
+even(X) :- X `mod` 2 = 0.
+\end{verbatim}
+The mode declaration is equivalent to writing
+\begin{verbatim}
+:- mode even(in) is semidet.
+\end{verbatim}
+
+\XXX{This isn't very convincing since the longhand is more concise.}
+
+Judicious use of @with_inst@ declarations can improve the
+readability and maintainability of a program.
+
+\subsection{* Uniqueness}
+\subsubsection{Determinism Restrictions}
+
+\XXX{I've said something of this earlier on just before
+Determinism.}
+
+\subsubsection{* Mostly Unique Insts}
+
+\XXX{This is definitely more advanced stuff.}
+\begin{itemize}
+\item Mostly unique $Leftrightarrow$ destructive update undone on
+  backtracking.
+\item Trailing and cost of trailing.
+\item Possibility of optimizing trailing via FFI and impurity.
+\item Distributed fat: implementation costs everywhere you can
+  backtrack and may slurp up a general purpose register or
+  two.
+\end{itemize}
+
+\subsection{Higher Order Insts and Modes}
+
+\begin{itemize}
+\item The type system says what values a variable may take on.
+\item The mode system dictates the direction the data flows.
+\item Higher order values are \emph{procedures} (not predicates), hence
+  their modes also need to tell us the direction of data flow
+  and the associated determinism.  \XXX{Fill in how HO insts are
+  described and used.}
+\item For the sake of brevity, the mode @in(pred(...) is <detism>)@
+  can be abbreviated to just @pred(...) is <detism>@
+\end{itemize}
+
+\subsubsection{The Standard Function Inst}
+
+\XXX{Said something about this earlier.}
+
+\begin{itemize}
+\item The set of insts @func(in, in, ..., in) = out is det@ is
+  subsumed by the inst @ground@.  That is, you do not need to
+  use a complex inst to pass around and use values with this
+  sort of inst.
+\item (Any of the @in@ arg modes may be replaced with an higher
+  order inst.)
+\item Since this is the most common type of higher order inst,
+  higher order programming is thereby simplified.
+\item There is a consequence: it is an error for a program to try
+  to convert an higher order value with a different sort of
+  inst to @ground@ (\eg by passing it to something expecting a
+  @ground@ value).  This is necessary because otherwise there
+  would be no way of knowing whether a ground value with a
+  func type had the standard @func@ inst or not.
+\end{itemize}
+
+\subsection{Polymorphic Modes}
+
+\XXX{Look this up.}
+
+
+

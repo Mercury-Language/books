@@ -1,0 +1,191 @@
+\section{Lists}
+
+Lists are perhaps the single most useful data structure in the
+programmer's armoury.
+
+The @list@ module in the Mercury standard library defines lists as
+follows:
+\begin{verbatim}
+:- type list(T) ---> []
+                ;    [T | list(T)].
+\end{verbatim}
+The notation @[A | B]@ is special syntactic sugar recognised by the
+Mercury parser for @[|](A, B)@ -- that is, @[|]/2@ is the basic list
+data constructor, with @[]@ standing for the empty list.
+
+Moreover, an expression of the form @[A, B, C]@ is syntactic sugar for
+@[A | [B | [C | []]]]@ which, of course, is identical to
+@[|](A, [|](B, [|](C, [])))@.
+
+Also, an expression of the form @[A, B, C | Xs]@ is syntactic sugar for
+@[A | [B | [C | Xs]]]@ which, of course, is identical to
+@[|](A, [|](B, [|](C, Xs)))@.
+
+These are obviously singly linked lists.  \XXX{Discussion of the pros
+and cons of the various list ADTs out there.}
+
+\subsection{The Main List Operations}
+
+The higher order functions @map@, @foldl@ and @foldr@ provide easy ways
+of iterating over lists, either transforming them member by member or
+somehow accumulating the result of processing each member in turn.
+
+The section on higher order programming \XXX{} has already dealt with
+@map@, @foldl@ and @foldr@ in some detail, so we merely summarise that
+discussion here and concentrate on operations we have not previously
+examined.
+
+\subsubsection{Miscellany}
+
+\begin{verbatim}
+    % length([X1, X2, X3, ..., XN]) = N
+    %
+:- func length(list(T)) = int.
+
+length(Xs) = foldl((func(_, N) = N + 1), Xs, 0).
+
+    % reverse([X1, X2, X3, ..., XN]) = [XN, ..., X3, X2, X1]
+    %
+:- func reverse(list(T)) = list(T).
+
+reverse(Xs) = foldl((func(X, Ys) = [X | Ys]), Xs, []).
+\end{verbatim}
+
+\subsubsection{Membership}
+
+\XXX{Should have a section on equality and @compare@ and so forth.}
+
+@member@ is used to decide membership of a @list@ under equality and to
+non-deterministically project members from a @list@ (the argument ordering
+is arguably unfortunate for higher order programming, but this is
+historically how things have been done):
+\begin{verbatim}
+    % member(X, Xs) iff X is a member of Xs.
+    %
+:- pred member(T,   list(T)).
+:- mode member(in,  in     ) is semidet.
+:- mode member(out, in     ) is nondet.
+
+member(X, [X | _ ]).
+member(X, [_ | Xs]) :- member(X, Xs).
+\end{verbatim}
+From time to time one wants to access members of a @list@ by their index
+(\ie distance from the start of the @list@).  There are two sets of
+operations for doing so, depending upon whether it is most convenient to
+give the head of the list an index of 1 or 0:
+\begin{verbatim}
+    % index0(Xs, I, X) iff 0 =< I < length(Xs) and
+    % X is the I+1th member of Xs.  That is,
+    % index0([X1, X2, X3], 1, X2) while
+    % index0([X1, X2, X3], 3, _ ) fails.
+    %
+:- pred index0(list(T), int, T  ).
+:- mode index0(in,      in,  out) is semidet.
+
+    % index1(Xs, I, X) iff 1 =< I =< length(Xs) and
+    % X is the Ith member of Xs.  That is
+    % index1([X1, X2, X3], 1, X1) while
+    % index1([X1, X2, X3], 3, _ ) fails.
+    %
+:- pred index1(list(T), int, T  ).
+:- mode index1(in,      in,  out) is semidet.
+
+    % These functions correspond to the predicates above, but differ
+    % in that an exception is thrown if the index is out of range.
+    %
+:- func index0(list(T), int) = T.
+:- func index1(list(T), int) = T.
+\end{verbatim}
+
+\subsubsection{Mapping}
+
+@map@ applies its function argument to each member of its @list@ argument
+and returns the corresponding @list@ of results.
+\begin{verbatim}
+    % map(F, [X1, X2, X3, ...]) = [F(X1), F(X2), F(X3), ...]
+    %
+:- func map(func(T1) = T2, list(T1)) = list(T2).
+
+map(_, []      ) = [].
+map(F, [X | Xs]) = [F(X) | map(F, Xs)].
+\end{verbatim}
+
+A related function is @map_corresponding@ which is used to map a
+function combining the corresponding members of \emph{two} lists
+(@map_corresponding@ will throw an exception if the lists are of
+different lengths.)
+\begin{verbatim}
+    % map_corresponding(F, [X1, X2, X3, ...], [Y1, Y2, Y3, ...]) =
+    %       [F(X1, Y1), F(X2, Y2), F(X3, Y3), ...]
+    %
+:- func map_corresponding(func(T1, T2) = T3, list(T1), list(T2)) =
+            list(T3).
+
+map_corresponding(_, [],       []      ) = [].
+map_corresponding(_, [],       [_ | _ ]) = <<throw exception>>.
+map_corresponding(_, [_ | _ ], []      ) = <<throw exception>>.
+map_corresponding(F, [X | Xs], [Y | Ys]) =
+    [F(X, Y) | map_corresponding(F, Xs, Ys)].
+\end{verbatim}
+
+There is also a @map_corresponding3@ which works for functions of three
+arguments:
+\begin{verbatim}
+:- func map_corresponding3(func(T1, T2, T3) = T4,
+            list(T1), list(T2), list(T3)) = list(T4).
+\end{verbatim}
+
+\XXX{Should probably include a subsubsection on zipping and
+interleaving.}
+
+\subsubsection{Folding}
+
+The two main folding operations are @foldl@ and @foldr@.  We have
+already seen a definition of @foldr@ (the version supplied in the
+Mercury standard library unfortunately uses a slightly different
+argument ordering):
+\begin{verbatim}
+    % foldr(F, [X1, X2, X3], A) = F(X1, F(X2, F(X3, A)))
+    %
+:- func foldr(func(T1, T2) = T2, list(T1), T2) = T2.
+
+foldr(_, [], A) = A.
+foldr(F, [X | Xs], A) = F(X, foldr(Xs, A)).
+\end{verbatim}
+In many situations the function @F@ will be commutative or we will want
+to process the @list@ starting with the leftmost member, in which case
+it is more efficient to use the tail recursive @foldl@:
+\begin{verbatim}
+    % foldl(F, [X1, X2, X3], A) = F(X3, F(X2, F(X1, A)))
+    %
+:- func foldl(func(T1, T2) = T2, list(T1), T2) = T2.
+
+foldl(_, [],       A) = A.
+foldl(F, [X | Xs], A) = foldl(F, Xs, F(X, A))).
+\end{verbatim}
+As an example, here's how we could define the @reverse@ function, as
+well as more efficient versions of the @sum@ and @prod@ functions
+introduced in the section on higher order programming \XXX{}:
+\begin{verbatim}
+reverse(Xs) = foldl((func(X, Ys) = [X | Ys]), Xs, []).
+sum(Xs)     = foldl((func(X, A ) = X + A   ), Xs, 0 ).
+prod(Xs)    = foldl((func(X, A ) = X * A   ), Xs, 1 ).
+\end{verbatim}
+
+\subsubsection{XXX More To Come}
+
+\subsection{General Advice}
+
+\XXX{This probably deserves its own top-level section.}
+
+While lists are easy to understand and work with, most programmers show
+an unfortunate tendency to use lists when another data structure may be
+more appropriate.  It is worth spending some time looking at the various
+types provided by the Mercury standard library to see what is available.
+The decision as to which data structure is best for a given situation is
+one that can only be made in the light of experience, although as a rule
+of thumb you cannot go far wrong by picking the data structure with the
+most useful set of support functions for the problem in hand
+(occasionally an @assoc_list@ may be preferable to a @map@, but in most
+situations it won't be.)
+

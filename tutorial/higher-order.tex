@@ -1,0 +1,242 @@
+\section{Higher Order Programming}
+
+Predicates and functions are first class values, just like values of
+type @int@, @string@, @list(char)@ and so forth.  They can be
+passed around and constructed just like any other kind of value.  Code
+that manipulates predicate values is said to be \emph{higher order}.
+
+\XXX{Should say somewhere that equality and ordering are undefined on
+higher order values.}
+
+What is special about predicate values is that they can be
+\emph{applied} to arguments in order to carry out tests or compute other
+values.
+
+This turns out to be a surprisingly useful and flexible way to program.
+Indeed, it is one of the key reasons why one should consider a typical
+declarative programming language in preference to the more common
+imperative languages.
+
+\subsection{Example: the Map Function}
+
+It is very common to want to apply a function to each member of a @list@
+to obtain the @list@ of transformed values.  That is, given a function
+@F@ and a @list@ @[X1, X2, X3, ...]@, we want to compute the @list@
+@[F(X1), F(X2), F(X3), ...]@.
+
+We can achieve this with the higher order function @map@:
+\begin{verbatim}
+:- func map(func(T1) = T2, list(T1)) = list(T2).
+
+map(_, []      ) = [].
+map(F, [X | Xs]) = [F(X) | map(F, Xs)].
+\end{verbatim}
+The first argument @F@ is declared to be a function itself computing
+values of type @T2@ from values of type @T1@, where @T1@ and @T2@ can be
+anything.  The second argument is declared to be a @list(T1)@ and the
+result of the @map@ operation is a @list(T2)@.
+
+The first clause states that if the second argument is the empty list
+@[]@, then so is the result.
+
+The second clause states that if the second argument is a @list@ with head
+@X@ and tail @Xs@, then the result is the @list@ whose head is computed by
+applying @F@ to @X@, namely as @F(X)@, and whose tail is computed by
+@map(F, Xs)@.
+
+It follows that
+\begin{verbatim}
+map(F, [X1, X2, X2, ...]) = [F(X1), F(X2), F(X3), ...]
+\end{verbatim}
+as required.  Since @map/2@ is polymorphic, it will work for any @F@
+with the appropriate signature -- there is no need to recode it for each
+particular function we wish to map over a @list@.
+
+\subsection{Example: the Foldr Function}
+
+\XXX{Should probably reference ``Why Functional Programming Matters''.}
+
+Say we need to write a function @sum@ that will compute the sum of a
+@list@ of @int@s.  We could reason as follows: the sum of a list whose
+head is @X@ and whose tail is @Xs@ is just @X@ plus the sum of the @Xs@.
+Since we would like @sum(Xs ++ Ys) = sum(Xs) + sum(Ys)@, for any @Xs@
+and @Ys@, we would conclude that the sum of the empty list must be @0@.
+Hence
+\begin{verbatim}
+:- func sum(list(int)) = int.
+
+sum([]      ) = 0.
+sum([X | Xs]) = X + sum(Xs).
+\end{verbatim}
+Observe that @sum([X1, X2, X3]) = X1 + (X2 + (X3 + 0))@.
+
+By a similar process we could arrive at a function @prod@ that computed
+the product of a @list@ of @int@s:
+\begin{verbatim}
+:- func prod(list(int)) = int.
+
+prod([]      ) = 1.
+prod([X | Xs]) = X * prod(Xs).
+\end{verbatim}
+Observe this time that @prod([X1, X2, X3]) = X1 * (X2 * (X3 * 1))@.
+
+At this point we see that the definitions of @sum@ and @prod@ are almost
+identical, the only difference being the result for the empty list and
+the function used to combine the head of the list with the result of
+processing the tail.
+
+What would be most useful would be an higher order function that
+generalised this pattern so that we only have to get it right once and
+can reuse it thereafter for @list@ processing functions with a similar
+pattern to @sum@ and @prod@.  We call this function @foldr@ and it takes
+two arguments: @A@ is the value returned when the @list@ in question is
+empty and @F@ is the function that computes the combination of the head
+of the @list@ with the result of processing its tail.
+\begin{verbatim}
+:- func foldr(func(T1, T2) = T2, T2, list(T1)) = T2.
+
+foldr(_, A, []      ) = A.
+foldr(F, A, [X | Xs]) = F(X, foldr(F, A, Xs)).
+\end{verbatim}
+(The type signature for @foldr@ might look a little intimidating, but a
+little careful consideration should make it obvious what's going on.)
+
+\XXX{By the way, the standard library gets the argument order wrong as
+far as Currying is concerned.  Can we fix it for v2 or are we stuck with
+the current ordering?}
+
+Now, with the aid of a couple of auxiliary functions,
+\begin{verbatim}
+:- func plus(int, int) = int.
+
+plus(X, Y) = X + Y.
+
+:- func times(int, int) = int.
+
+times(X, Y) = X * Y.
+\end{verbatim}
+we can go on to define @sum@ and @prod@ in terms of @foldr@:
+\begin{verbatim}
+sum(Xs) = foldr(plus, 0, Xs).
+
+prod(Xs) = foldr(times, 1, Xs).
+\end{verbatim}
+(The reason we had to define @plus@ is that the standard @int@ library
+function @+@ has more than one mode -- given any two arguments to the
+equation @X + Y = Z@ one can obtain the third, although this is not true
+of integer multiplication (we define @times@ merely for symmetry) -- and
+Mercury currently has no syntax for specifying a particular procedure of
+a function or predicate nor the means to identify from context, in
+higher order code in general, which is otherwise intended.) \XXX{This is
+a complicated paragraph.}
+
+@foldr@ is surprisingly general.  For instance, consider the definition
+of the @list@ concatenation function, whose name is the infix operator
+@++@:
+\begin{verbatim}
+:- func list(T) ++ list(T) = list(T).
+
+[]       ++ Ys = Ys.
+[X | Xs] ++ Ys = [X | Xs ++ Ys].
+\end{verbatim}
+Once we have @foldr@, there's no need for us to have to think about the
+recursion any more.  We can instead write
+\begin{verbatim}
+Xs ++ Ys = foldr(cons, Ys, Xs).
+
+:- func cons(T, list(T)) = list(T).
+
+cons(X, Xs) = [X | Xs].
+\end{verbatim}
+(we have to define @cons@ because data constructors such as @[|]@ are
+\emph{not} functions, not least because they can also be used as
+``deconstructors'' in unifications and pattern matching.)
+
+It is worth spending the time to become familiar with higher order
+functions such as @foldr@.  Such functions enable you to solve the
+general case once and then never have to expend mental or physical
+effort duplicating the scheme for each specific application.
+
+\subsection{Lambdas}
+
+Sometimes it is a little painful to have to name each and every small
+auxiliary function when writing higher order code.  Lambdas are
+auxiliary predicate or function procedures that can be constructed on an
+as-needs basis in a program and passed around just as if they had been
+defined as separate predicates or functions in their own right.  The
+main difference is that lambdas do not have names (they are sometimes
+described as `anonymous') and therefore cannot be recursive.
+
+We illustrate lambdas by recoding @sum@, @prod@ and @++@:
+\begin{verbatim}
+sum(Xs)  = foldr((func(A, B)  = A + B   ), 0, Xs).
+
+prod(Xs) = foldr((func(A, B)  = A + B   ), 1, Xs).
+
+Xs ++ Ys = foldr((func(A, As) = [A | As]), Ys, Xs).
+\end{verbatim}
+As with most coding short-cuts, lambdas can make code both more and less
+legible.  As a general rule, lambdas are best kept brief and used in
+situations where their purpose is obvious, or, in other words, if you
+think an explanatory comment is justified, then avoid using a lambda.
+Their use is justified in the above cases.
+
+\XXX{Talk about lambdas with bodies.  They only get one clause.}
+
+\XXX{Talk about predicate lambdas, including nondeterminism etc.}
+
+\XXX{Say that it's fine to unify lambdas with variables etc.}
+
+\XXX{Don't forget the scope rules.}
+
+\subsection{Partial Application (Currying)}
+
+Looking at the definition of @map@ once more,
+\begin{verbatim}
+map(_, []      ) = [].
+map(F, [X | Xs]) = [F(X) | map(F, Xs)].
+\end{verbatim}
+we see exactly the same pattern of recursion captured by @foldr@, hence
+we can recode it as
+\begin{verbatim}
+map(F, Xs) = foldr(apply_cons(F), [], Xs).
+
+:- func apply_cons(func(T1) = T2, T1, list(T2)) = list(T2).
+
+apply_cons(F, X, Ys) = [F(X) | Ys].
+\end{verbatim}
+using the auxiliary function @apply_cons@.  
+
+At this point one may be prompted to ask, ``What is this strange
+@apply_cons(F)@ appearing in the definition of @++@?  And besides,
+@apply_cons@ takes three arguments.''
+
+The expression @apply_cons(F)@ is a \emph{partial application} of
+@apply_cons/3@, resulting in a \emph{closure} which is equivalent to
+writing @func(A, Bs) = apply_cons(F, A, Bs)@.
+
+\XXX{Are lambdas implemented any more efficiently than this behind the
+scenese?}
+
+(Note that in practice we would probably have just written
+\begin{verbatim}
+map(F, Xs) = foldr((func(X, Ys) = [F(X) | Ys]), [], Xs).
+\end{verbatim}
+and avoided the need for a named auxiliary function at all.)
+
+\XXX{Watch out for procedure ambiguity using closures.}
+
+\XXX{Mention that a fully applied func expression is applied whereas a
+pred expression may not be.}
+
+\XXX{Mention @call@ and @apply@.}
+
+\XXX{What about restrictions on partial application?}
+
+\subsection{Modes}
+\subsection{* Monomorphism Restriction}
+\subsection{* Monomoding Restriction}
+\subsection{* Efficiency}
+
+
+

@@ -1,0 +1,925 @@
+\section{Predicates}
+
+The key computational unit in Mercury is the predicate.  A
+predicate describes a relationship between its arguments; it is
+also possible to provide a procedural view of Mercury predicates,
+which is how they can be used in a programming language.
+
+Predicates cover not only tests and functions, as found in other
+languages, but also procedures with multiple return values and
+even non-deterministic relationships, in which there may be
+several different solutions for a given set of input arguments.
+
+\subsection{Introduction}
+
+A predicate is defined by a set of \emph{clauses}, where each
+clause takes the form
+\begin{verbatim}
+Head :- Body.
+\end{verbatim}
+This should be read as saying ``@Head@ is true if @Body@ is true'' with
+the set of clauses forming an exhaustive specification of the
+predicate.
+
+If the body of a predicate is empty (taken to mean just @true@), one can
+just write
+\begin{verbatim}
+    Head.
+\end{verbatim}
+Clauses like this are called \emph{facts}.
+
+The body of a predicate clause is a \emph{goal} -- a logical formula
+that must be satisfied in order for the head to hold.
+
+A very simple example of a predicate is
+\begin{verbatim}
+:- pred max(int, int, int).         % A, B, Max.
+:- mode max(in,  in,  out) is det.
+
+max(A, B, Max) :-
+    ( if B < A then Max = A else Max = B ).
+\end{verbatim}
+This predicate takes two integers, @A@ and @B@, and succeeds
+binding @Max@ to @A@ if @A@ is greater than @B@ or binding @Max@ to @B@
+otherwise.  The part of the mode declaration @is det@ means
+that this is a deterministic predicate: it will always succeed
+and has just one solution for any given pair of inputs.
+
+(This sort of deterministic predicate with a single output is
+called a \emph{function}.  Functions are so common that Mercury
+includes special syntax and conventions to simplify working
+with them.  More of this in a later section \XXX{}.)
+
+For a more interesting example, consider the following small
+genealogical database of people defined by the @person@ type:
+\begin{verbatim}
+:- type person
+    --->    arthur  ; bill      ; carl
+    ;       alice   ; betty     ; cissy.
+\end{verbatim}
+We start by defining predicates that we can use to decide if a
+particular person is male or female.  These predicates are
+labelled semidet because they have at most one solution
+(success) for a given argument, but might also fail.
+\begin{verbatim}
+:- pred male(person).
+:- mode male(in) is semidet.
+
+male(arthur).
+male(bill).
+male(carl).
+
+:- pred female(person).
+:- mode female(in) is semidet.
+
+female(Person) :- not male(Person).
+\end{verbatim}
+The definition for @female/1@ states that @female(Person)@ succeeds
+iff\footnote{\emph{Iff}: if and only if} @male(Person)@ fails.  (Recall
+that variables in Mercury are distinguished by starting with a capital
+letter.)
+\begin{verbatim}
+:- pred father(person, person).     % Child, Father.
+:- mode father(in,     out) is semidet.
+
+father(betty, arthur).
+father(carl,  bill).
+father(cissy, bill).
+
+:- pred mother(person, person).     % Child, Mother.
+:- mode mother(in,     out) is semidet.
+
+mother(bill,  alice).
+mother(carl,  betty).
+mother(cissy, betty).
+\end{verbatim}
+The predicates @father/2@ and @mother/2@ take their first argument
+as an input and return a result in the second.  The
+determinism is semidet again because they are not exhaustive:
+some inputs can cause them to fail (\eg there is no solution
+for @father(arthur, X)@.)
+\begin{verbatim}
+:- pred parent(person, person).     % Child, Parent.
+:- mode parent(in,     out) is nondet.
+
+parent(Child, Parent) :- father(Child, Parent).
+parent(Child, Parent) :- mother(Child, Parent).
+\end{verbatim}
+This simply says that the parent of a child is either the
+father or the mother.  The determinism is nondet because for a
+given @Child@ argument this predicate may fail or may have more
+than one solution:
+\begin{itemize}
+\item both @father/2@ and @mother/2@ can fail
+(\eg if @Child = arthur@);
+\item just one of @father/2@ or @mother/2@ could succeed
+(\eg if @Child = bill@);
+\item both @father/2@ and @mother/2@ could succeed
+(\eg if @Child = cissy@).
+\end{itemize}
+
+(How failure and multiple solutions affect the execution of a
+Mercury program will be explained below.)
+\begin{verbatim}
+:- pred ancestor(person, person).   % Person, Ancestor.
+:- mode ancestor(in,     out) is nondet.
+
+ancestor(Person, Ancestor) :-
+    parent(Person, Ancestor).
+
+ancestor(Person, Ancestor) :-
+    parent(Person, Parent),
+    ancestor(Parent, Ancestor).
+\end{verbatim}
+We can now define an ancestor of a Person as being either
+\begin{itemize}
+\item a parent of that Person or
+\item an ancestor of a parent of that Person.
+\end{itemize}
+
+Since @parent/2@ is nondet, so is @ancestor/2@.
+
+This table explains the difference between the number of
+solutions a predicate can have for a given determinism:
+
+\begin{tabular}{lll}
+\textbf{Determinism}       & \multicolumn{2}{l}{\textbf{Number of Solutions}} \\
+            & \textbf{Min} & \textbf{Max} \\
+\hline \\
+@semidet@   & 0            & 1 \\
+@nondet@    & 0            & 1 or more \\
+@det@       & 1            & 1 \\
+@multi@     & 1            & 1 or more \\
+\end{tabular}
+
+(There are a few other determinisms, but we don't need to
+consider them just yet \XXX{}.)
+
+The compiler will check that your determinism declarations are
+correct.
+
+One interesting thing about this database is that there's no
+reason why it shouldn't be run in ``reverse''.  That is, for any
+father or mother, we should be able to deduce who their
+children are and for any ancestor we should be able to work
+out who their descendants are.
+
+To gain this extra functionality we have only to add the
+required extra mode declarations; there is no need to touch
+the definitions themselves!  The extra mode declarations are
+\begin{verbatim}
+:- mode father(out, in) is nondet.   % Infer Child from Father.
+:- mode mother(out, in) is nondet.   % Infer Child from Mother.
+:- mode parent(out, in) is nondet.   % Infer Child from Parent.
+:- mode ancestor(out, in) is nondet. % Infer Person from Ancestor.
+\end{verbatim}
+Notice that @father/2@ and @mother/2@ are nondet in this mode
+rather than semidet: looking at the definitions we see that
+@father(Child, bill)@ has multiple solutions @Child = carl@ and
+@Child = sissy@, while @mother(Child, betty)@ also has solutions
+@Child = carl@ and @Child = sissy@.
+
+There is no reason why a predicate cannot have several output
+arguments or even no input arguments.  For example, we
+might go on to add
+\begin{verbatim}
+:- pred parents(person, person, person).    % Child, Mother, Father.
+:- mode parents(in,     out,    out   ) is semidet.
+:- mode parents(out,    in,     in    ) is nondet.
+
+parents(Child, Mother, Father) :-
+    mother(Child, Mother),
+    father(Child, Father).
+\end{verbatim}
+The first mode of @parents/3@ is semidet because both @mother/2@
+and @father/2@ are semidet when called with @Child@ as an input
+and both must succeed for @parents/3@ to succeed.
+
+The second mode is nondet for similar reasons, but exhibits an
+interesting property.  At first glance you might think that
+something will go wrong here: when @parents/3@ is called in the
+second mode, initially @Mother@ and @Father@ are inputs and @Child@
+is an output.  However, if the call to @mother/2@ succeeds, then
+@Child@ will end up being bound to the identifier for some
+person.  This appears that we would then be trying to call
+@father/2@ with \emph{both} arguments as inputs, but there is no such
+mode declaration for @father/2@.  There is no need to worry,
+however -- the compiler will recognise the situation and treat
+the definition of @parents/3@ like this as far as the second
+mode is concerned:\footnote{The compiler isn't doing any special analysis here;
+this is just a natural consequence of conversion to
+super-homogeneous normal form, which will be explained later
+on \XXX{}.}
+\begin{verbatim}
+:- mode parents(out, in, in) is nondet.
+
+parents(Child, Mother, Father) :-
+    mother(Child, Mother),
+    father(X,     Father),
+    X = Child.
+\end{verbatim}
+So here @father/2@ is being called in mode @(out, in) is nondet@ and
+@parents/3@ succeeds if the result @X@ is bound to the same value
+as @Child@.
+
+In effect the compiler has deduced that @father/2@ has the
+implied mode
+\begin{verbatim}
+:- mode father(in, in) is semidet.
+\end{verbatim}
+In general, Mercury will reorder each clause body for each mode
+declaration so that results are generated before they are needed -- each
+mode of a predicate is referred to as a \emph{procedure}.
+
+\subsection{Execution}
+This subsection explains Mercury's execution model in more
+detail.  In particular, the notions of failure, backtracking
+and non-determinism are addressed.
+
+Let's start by looking at some of the code for our
+genealogical database again -- this time we're going to label
+the clauses to help us see how programs execute in Mercury.
+\begin{verbatim}
+
+    :- pred father(person, person).     % Child, Father.
+    :- mode father(in,     out   ) is semidet.
+    :- mode father(out,    in    ) is nondet.
+
+f1  father(betty, arthur).
+f2  father(carl,  bill).
+f3  father(cissy, bill).
+
+    :- pred mother(person, person).     % Child, Mother.
+    :- mode mother(in,     out   ) is semidet.
+    :- mode mother(out,    in    ) is nondet.
+
+m1  mother(bill,  alice).
+m2  mother(carl,  betty).
+m3  mother(cissy, betty).
+
+    :- pred parent(person, person).     % Child, Parent.
+    :- mode parent(in,     out   ) is nondet.
+    :- mode parent(out,    in    ) is nondet.
+
+p1  parent(Child, Parent) :- father(Child, Parent).
+p2  parent(Child, Parent) :- mother(Child, Parent).
+
+    :- pred ancestor(person, person).   % Person, Ancestor.
+    :- mode ancestor(in,     out   ) is nondet.
+
+a1  ancestor(Person, Ancestor) :-
+        parent(Person, Ancestor).
+
+a2  ancestor(Person, Ancestor) :-
+        parent(Person, Parent),
+        ancestor(Parent, Ancestor).
+
+    :- pred parents(person, person, person).    % Child, Mother, Father.
+    :- mode parents(in,     out,    out   ) is semidet.
+    :- mode parents(out,    in,     in    ) is nondet.
+
+s1  parents(Child, Mother, Father) :-
+        mother(Child, Mother),
+        father(Child, Father).
+\end{verbatim}
+First off, we'll consider the goal @parent(cissy, Parent)@.
+Every time we see a goal we try expanding it according to each
+clause definition in turn (this is what being referentially
+transparent is all about).  If we get to a dead end we have to
+\emph{backtrack} to the last point where we had a choice and try a
+different clause (when we backtrack we also forget any
+variable bindings we might have made one the way from the
+/choice point/.)
+\begin{verbatim}
+        parent(cissy, Parent)
+(by p1)     father(cissy, Parent)
+(by f1)         false because betty \= cissy
+(by f2)         false because carl  \= cissy
+(by f3)         Parent = bill
+\end{verbatim}
+So one solution to @parent(cissy, Parent)@ is @Parent = bill@.  We
+obtained this by first expanding the goal according to p1 and
+then expanding the resulting goal @father(cissy, Parent)@
+according to each of @f1@, @f2@ and @f3@ until we found one that
+succeeded.
+
+If the program later has to backtrack over this goal then we
+have to forget the binding @Parent = bill@ and try the next
+clause for @parent/2@ (since there are no more clauses for
+@father/2@):
+\begin{verbatim}
+        parent(cissy, Parent)
+(by p1)     mother(cissy, Parent)
+(by m1)         false because bill \= cissy
+(by m2)         false because carl \= cissy
+(by m3)         Parent = betty
+\end{verbatim}
+Now, say we wanted to ask the question ``which ancestor of
+@carl@, if any, is also a parent of @bill@?''  Here's how things
+would proceed:\footnote{We have to supply fresh local vars in each
+ expansion -- for instance, @Ancestor@ in the expansion of @a2@ has
+ been replaced with a new variable @Z@.}
+\begin{verbatim}
+        ancestor(carl, X), parent(bill, Y), X = Y
+(by a1)     parent(carl, X), parent(bill, Y), X = Y
+(by p1)         father(carl, X), parent(bill, Y), X = Y
+(by f1)             false because betty \= carl
+(by f2)             X = bill, parent(bill, Y), X = Y
+(  =  )             parent(bill, Y), bill = Y
+(by p1)                 father(bill, Y), bill = Y
+(by f1)                     false because bill \= betty
+(by f2)                     false because bill \= carl
+(by f3)                     false because bill \= cissy
+(by p2)                 mother(bill, Y), bill = Y
+(by m1)                     Y = alice, bill = Y
+(  =  )                     bill = alice
+(  =  )                     false because bill \= alice
+(by m2)                     false because bill \= carl
+(by m3)                     false because bill \= cissy
+(by p2)         mother(carl, X), parent(bill, Y), X = Y
+(by m1)             false because carl \= bill
+(by m2)             X = betty, parent(bill, Y), X = Y
+(  =  )             parent(bill, Y), betty = Y
+(by p1)                 father(bill, Y), betty = Y
+(by f1)                     false because bill \= betty
+(by f2)                     false because bill \= carl
+(by f3)                     false because bill \= cissy
+(by p2)                 mother(bill, Y), betty = Y
+(by m1)                     Y = alice, betty = Y
+(  =  )                     betty = alice
+(  =  )                     false because alice \= betty
+(by m2)                     false because bill \= carl
+(by m3)                     false because bill \= cissy
+(by a2)     parent(carl, Z), ancestor(Z, X), parent(bill, Y), X = Y
+(by p1)         father(carl, Z), ancestor(Z, X), parent(bill, Y), X = Y
+(by f1)             false because carl \= betty
+(by f2)             Z = bill, ancestor(Z, X), parent(bill, Y), X = Y
+(  =  )             ancestor(bill, X), parent(bill, Y), X = Y
+(by a1)                 parent(bill, X), parent(bill, Y), X = Y
+(by p1)                     father(bill, X), parent(bill, Y), X = Y
+(by f1)                         false because bill \= betty
+(by f2)                         false because bill \= carl
+(by f3)                         false because bill \= cissy
+(by p2)                     mother(bill, X), parent(bill, Y), X = Y
+(by m1)                         X = alice, parent(bill, Y), X = Y
+(  =  )                         parent(bill, Y), alice = Y
+(by p1)                             father(bill, Y), alice = Y
+(by f1)                                 false because bill \= betty
+(by f2)                                 false because bill \= carl
+(by f3)                                 false because bill \= cissy
+(by p2)                             mother(bill, Y), alice = Y
+(by m1)                                 Y = alice, alice = Y
+(  =  )                                 alice = alice
+(  =  )                                 true
+\end{verbatim}
+So our program concludes that a solution to
+\begin{verbatim}
+    ancestor(carl, X), parent(bill, Y), X = Y
+\end{verbatim}
+is
+\begin{verbatim}
+    X = alice, Y = alice
+\end{verbatim}
+As we indicated earlier in the definition of @parents/3@, in
+practice we'd be more likely to write the goal as just
+\begin{verbatim}
+    ancestor(carl, X), parent(bill, X)
+\end{verbatim}
+and let Mercury work out where the implicit unification should
+go.
+
+\Aside{The above example might give the impression that Mercury is a term
+rewriting system.  This is not true (although conceivably a very
+slow Mercury implementation might use such a technique\ldots)  What
+happens behind the scenes is much more efficient, albeit
+computationally equivalent.}
+
+In practice, ninety per cent or so of the code one writes is
+deterministic.  However, there are times (as in the example above) when
+non-determinism can be used to write very clear, concise programs.
+Support for backtracking and unification is what distinguishes Mercury
+from purely functional languages.
+
+\subsection{Recursion}
+
+Imperative languages like C and Java provide a whole slew of
+mechanisms for supporting iterative (looping) control flow --
+while loops, repeat-until loops, for loops and so forth.
+
+Declarative languages typically provide but one mechanism for
+such things: \emph{recursion}.  A recursive predicate is simply one
+defined in terms of itself \XXX{Don't forget to mention mutual
+recursion}.  (Later on we will discover \emph{higher order} predicates
+and observe that the standard library supplies predicates that stand in
+for the common iterative mechanisms found in imperative languages.)
+
+Some simple examples:
+\begin{verbatim}
+:- func factorial(int) = int.
+
+factorial(N) =
+    ( if N  = 0 then 1 else N * factorial(N - 1) ).
+
+
+:- func fibonacci(int) = int.
+
+fibonacci(N) =
+    ( if N =< 2 then 1 else fibonacci(N - 1) + fibonacci(N - 2) ).
+\end{verbatim}
+These are examples of what is sometimes called ``middle
+recursion'' where the recursive call is \emph{not} the last thing
+that the predicate (or function) does when looping.  Here,
+calls to @factorial/1@ finishes with a multiplication and calls
+to @fibonacci/1@ finish with an addition.
+
+Although middle recursion is easy to read, it incurrs some
+performance penalty in that each iteration has to record
+something extra on the stack in order to finish up the
+computation.\footnote{That said, the compiler can in fact turn some
+middle recursive predicates into equivalent tail recursive
+predicates that do not incurr a stack overhead \XXX{}.}
+
+\XXX{Include a side-bar or something explaining stack frames.}
+
+\emph{Tail recursion} describes the situation where the last thing a
+predicate does is call itself.  Since there is nothing left to
+do after the call, the compiler can reuse the current call's
+stack frame for the recursive call, allowing the predicate to
+execute using only a fixed amount of stack space.  For
+example, tail recursive implementations of the above
+functions are
+\begin{verbatim}
+factorial(N) = fac(N, 1).
+
+fac(N, X) =
+    ( if N = 0 then X     else fac(N - 1, N * X) ).
+
+
+fibonacci(N) = fib(1, 1, N).
+
+fib(FN_2, FN_1, N) =
+    ( if N =< 2 then FN_1 else fib(FN_1, FN_1 + FN_2, N - 1) ).
+\end{verbatim}
+Tail recursive code like this should execute just as quickly
+and efficiently as a for or while loop in an imperative
+language.
+
+\subsection{Unifications}
+
+Mercury has but two basic atomic (\ie indivisible) types of
+goal: unifications and calls.
+
+A unification is written @X = Y@.  A unification can fail if @X@
+and @Y@ are not unifiable.
+
+Two values are unifiable if they are ``structurally similar'' --
+that is, where you see a data constructor in one, you either
+see the same data constructor in the other (and the
+corresponding arguments are also structurally similar) or a
+variable, which will end up being bound to the corresponding
+term on the other side if the unification is successful.\footnote{Unlike Prolog, Mercury forbids the aliasing of
+variables whereby a partially instantiated data structure
+may contain the same unbound variable in two different places.
+This will be explained fully in a later chapter.  \XXX{}}
+
+Unifications, therefore, can be used to bind variables to
+values, test to see if a variable is bound to a particular
+constructor, unpack the arguments of a constructor or all of
+the above.
+
+In the following examples we assume that variables are
+initially unbound:
+
+\begin{tabular}{rcll}
+         @123@ & @=@ & @123@ &
+                -- Succeeds \\
+           @X@ & @=@ & @123@ &
+                -- Binds @X = 123@ \\
+         @123@ & @=@ & @234@ &
+                -- Fails \\
+           @X@ & @=@ & @foo(1, 2, 3)@ &
+                -- Binds @X = foo(1, 2, 3)@ \\
+@foo(X, Y, Z)@ & @=@ & @foo(1, 2, 3)@ &
+                -- Binds @X = 1@, @Y = 2@, @Z = 3@ \\
+@foo(X, Y, 4)@ & @=@ & @foo(1, 2, 3)@ &
+                -- Fails (@4 \= 3@) \\
+@foo(X, 2, 3)@ & @=@ & @foo(1, 2, Z)@ &
+                -- Binds @X = 1@, @Z = 3@ \\
+\end{tabular}
+
+The complex unifications are most easily understood by first
+converting them into \emph{super homogeneous normal form} (which is
+what the compiler does.)  In SHNF, the left hand side of each
+unification is a variable and the right hand side is either
+another variable or a functor \XXX{have I explained this term?}, all of
+whose arguments are variables.  For example
+
+\begin{verbatim}
+    foo(X, 2, 3) = foo(1, 2, Z)
+\end{verbatim}
+becomes
+\begin{verbatim}
+    V_1 = X, V_2 = 2, V_3 = 3, V_4 = foo(V_1, V_2, V_3),
+    V_5 = 1, V_6 = 2, V_7 = Z, V_8 = foo(V_5, V_6, V_7),
+    V_4 = V_8
+\end{verbatim}
+where @V_1@\ldots@V_8@ are all temporary variables
+introduced in the conversion to SHNF.
+
+\subsection{Calls}
+The other kind of primitive goal supported by Mercury is the
+predicate call, @p(X1, ..., Xn)@, which we have already seen in
+the examples above.
+
+One way to picture the evaluation of a call is to think of it
+as expanding into the different clause bodies for the
+predicate definition while looking for solutions.
+
+Two relatively important built-in predicates are @true@ and
+@false@ \XXX{}.  @true@ always succeeds and @false@ always fails.\footnote{@false@ is often written as @fail@, which is a hangover
+from Mercury's Prolog roots where it was sometimes more useful
+to think in procedural terms.}
+
+\subsection{Conjunction}
+
+A goal of the form @G1, G2, ..., Gn@ is called a \emph{conjunction}
+with the separating commas read as ``and''.  A conjunction
+succeeds iff a consistent solution to each of the sub-goals @G1@,
+@G2@, \ldots, @Gn@ can be found by the program.
+
+(The compiler may have to reorder the sequence of goals in a
+clause in order to satisfy the mode constraints.  Although one
+can set a flag to force the compiler to do no more reordering
+than is necessary, in general this will mean that certain
+optimizations will not be possible.  The upshot of this is
+that one should avoid writing code that assumes a particular
+evaluation order other than that dictated by the mode
+constraints.)
+
+A conjunction executes by trying each of the goals in order.
+If a goal fails then the program backtracks to the nearest
+preceding choice-point (\ie non-deterministic goal that may
+have other solutions).
+
+\subsection{Negation}
+
+A goal of the form not @G@ succeeds iff @G@ has no solutions.  @G@
+may be a compound goal, in which case it should be enclosed in
+parentheses to avoid syntactic precedence problems.
+
+The sub-goal @G@ is said to be in a \emph{negated context} and as
+such cannot bind any variables visible outside the negation
+(since the only way not @G@ can succeed is if @G@ fails, in which
+case it will not produce any variable bindings.)
+
+Note that not not @G@ is equivalent to @G@ and hence may bind
+variables if it succeeds (while not not @G@ would be an odd
+thing to write, some of the code transformations the compiler
+performs can generate such things; getting the modes right for
+such things requires that the compiler observe this
+simplification rule.)
+
+\subsection{If-Then-Else Goals}
+
+Mercury's if-then-else construct looks like this:
+\begin{verbatim}
+    ( if ConditionGoal then YesGoal else NoGoal )
+\end{verbatim}
+Note that the else part is \emph{not} optional.  \XXX{Except in DCG
+code...  But we probably don't need to mention this.}
+
+You may also see if-then-elses written as
+\begin{verbatim}
+    ( ConditionGoal -> YesGoal ; NoGoal )
+\end{verbatim}
+although the author finds this style less appealing.
+
+While the parentheses are not always required, it is a very
+good idea to include them in order to avoid confusing
+syntactic precedence errors.  One common exception is a chain
+of if-then-elses where only the top level of parentheses are
+necessary:
+\begin{verbatim}
+    ( if      ConditionGoal1 then YesGoal1
+      else if ConditionGoal2 then YesGoal2
+      else if ConditionGoal3 then YesGoal3
+      ...
+      else                        NoGoal
+    )
+\end{verbatim}
+Extra parentheses are not required even if any of the @ConditionGoal@s,
+@YesGoal@s or the @NoGoal@ are compound goals.
+
+The if-then-else goal
+\begin{verbatim}
+    ( if ConditionGoal then YesGoal else NoGoal )
+\end{verbatim}
+is semantically equivalent to the disjunction
+\begin{verbatim}
+    ( ConditionGoal, YesGoal ; not ConditionGoal, NoGoal )
+\end{verbatim}
+but will be implemented more efficiently by the compiler (if
+@ConditionGoal@ produces no solutions in the first disjunct then
+there's no point in checking again that it has none in the
+second disjunct.)
+
+It's worth looking at a few examples to really understand how
+if-then-else goals work.  Again, we assume that all variables
+are initially unbound:
+\begin{verbatim}
+    ( if ( X = 1 ; X = 2 ) then ( X = 2 ; X = 4 ) else X = 5 )
+\end{verbatim}
+The above goal is @nondet@ (the condition is @multi@
+and the then-goal is @nondet@, since @X@ will be bound at this point),
+but has the single solution @X = 2@.
+\begin{verbatim}
+    ( if ( X = 1 ; X = 2 ) then ( X = 3 ; X = 4 ) else X = 5 )
+\end{verbatim}
+The above goal is also @nondet@ for the same reason, but in fact has no
+solutions (the compiler can only be expected to perform a certain amount
+of program analysis and will sometimes not be completely precise --
+mode inference is actually undecidable in general, although this is not
+a problem in practice.  \XXX{Check this is true!})
+\begin{verbatim}
+    ( if 1 = 2 then ( X = 3 ; X = 4 ) else ( X = 5 ; X = 6 ) )
+\end{verbatim}
+The above goal is @nondet@ because the condition is @semidet@ and the
+then- and else-goals are
+@multi@.  (Since the condition will fail, the
+else-goal is evaluated, with solutions @X = 5@ and @X = 6@.)
+\begin{verbatim}
+    ( if 1 = 1 then ( X = 3 ; X = 4 ) else ( X = 5 ; X = 6 ) )
+\end{verbatim}
+Similary, the above goal is @nondet@ because the condition is @semidet@
+and the then- and else-goals are
+@multi@.  (Since the condition will succeed, the
+else-goal is evaluated, with solutions @X = 3@ and @X = 4@.)
+
+That said, in the vast majority of cases where the
+condition-goal is semidet and the then- and else-goals are
+deterministic, if-then-else goals will act in very much the
+same way as similar structures in other programming languages.
+
+Since the condition-goal is in a negated context in the else-arm
+of the disjunctive form of an if-then-else, it cannot
+produce any outputs that would be used in @NoGoal@ or anything
+outside the if-then-else as a whole.  It can, however, produce
+outputs that are only used in the @YesGoal@.  (The reason for
+this restriction is slightly subtle and will be explained in
+more detail later.  \XXX{It's to do with having mode
+independent semantics.})
+
+For example, the following somewhat contrived code violates
+the constraint because @S@ is bound inside the condition and is
+also visible outside the if-then-else goal.
+\begin{verbatim}
+
+:- pred prime_divisor(int, int).
+:- mode prime_divisor(in,  out) is nondet.
+...
+
+:- pred prime_divisor_or_zero(int, int).
+:- mode prime_divisor_or_zero(in,  out) is multi.
+
+prime_divisor_or_zero(N, S) :-
+    ( if   prime_divisor(N, S)
+      then true
+      else S = 0
+    ).
+
+\end{verbatim}
+The correct way to write @prime_divisor_or_zero/2@ is
+\begin{verbatim}
+prime_divisor_or_zero(N, S) :-
+    ( if   prime_divisor(N, D)
+      then S = D
+      else S = 0
+    ).
+\end{verbatim}
+Note that if-then-else \emph{expressions} are slightly different;
+the following is perfectly legal:
+\begin{verbatim}
+prime_divisor_or_zero(N, S) :-
+    S = ( if prime_divisor(N, D) then D else 0 ).
+\end{verbatim}
+
+\subsection{Disjunction}
+
+Just as conjunction lets you use ``and'' to construct goals,
+disjunction lets you use ``or''.  A \emph{disjunctive} goal takes the
+form @(G1 ; G2 ; ... ; Gn)@ with the separating semicolons being
+read as ``or''.
+
+A disjunction succeeds iff any of its disjunct sub-goals
+succeeds.  A disjunction has as many solutions as all of its
+disjuncts put together: if one disjunct fails or backtracking
+exhausts all the solutions for one disjunct then execution
+proceeds with another disjunct.  Again, the compiler is
+generally free to reorder disjuncts, although this should not
+have a visible impact on programs.  Disjunctions are typically
+non-deterministic, although switches, mentioned earlier, are a
+special case.
+
+\XXX{Need examples?}
+
+The clausal notation we have been using in the examples above
+is in fact convenient syntactic sugar for writing top-level
+disjunctions.  For example, the @ancestor/2@ predicate we
+defined earlier
+\begin{verbatim}
+
+ancestor(Person, Ancestor) :-
+    parent(Person, Ancestor).
+
+ancestor(Person, Ancestor) :-
+    parent(Person, Parent),
+    ancestor(Parent, Ancestor).
+\end{verbatim}
+could equivalently be written as
+\begin{verbatim}
+ancestor(Person, Ancestor) :-
+    (
+        parent(Person, Ancestor)
+    ;
+        parent(Person, Parent),
+        ancestor(Parent, Ancestor)
+    ).
+\end{verbatim}
+(Indeed, this is how the compiler sees multi-clause
+definitions.)
+
+In general it is better style to use clausal form for
+top-level disjunctions.
+
+\subsection{Switches}
+Mercury recognises particular forms of (@semi-@)@det@
+disjunction which it can compile very efficiently.
+
+The @string@ library module defines the following type:
+\begin{verbatim}
+:- type poly_type
+    --->    f(float)
+    ;       i(int)
+    ;       s(string)
+    ;       c(char).
+\end{verbatim}
+which can be used to form heterogeneous collections of the
+primitive types (this is useful, amongst other things, for
+supplying argument lists for formatted output.)
+
+Say we wanted to write a predicate that would convert any
+@poly_type@ value into a @string@.  Here's how we might write the
+code (in practice we would use a function; here we use a
+predicate for the purposes of illustration):
+\begin{verbatim}
+:- pred poly_type_to_string(poly_type, string).
+:- mode poly_type_to_string(in, out) is det.
+
+poly_type_to_string(f(F), S) :- float_to_string(F, S)
+poly_type_to_string(i(I), S) :- int_to_string(I, S)
+poly_type_to_string(s(S), S).
+poly_type_to_string(c(C), S) :- char_to_string(C, S)
+\end{verbatim}
+this is equivalent to the single clause definition
+\begin{verbatim}
+poly_type_to_string(Poly, S) :-
+    (   Poly = f(F), float_to_string(F, S)
+    ;   Poly = i(I), int_to_string(I, S)
+    ;   Poly = s(S)
+    ;   Poly = c(C), char_to_string(C, S)
+    ).
+\end{verbatim}
+
+The compiler knows that since @Poly@ is an input variable it
+must be bound when the disjunction is evaluated.  The compiler
+also sees that each arm of the disjunction unifies @Poly@
+against a different data constructor.  The compiler therefore
+deduces that at most one disjunct can succeed on a particular
+call (and, since all @poly_type@ data constructors are tested
+for, \emph{exactly} one must succeed.)  The compiler generates very
+efficient code for so-called \emph{switch} constructs such as this.\footnote{The name \emph{switch} is used because of its similarity
+to the C language construct of the same name.}
+
+Switches are an elegant way of describing conditions based on
+unification tests and are typically more efficient than the
+equivalent if-then-else chains.
+
+\subsection{Existential Quantification}
+
+Sometimes we only need to know whether a solution exists, but
+are not interested in the result.  For this we use existential
+quantification, which looks like this:
+\begin{verbatim}
+    (some [X, Y, Z] G)
+\end{verbatim}
+A goal of this form will succeed iff there is a solution to @G@,
+but any bindings for @X@, @Y@ and @Z@ will not be visible outside
+the quantification -- it's rather like saying that @X@, @Y@ and @Z@ 
+are local variables for the goal @G@.
+
+Mercury has an rule that any variables in a clause that do not
+also appear in the head are implicitly existentially
+quantified, which means you never actually need to use
+explicit existential quantification in your programs.
+
+\subsection{Universal Quantification}
+
+On the other hand, we may wish to know whether a particular
+property holds for all solutions to a particular goal.  This
+is where universal quantification is useful.
+
+The goal
+\begin{verbatim}
+    (all [X, Y, Z] G)
+\end{verbatim}
+is equivalent to writing
+\begin{verbatim}
+    not (some [X, Y, Z] not G)
+\end{verbatim}
+
+\subsection{Implication}
+
+Mercury has three types of goal for describing implicative
+relationships between goals.\footnote{The translations are given by de Morgan's laws.}
+\begin{itemize}
+\item @(G1 => G2)@ is shorthand for @(not G1 ; G2)@;
+\item @(G1 <= G2)@ is shorthand for @(G2 => G1)@; and
+\item @(G1 <=> G2)@ is shorthand for @((G1 => G2), (G1 <= G2))@.
+\end{itemize}
+
+Note that parentheses are required around @G1@ and @G2@ if they
+are not atomic goals; it is a good idea to also put
+parentheses around the implication as a whole to avoid
+ambiguity in the scope of the implication.)
+
+Implication is most often used with universal quantification
+to test for some general property.
+
+\subsubsection{Examples}
+
+This example uses the predicate @member(X, Xs)@ to non-deterministically
+project members @X@ from the @list@ @Xs@ and the semidet predicate
+@even(X)@ which succeeds iff @X@ is even.\footnote{The convention is to
+name a @list@ of items, @X@, as @Xs@.}
+\begin{verbatim}
+:- pred all_even(list(int)).
+:- mode all_even(in) is semidet.
+
+all_even(Xs) :-
+    all [X] ( member(X, Xs) => even(X) ).
+
+\end{verbatim}
+
+\begin{verbatim}
+
+    % Two list can be interpreted as equivalent sets if
+    % each contains the same members as the other.
+    %
+:- pred equivalent_sets(list(T), list(T)).
+:- mode equivalent_sets(in, in) is semidet.
+
+equivalent_sets(Xs, Ys) :-
+    all [Z] ( member(Z, Xs) <=> member(Z, Ys) ).
+\end{verbatim}
+The auxiliary predicates @member/2@ and @even/1@ are defined as\footnote{The Mercury parser views anything in @`@backquotes@`@
+as an infix operator.  This is the same as the rule used in Haskell.}
+\begin{verbatim}
+:- pred member(T, list(T)).
+:- mode member(out, in) is nondet.
+
+    % X is a member of a list if it is either the head of
+    % that list or a member of the tail.
+    %
+member(X, [X | _ ]).
+member(X, [_ | Xs]) :- member(X, Xs).
+
+
+:- pred even(int).
+:- mode even(in) is semidet.
+
+even(X) :- X `mod` 2 = 0.
+\end{verbatim}
+
+\subsection{Higher Order Application}
+
+\XXX{I'll talk about this later.}
+
+\subsection{Anonymous and Singleton Variables}
+
+Often one is not interested in a particular output variable
+from a call or unification.  In these cases you can use the
+special variable named @_@ (a single underscore) which stands
+for a different anonymous or ``don't care'' variable every time
+it appears.
+
+Sometimes, however, it makes programs easier to read if you do
+name don't care variables.  Since variables that only appear
+once in a clause are usually the result of typographical
+error, the compiler will issue a warning when it sees such
+things.  To get around this problem, giving a variable a
+name that starts with an underscore (\eg @_X@) tells the compiler that
+you know this is a named don't care variable and that there's
+no need to issue a warning.
+
+
+

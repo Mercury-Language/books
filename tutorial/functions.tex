@@ -1,0 +1,151 @@
+\section{Functions}
+
+Functions are @det@ (or @semidet@) relations with (at least) one output.
+
+Essentially, a function is any relation with a single solution for
+a given set of inputs.
+
+Functions with single output values are so common that Mercury provides
+special syntax to make working with them easier.  One of the key
+advantages of functions is that they can be used as parts of
+expressions, rather than having to have a separate goal computing each
+subexpression in turn.  That is, one can use an expression as in
+\begin{verbatim}
+    X = (B + sqrt(B*B - 4*A*C)) / (2*A)
+\end{verbatim}
+rather than the somewhat verbose
+\begin{verbatim}
+    square(B, BSquared),
+    multiply(4, A, FourA),
+    multiply(FourA, C, FourAC),
+    subtract(BSquared, FourAC, BSquaredMinusFourAC),
+    sqrt(BSquaredMinusFourAC, Sqrt),
+    add(B, Sqrt, Numerator),
+    multiply(2, A, Denominator),
+    divide(Numerator, Denominator, X)
+\end{verbatim}
+
+\subsection{Definition}
+
+This example illustrates how functions are defined:
+\begin{verbatim}
+:- func length(list(T)) = int.
+:- mode length(in) = out is det.
+
+    % The length of an empty list is 0.
+    % The length of a non-empty list is 1 for the head
+    % plus the length of the tail.
+    %
+length([]      ) = 0.
+length([_ | Xs]) = 1 + length(Xs).
+\end{verbatim}
+Like predicates, functions may be defined using several clauses
+and make use of pattern matching.
+
+Functions can be computed from goals, where the head and goal
+are separated by @:-@ in the definition:
+\begin{verbatim}
+        % take(N, Xs) is the length min(N, length(Xs))
+        % prefix of Xs.
+        %
+    :- func take(int, list(T)) = list(T).
+    :- func take(in, in) = out is det.
+
+    take(N, Xs) = Ys :-
+        split(N, Xs, Ys, _).
+
+        % drop(N, Xs) is the length max(0, length(Xs) - N)
+        % suffix of Xs.
+        %
+    :- func drop(int, list(T)) = list(T).
+    :- func drop(in, in) = out is det.
+
+    drop(N, Xs) = Zs :-
+        split(N, Xs, _, Zs).
+
+        % split(N, Xs, Prefix, Suffix)
+        %
+    :- pred split(int, list(T), list(T), list(T)).
+    :- mode split(in,  in,      out,     out    ) is det.
+
+    split(N, Xs, Ys, Zs) :-
+        ( if N > 0, Xs = [X | Xs0] then
+            Ys = [X | Ys0],
+            split(N - 1, Xs0, Ys0, Zs)
+          else
+            Ys = [],
+            Zs = Xs
+        ).
+\end{verbatim}
+By far the most common mode for a function is
+\begin{verbatim}
+:- mode f(in, in, ..., in) = out is det.
+\end{verbatim}
+
+If a function has (just) this sort of mode, then the mode
+declaration can be ommitted and the compiler will simply assume
+this mode is what is intended.  Hereafter we will omit unnecessary
+mode declarations for functions.
+
+\XXX{What exactly are the constraints on function
+determinisms?  Remember to point out (somewhere) that
+functions may also have multiple procedures.  See the ref.
+manual section on Determinism.}
+
+\subsection{Pattern Matching}
+
+\XXX{Dealt with above.}
+
+\subsection{Recursion}
+
+\XXX{Dealt with above.}
+
+\subsection{Conditional Expressions}
+
+Conditional (if-then-else) expressions look like this:
+\begin{verbatim}
+    ( if ConditionGoal then YesExpr else NoExpr )
+\end{verbatim}
+where the usual rules for if-then-elses apply (in particular,
+@ConditionGoal@ may bind output variables that are used in
+YesExpr, but not elsewhere), except that the then and else
+arms are \emph{expressions}, rather than goals.
+
+Note that as with if-then-else goals, the else clause is \emph{not}
+optional in a conditional expression (it would make no sense
+not to have one.)
+
+\subsection{* Partial (Semi-Deterministic) Functions}
+
+\XXX{Leave for later.}
+
+\subsection{Overview of Semidet Predicates}
+
+\XXX{Deal with this in a later section.  It's sort-of advanced
+stuff.}
+
+\subsection{Polymorphism}
+
+\XXX{Dealt with in section on types.}
+
+\subsection{Infix Notation}
+
+Mercury syntax supports a number of prefix, infix and postfix
+operators, including all the usual arithmetic operators.  This
+is just syntactic sugar, however, and there is no difference
+between @X + Y@ and @+(X, Y)@ as far as the compiler is concerned.
+
+If you want to use another name as an infix operator, you can
+simply place it in @`@backquotes@`@:
+\begin{verbatim}
+    X `union` Y `union` Z
+\end{verbatim}
+is seen by the compiler as
+\begin{verbatim}
+    union(X, union(Y, Z))
+\end{verbatim}
+Backquoted symbols bind more tightly than anything else and
+associate to the right.
+
+
+

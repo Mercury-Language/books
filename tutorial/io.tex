@@ -1,0 +1,365 @@
+\section{Input and Output}
+
+One unfortunate consequence of being a pure declarative language
+is that IO becomes somewhat more complex than is the case for
+imperative languages.
+
+\subsection{IO \emph{Is} a Side-Effect}
+
+One problem is that performing IO necessarily has an effect on the
+outside world that cannot be backtracked over or undone -- there is
+no returning to an earlier state of the world!  This is in
+contrast to the mathematically pure world that Mercury inhabits,
+where there is no concept of a value (such as the state of the
+world) ``changing'', only one of new such values being computed.
+
+\subsection{Order is Important}
+
+Another problem is that since logically there is no difference
+between the goal @(G1, G2)@ and the goal @(G2, G1)@, we also need to
+find some mechanism for ensuring that IO operations happen in the
+intended order and are not mixed up as a consequence of the
+compiler reordering goals for optimization purposes and so forth.
+
+\subsection{Uniqueness}
+
+A number of solutions to the IO problem have been adopted by
+the pure, declarative languages, the main contenders being the
+monadic approach (as exemplified by Haskell) and the
+uniqueness approach (as exemplified by Clean and Mercury.)
+
+The uniqueness approach works like this: we view a Mercury
+program as a function from world states to world states.  The
+top-level @main/2@ predicate of a Mercury program takes the
+current world state as an input and computes a new world state
+as its result.  Every IO operation does the same thing: takes
+a world state as input and produces a new world state as
+output -- notionally updated with the effects of the IO
+operation (and the actions of the world at large between IO
+operations).  The so-called IO state is opaque to the Mercury
+program; it can only be queried via the operations defined in
+the io module.\footnote{Of course, the Mercury program doesn't actually
+pass the state of the world around in fact -- the IO state
+abstraction serves both to ensure the properties we require
+and to give a semantics to IO in Mercury.}
+
+Example (we eschew state variable notation here for clarity of
+exposition):
+\begin{verbatim}
+:- pred main(io, io).
+:- mode main(di, uo) is det.
+
+main(IO0, IO) :-
+    io__write_string("pi = ", IO0, IO1),
+    io__write_float(math__pi, IO1, IO2),
+    io__nl(                   IO2, IO ).
+\end{verbatim}
+The type of the IO state is called just io and is defined
+as an abstract type in the @io@ library module.  The
+top-level predicate @main/2@ takes the initial IO state as a
+@di@ mode argument (\emph{destructive input}), and produces another as a
+@uo@ mode result (\emph{unique output}).  The three IO operations in the body
+show how the initial IO state, @IO0@, is transformed into
+the final IO state, @IO@.  So, @io__write_string/3@ destroys
+@IO0@ and produces @IO1@ as a unique output.  Next,
+@io__write_float/3@ destroys @IO1@ and produces @IO2@ as a
+unique output.  Finally, @io__nl@ (which writes out a
+newline) destroys @IO2@ and produces @IO@ as a unique output.
+
+In order to ensure that old versions of the world state cannot
+be accessed after an IO operation, the IO state is \emph{unique} --
+this means that there can only ever be one live reference to
+it.\footnote{A live reference is one that will be used
+later on in computation.}  The old version of the IO state
+is said to be clobbered by an IO operation -- the compiler will
+report an error if the old version is still live after the IO
+operation in question.  Similarly, it is impossible to make a
+copy the IO state.\footnote{It is possible to ``fork'' the IO
+state, this is necessary to support concurrency.  Concurrency
+is dealt with in a later chapter. \XXX{}}
+
+Example:
+\begin{verbatim}
+:- pred main(io, io).
+:- mode main(di, uo) is det.
+
+main(IO0, IO) :-
+    io__write_string("Hello, ",  IO0, IO1),
+    io__write_string("world!\n", IO0, IO ).
+\end{verbatim}
+Here @IO0@ is used twice; the compiler spots the bug and
+rejects the program with
+\begin{verbatim}
+In clause for `main(di, uo)':
+  in argument 2 of call to predicate `io:write_string/3':
+  unique-mode error: the called procedure would clobber
+  its argument, but variable `IO0' is still live.
+\end{verbatim}
+The uniqueness constraint is sufficient to ensure that IO
+operations happen in a strict order, specified by the
+programmer, and that it is impossible to backtrack over IO or
+refer to a dead IO state.
+
+Note that uniqueness is not a property reserved for IO states:
+it is used to implement destructively updated arrays, the
+store data type which allows the construction of arbitrary
+pointer graphs, hash tables and so forth.  Uniqueness allows
+the compiler to use a safe form of destructive update of data
+structures: there is no reason why a dead unique object cannot
+be reused to create a new live unique object (since the old
+value can never be accessed), which is exactly what happens
+for the data types just mentioned.
+
+\subsection{Stylistic Considerations}
+
+Since passing the IO state around everywhere is a little
+cumbersome and also quite restrictive (it can only be passed
+into det predicates), Mercury programmers naturally find
+themselves separating applications into two parts: the part
+that handles all the IO and the part that handles all the
+interesting processing.  This is good style in general, and
+although one might find it slightly annoying not to be able to
+insert print statements willy-nilly as is the case with impure
+languages, one soon finds that the discipline imposed pays
+real dividends in terms of reusability, maintainability, ease
+of debugging and so forth.
+
+\subsection{* Determinism Restrictions}
+
+Since IO operations cannot be backtracked across, the IO state
+(and, indeed, unique objects in general) cannot be passed to
+non-deterministic predicates -- that is, only deterministic
+predicates can take unique IO states as arguments.\footnote{This is not strictly true; there is another
+determinism, cc-multi, which is compatible with uniqueness.}
+
+\subsection{* State Variable Syntax}
+
+Having to name and pass two variables around for every IO
+operation quickly becomes tiresome.  Mercury has a special
+\emph{state variable} syntax for just this purpose.  The idea is to
+write code that looks a little more like what one would write
+in an imperative language, but which is transformed by the
+compiler into pure Mercury.  A state variable argument @!X@
+stands for two real arguments, @!.X@ and @!:X@, which in turn
+stand for the ``current'' and ``next'' values of the state variable
+@X@, respectively.  Occurrences of @!.X@ and @!:X@ are converted by
+the compiler into appropriately numbered variables.
+
+For example, the following code
+\begin{verbatim}
+    % Writes out a list of strings, separated by
+    % commas.
+    %
+:- pred write_strings(list(string), io, io).
+:- mode write_strings(in,           di, uo) is det.
+
+write_strings([],            !IO).
+
+write_strings([S1],          !IO) :-
+    io__write_string(S1,     !IO).
+
+write_strings([S1, S2 | Ss], !IO) :-
+    io__write_string(S1,     !IO),
+    io__write_string(", ",   !IO),
+    write_strings(Ss,        !IO).
+\end{verbatim}
+is transformed by the compiler into\footnote{Note that the pred and mode declarations reflect
+the fact that @!IO@ is actually two arguments, not one.}
+\begin{verbatim}
+    % Writes out a list of strings, separated by
+    % commas.
+    %
+:- pred write_strings(list(string), io, io).
+:- mode write_strings(in,           di, uo) is det.
+
+write_strings([],            IO0, IO) :-
+    IO = IO0.
+
+write_strings([S1],          IO0, IO) :-
+    io__write_string(S1,     IO0, IO).
+
+write_strings([S1, S2 | Ss], IO0, IO) :-
+    io__write_string(S1,     IO0, IO1),
+    io__write_string(", ",   IO1, IO2),
+    write_strings(Ss,        IO2, IO ).
+\end{verbatim}
+Henceforth we will use state variable syntax rather than
+explicitly numbered IO states.
+
+\subsection{Common IO Operations}
+
+The @io@ library module defines a plethora of useful IO
+operations and as usual with libraries, the reader is
+encouraged to take some time to peruse the interface section.
+Here we will present some basic IO operations to help get the
+ball rolling.
+
+\subsubsection{Output}
+
+Output is generally simpler to deal with than input,
+because, by and large, there are no error codes to deal
+with.
+
+The @io@ library module includes predicates for the output
+of the basic types:
+\begin{verbatim}
+:- pred io__write_string(string, io, io).
+:- mode io__write_string(in,     di, uo) is det.
+
+:- pred io__write_char(char, io, io).
+:- mode io__write_char(in,   di, uo) is det.
+
+:- pred io__write_int(int, io, io).
+:- mode io__write_int(in,  di, uo) is det.
+
+:- pred io__write_float(float, io, io).
+:- mode io__write_float(in,    di, uo) is det.
+\end{verbatim}
+However, it's typically easier to use the more general
+formatted output predicate:
+\begin{verbatim}
+:- pred io__format(string, list(poly_type), io, io).
+:- mode io__format(in,     in,              di, uo) is det.
+\end{verbatim}
+The @string@ argument describes how the output is to be formatted, very
+similar in spirit and detail to what one would pass to C's @printf()@.
+The @list@ argument is a type safe means of passing the parameters to be
+formatted.
+
+Using @io__format/4@ one might write
+\begin{verbatim}
+:- pred write_record(string, int, float, io, io).
+:- mode write_record(in,     in,  in,    di, uo) is det.
+
+write_record(Name, Age, Children, !IO) :-
+    io__format("%s is %d years old and has %f children.\n",
+               [s(Name), i(Age), f(Children)], !IO).
+\end{verbatim}
+and then we could call
+\begin{verbatim}
+    write_record("Joe Bloggs", 43, 2.4, !IO)
+\end{verbatim}
+and the program would write out
+\begin{verbatim}
+Joe Bloggs is 43 years old and has 2.4 children.
+\end{verbatim}
+The implementation of @write_record/5@ is much simpler than the
+functionally equivalent
+\begin{verbatim}
+:- pred write_record(string, int, float, io, io).
+:- mode write_record(in,     in,  in,    di, uo) is det.
+
+write_record(Name, Age, Children,           !IO) :-
+    io__write_string(Name,                  !IO),
+    io__write_string(" is ",                !IO),
+    io__write_int(Age,                      !IO),
+    io__write_string(" years old and has ", !IO),
+    io__write_float(Children,               !IO),
+    io__write_string(" children.\n",        !IO).
+\end{verbatim}
+
+In fact, @io__format/4@ is quite a bit more powerful, in
+that the @%@ formatting specifications can include
+details as to the style of formatting, precision,
+justification and so forth.
+
+\XXX{I'm not sure I should mention @io\_\_print/3@ this early.}
+Another useful predicate the @io@ library module provides is
+\begin{verbatim}
+:- pred io__print(T,  io, io).
+:- mode io__print(in, di, uo) is det.
+\end{verbatim}
+@io__print/3@ is used to print a representation of arbitrary
+Mercury values.  Be aware, though, that if you try to
+print the results of expressions, the compiler may ask you
+to supply more type information to help resolve what
+exactly it is you are printing (\ie the expression or the
+value of the expression.)  This is subtle stuff and will
+be dealt with in a later chapter. \XXX{}
+
+\subsubsection{Input}
+
+Input is marginally more complex than output since
+typically on of three things can happen:
+\begin{enumerate}
+\item we successfully read a value of the required type from
+  the input stream;
+\item we hit the end-of-file;
+\item an error of some kind occurs (\eg the input is
+  malformed or the input source has gone away unexpectedly.)
+\end{enumerate}
+
+To this end the @io@ library module defines the following
+type to report the results of input operations:
+\begin{verbatim}
+:- type io__result(T) ---> ok(T)
+                      ;    eof
+                      ;    error(io__error).
+\end{verbatim}
+In order, @ok(X)@ is returned if the input operation
+succeeded, reading @X@; @eof@ is returned if the end of file
+has been reached; and @error(ErrorCode)@ is returned if
+something went wrong (the function @io__error_message/1@ can
+be used to turn @ErrorCode@ into a printable error message.)
+
+This arrangement forces the programmer to handle the error
+cases.  There is still lively debate over whether error
+codes or throwing exceptions is the best way to handle
+errors for things like this.  A genuine advantage of the
+error code approach is that you have to consider the error
+cases from the outset, which, while requiring a little
+more initial thought from the programmer, usually pays
+real dividends later on.
+\XXX{is this the right place to say this?  Should I
+enlarge on the debate?  Probably no and yes
+respectively...}
+
+Two very basic input predicates are
+\begin{verbatim}
+:- pred io__read_char(io__result(char), io, io).
+:- mode io__read_char(in,               di, uo) is det.
+
+:- pred io__read_line_as_string(io__result(string), io, io).
+:- mode io__read_line_as_string(in,                 di, uo)
+            is det.
+\end{verbatim}
+
+The input predicates are also less comprehensive in the
+sense that there are no predicates @io__read_int/3@,
+@io__read_float/3@ or @io__read_string/3@.  The problem is
+that it's not clear exactly what should be allowed to
+terminate the input stream for an @int@, @float@ or @string@.
+Instead, the library leaves issues of parsing up to
+applications (there are several programs in the Mercury
+extras distribution to help, including a lexer and parser
+generators.)
+
+Here's a simple program echoes the capitalised version of
+letters in the input stream:
+\begin{verbatim}
+:- module capitalise.
+:- interface.
+:- import_module io.
+
+:- pred main(io, io).
+:- mode main(di, uo) is det.
+
+:- implementation.
+:- import_module char, exception.
+
+main(!IO) :-
+    io__read_char(R, !IO),
+    (
+        R = ok(C),
+        io__write_char(char__to_upper(C), !IO),
+        main(!IO)
+    ;
+        R = eof
+    ;
+        R = error(E),
+        exception__throw(E)
+    ).
+\end{verbatim}
+
+
+

@@ -1,0 +1,270 @@
+\section{Modules}
+
+The Mercury unit of compilation is the module.  Modules
+are compiled separately and the resulting object files linked
+together to make a program or aggregated to form libraries.
+
+A module has two parts, the interface and the implementation sections.
+
+The interface section describes the types, insts, preds and funcs and so
+forth that are said to be exported or externally visible.
+
+The implementation section supplies all the code that defines the
+behaviour of the exported preds and funcs and defines any abstract
+types or type class instances exported by the module (we will come
+across type classes later on \XXX{}.)  Declarations and definitions in
+the implementation section are not externally visible.
+
+\subsection{Names and Namespaces}
+
+It would be unreasonable to insist that no two preds (or types
+or \ldots) share the same name in any Mercury program.  To this
+end, the Mercury module system makes use of two mechanisms:
+restrictions on the visiblity of names and a module qualified
+naming scheme.
+
+In this section we will use the term \emph{name} to refer to the
+name of any type, func, pred, inst, mode, type class and so
+forth that one might find in a Mercury program.
+
+\subsection{Visibility}
+
+In order to use a name, it must be visible at each point in
+a module where it appears.
+
+\XXX{This stuff needs illustrating with examples.}
+
+\subsubsection{In the Interface Section}
+
+A name is visible in an interface section if it is
+\begin{itemize}
+\item declared or defined there;
+\item is exported by a module which is imported in this
+  module's interface section;
+\item is declared or defined in a parent module (we will come
+  to submodules shortly \XXX{}.)
+\end{itemize}
+
+Any name defined or declared in the interface section is
+said to be \emph{public} or \emph{exported} by that module.
+
+\subsubsection{In the Implementation Section}
+
+A name is visible in an implementation section if it is
+\begin{itemize}
+\item declared or defined there;
+\item is exported by a module which is imported in this
+  module's interface or implementation section;
+\item is declared or defined in a parent module.
+\end{itemize}
+
+Any name declared or defined in the implementation section
+that is not exported by the module is said to be \emph{private}
+or \emph{local} to the module.
+
+\subsection{Qualification}
+
+Name qualification allows us to avoid abiguity where one
+module imports two other modules which export different things
+under the same ``base'' name.
+
+A fully qualified name takes the form @<modulename>__<thingname>@
+(or, for submodules, @<modulename>__<submodulename>__...__<thingname>@)
+where the double-underscore @__@ is the module name separator symbol.
+
+Using fully qualified names throughout a program quickly
+becomes tedious and can distract from the readability of the
+source code.  Mercury therefore allows one to omit qualifiers
+(or partial prefixes in the case of submodules) where there is
+no ambiguity.
+
+The compiler will not confuse names of different sorts of
+things -- for instance, there is never ambiguity between a type
+and an inst with the same name since the types and insts
+always appear in separate contexts.
+
+Potential ambiguity arises with funcs, preds and data
+constructors since all three can appear in unifications.
+Ambiguity can still be resolved by the compiler if the
+possible ways of resolving the name in question each have
+different types or arities (\XXX{Need to go over some examples
+a la @io\_\_print@.  And be more precise.})
+
+A convention worth adopting is to explicitly qualify
+predicates, but not types, constructors and functions.
+
+(Mercury also provides @use_module@, an alternative to @import_module@,
+which does much the same thing, except that names imported via
+@use_module@ \emph{must} be fully qualified.)
+
+\subsection{Submodules and Hierarchical Namespaces}
+
+The module namespace may be structured rather than flat.  Modules can
+also have submodules to form a tree-like namespace.
+
+Submodules come in two flavours, nested and separate.
+
+\subsubsection{Nested Submodules}
+
+Nested submodules appear in the same source file as the parent module.
+
+For example,
+\begin{verbatim}
+:- module vector3.
+:- interface.
+:- import_module float.
+
+:- type vector3 == {float, float, float}.
+
+:- func vector3 + vector3 = vector3.
+:- func vector3 `dot` vector3 = float.
+
+:- module scalar_vector3.
+:- interface.
+
+    :- func float * vector3 = vector3.
+
+:- end_module scalar_vector3.
+
+:- module vector3_scalar.
+:- interface.
+
+    :- func vector3 * scalar = vector3.
+
+:- end_module vector3_scalar.
+    
+:- implementation.
+
+{Xa, Ya, Za} + {Xb, Yb, Zb} = {Xa + Xb, Ya + Yb, Za + Zb}.
+
+{Xa, Ya, Za} `dot` {Xb, Yb, Zb} = Xa * Xb + Ya * Yb + Za * Zb.
+
+:- module scalar_vector3.
+:- implementation.
+
+    A * {X, Y, Z} = {A * X, A * Y, A * Z}.
+
+:- end_module scalar_vector3.
+
+:- module vector3_scalar.
+:- implementation.
+
+    {X, Y, Z} * A = {A * X, A * Y, A * Z}.
+
+:- end_module vector3_scalar.
+\end{verbatim}
+Nested submodules are used in the example above to avoid overloading
+problems for the functions such as @*@ that have both @float * vector3@
+and @vector3 * float@ varieties (recall that overloaded functions with
+the same arity cannot be defined directly in the same module.)
+
+The submodules do not have to import the @float@ module separately
+because all names visible in the parent module are also visible in the
+submodules.
+
+A client of this module would have to import each submodule to have
+access to those particular names.  For example,
+\begin{verbatim}
+:- module foo.
+:- interface.
+:- import_module io.
+
+:- pred main(io::di, io::uo) is det.
+
+:- implementation.
+:- import_module vector3, vector3_scalar, scalar_vector3.
+
+main(!IO) :-
+    R = {1.0, 1.5, 2.0},
+    io__print(2.0 * R),
+    io__nl,
+    io__print(R * 3.0),
+    io__nl.
+\end{verbatim}
+should write out
+\begin{verbatim}
+{2.0, 3.0, 4.0}
+{3.0, 4.5, 6.0}
+\end{verbatim}
+when run.  The compiler understands that the multiplication @2.0 * R@
+is referring to the function defined in @scalar_vector3@ and that the
+multiplication @R * 3.0@ is referring to the function defined in the
+@vector3_scalar@.
+
+\subsubsection{Separate Submodules}
+
+Separate submodules are defined in separate files and must be explicitly
+listed in the parent module in @include_module@ declarations, but are 
+otherwise indistinguishable from nested submodules as far as the
+programmer is concerned.  The advantage of separate submodules is that
+they can be compiled separately \XXX{verify this is correct} and, for
+large submodules, splitting them into separate files can simplify code
+maintenance.
+
+\XXX{What about @import\_hierarchy@ and chums?}
+
+\XXX{We really want to just have @.@ as the module separator by the time
+this goes to print rather than the current mixture of @\_\_@ and @:@ and
+@.@ in separate submodule file names.}
+
+The vector example above could be recoded to use separate submodules as
+\begin{verbatim}
+:- module vector3.
+:- interface.
+
+:- import_module float.
+
+:- include_module vector3__scalar_vector3, vector3__vector3_scalar.
+
+:- type vector3 == {float, float, float}.
+
+:- func vector3 + vector3 = vector3.
+:- func vector3 `dot` vector3 = float.
+    
+:- implementation.
+
+{Xa, Ya, Za} + {Xb, Yb, Zb} = {Xa + Xb, Ya + Yb, Za + Zb}.
+
+{Xa, Ya, Za} `dot` {Xb, Yb, Zb} = Xa * Xb + Ya * Yb + Za * Zb.
+\end{verbatim}
+and in a file named @vector3.scalar_vector3.m@
+\begin{verbatim}
+:- module vector3__scalar_vector3.
+:- interface.
+
+:- func float * vector3 = vector3.
+
+:- implementation.
+
+A * {X, Y, Z} = {A * X, A * Y, A * Z}.
+\end{verbatim}
+and in a file named @vector3.vector3_scalar.m@
+\begin{verbatim}
+:- module vector3__vector3_scalar.
+:- interface.
+
+:- func vector3 * scalar = vector3.
+
+:- implementation.
+
+{X, Y, Z} * A = {A * X, A * Y, A * Z}.
+\end{verbatim}
+Note the @include_module@ declaration in the interface section for
+@vector3@ (making @scalar_vector3@ and @vector3_scalar@ accessible to
+clients of @vector3@\footnote{Their fully qualified names being
+@vector3\_\_scalar\_vector3@ and @vector3\_\_vector3\_scalar@
+respectively.}).  A declaration of this kind is required for every
+separate submodule.
+
+Use of @vector3@, @scalar_vector3@ and @vector3_scalar@ is exactly the
+same as if they had been written as nested submodules.
+
+\XXX{Is this the right place to mention the file name mapping option to
+@mmake@?}
+
+\subsubsection{Visibility and Submodules}
+
+\XXX{Need to check this one out carefully.}
+
+
+

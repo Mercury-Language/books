@@ -1,5 +1,5 @@
 %------------------------------------------------------------------------------%
-% sketch.tex
+% book.tex
 % Ralph Becket <rafe@cs.mu.oz.au>
 % Mon Jul 15 12:11:53 EST 2002
 % vim: ft=tex ff=unix ts=4 sw=4 et wm=8 tw=0
@@ -26,6 +26,7 @@
     %                           -- consider FoilTeX instead of slides
 
 \usepackage{doc}              % -- I want \MakeShortVerb
+\usepackage{amsmath}          % -- I want align*
 
 \pagestyle{headings}
     %
@@ -49,6 +50,11 @@
     %                           -- use % at EOL if definition not finished
     %                           -- space after a cmd is ignored unless
     %                           --  preceded by {}
+\newcommand{\eg}%
+{e.g.\@ }
+
+\newcommand{\ie}%
+{i.e.\@ }
 
 \newcommand{\XXX}[1]%
 {{\small\textbf{XXX} \emph{#1}}}
@@ -58,6 +64,87 @@
 
 \newcommand{\BoxedPar}[1]%
 {{\center{\fbox{\parbox{\linewidth}{#1}}}}}
+
+\newcommand{\True}%
+{\top}
+
+\newcommand{\False}%
+{\perp}
+
+\newcommand{\Not}[1]%
+{\neg{}#1}
+
+\newcommand{\Conj}%
+{\wedge}
+
+\newcommand{\Disj}%
+{\vee}
+
+\newcommand{\Imp}%
+{\Rightarrow}
+
+\newcommand{\Bimp}%
+{\Leftarrow}
+
+\newcommand{\Eqv}%
+{\Leftrightarrow}
+
+\newcommand{\All}[2]%
+{\forall\ #1.\ #2}
+
+\newcommand{\Some}[2]%
+{\exists\ #1.\ #2}
+
+\newcommand{\Union}%
+{\cup}
+
+\newcommand{\Excluding}%
+{\backslash}
+
+\newcommand{\Intersection}%
+{\cap}
+
+\newcommand{\Odd}%
+{\text{odd}}
+
+\newcommand{\FV}%
+{\text{FV}}
+
+\newcommand{\Wolf}%
+{\text{wolf}}
+
+\newcommand{\Fox}%
+{\text{fox}}
+
+\newcommand{\Bird}%
+{\text{bird}}
+
+\newcommand{\Caterpillar}%
+{\text{caterpillar}}
+
+\newcommand{\Snail}%
+{\text{snail}}
+
+\newcommand{\Animal}%
+{\text{animal}}
+
+\newcommand{\Herbivorous}%
+{\text{herbivorous}}
+
+\newcommand{\Carnivorous}%
+{\text{carnivorous}}
+
+\newcommand{\Eats}%
+{\text{eats}}
+
+\newcommand{\Plant}%
+{\text{plant}}
+
+\newcommand{\Grain}%
+{\text{grain}}
+
+\newcommand{\BiggerThan}%
+{\text{bigger-than}}
 
     % \newenvironment{name}[numargs]{begincmds}{endcmds}
 
@@ -90,7 +177,7 @@
 %
 % \end{abstract}
 
-% \tableofcontents
+\tableofcontents
 
 %- Body -----------------------------------------------------------------------%
 
@@ -154,7 +241,7 @@
 
     % $ ... $                   -- inline mathematics
     % \[ ... \]                 -- display mathematics
-    % \begin{equation}          -- equation* suppresses numbering
+    % \begin{equation}          -- align* suppresses numbering
     % ...
     % \end{equation}
     % \begin{array}{...}        -- as tabular
@@ -190,7 +277,7 @@ for writing the real text.}
 \section{Hello, World!}
 
 Because it's traditional...  Type the following into a file called
-``hello.m''.
+@hello.m@:
 \begin{verbatim}
 :- module hello.
 
@@ -273,7 +360,7 @@ definition of the name and it will make no difference.
 
 In more formal language,
 \[
-(\mathrm{let}\ x = e\ \mathrm{in}\ M)  \equiv  M[e/x]
+(\text{let}\ x = e\ \text{in}\ M)  \equiv  M[e/x]
 \]
 This is clearly not true of imperative languages.  Consider
 the following C program:
@@ -405,8 +492,750 @@ top-level predicate with an impure definition.
 \subsection{Mercury Philosophy}
 
 \XXX{I think I've already covered this one.  Tyson suggests an
-implementation philosophy section (e.g. no distributed fat) in
+implementation philosophy section (\eg no distributed fat) in
 a much later section.}
+
+
+
+\section{Logic and Logic Programming}
+
+While programming in a purely functional style is a fairly intuitive
+notion, the notion of programming in logic might at first seem a little
+odd.  Nevertheless, in this section we shall demonstrate that there is
+an easily understood logic-based programming paradigm.  But first, a
+refresher course on basic logic.
+
+\subsection{Propositional Logic}
+
+We start off with propositional logic (otherwise known as the
+\emph{predicate calculus}) because it is simple and can be used to
+illustrate several ideas that we will need to understand predicate
+logic.
+
+\subsubsection{Propositions}
+
+A \emph{proposition} is simply a statement that is either true or false.
+An \emph{atomic} proposition is one that is indivisible (\ie not a
+combination of other propositions).  Examples of atomic propositions are
+``my name is Ralph'', ``Pink Floyd is a rock group'', ``the Moon is made
+of green cheese'' and so forth.  When we want to work with propositions,
+we usually abbreviate them with short names or even just single letters.
+
+In this section we will use $a$, $b$, $c$, \ldots to stand for arbitrary
+atomic propositions.
+
+\subsubsection{Logical Formulae}
+
+Typically we want to combine atomic propositions into more complex
+\emph{compound} propositions or logical formulae.  For example, I may
+wish to combine the propositions ``I am outside'' and ``it is raining''
+into one.
+
+In this section we will use $p$, $q$, $r$, \ldots to stand for arbitrary
+propositions (\ie $p$ may stand for an atomic or a compound
+proposition.)
+
+There are a number of logical \emph{connectives} we can use to combine
+propositions into larger propositions.
+
+\subsubsection{Negation}
+
+For any proposition $p$, $\Not{p}$ (read as ``not $p$'') is its
+\emph{negation}.  That is, if $p$ is true then $\Not{p}$ is false and
+vice versa.  We use the following \emph{truth table} to define negation:
+\[
+\begin{array}{c|c}
+p       & \Not p \\
+\hline
+\False  & \True  \\
+\True   & \False \\
+\end{array}
+\]
+where $\True$ stands for truth and $\False$ for falsity.
+
+Note that $\Not{\Not{p}}$ is the same as $p$.
+
+\subsubsection{Conjunction}
+
+For any propositions $p$ and $q$, the \emph{conjunction} $p \Conj q$
+(read as ``$p$ and $q$'') is true iff both $p$ and $q$ are true:
+\[
+\begin{array}{cc|c}
+p       & q       & p \Conj q \\
+\hline
+\False  & \False  & \False \\
+\False  & \True   & \False \\
+\True   & \False  & \False \\
+\True   & \True   & \True \\
+\end{array}
+\]
+So it follows that $p \Conj \Not{p}$ must be false.
+
+Conjunction has an identity: $\True \Conj p \Eqv p$.
+
+Conjunction is associative: $(p \Conj q) \Conj r \Eqv p \Conj (q \Conj r)$.
+
+Conjunction is commutative: $p \Conj q \Eqv q \Conj p$.
+
+Conjunction is idempotent: $p \Conj p \Eqv p$.
+
+\subsubsection{Disjunction}
+
+For any propositions $p$ and $q$, the \emph{disjunction} $p \Disj q$
+(read as ``$p$ or $q$'') is true iff at least one of $p$ and $q$ is
+true:
+\[
+\begin{array}{cc|c}
+p       & q       & p \Disj q \\
+\hline
+\False  & \False  & \False \\
+\False  & \True   & \True \\
+\True   & \False  & \True \\
+\True   & \True   & \True \\
+\end{array}
+\]
+So $p \Disj \Not{p}$ must be true since $p$ can only be true or false
+(this is known as Aristotle's law of the excluded middle.)
+
+Note that disjunction is inclusive in the sense that $p \Disj q$ means
+``$p$ and/or $q$,'' although by convention we only write ``or''.  If we
+want exclusive-disjunction then we say ``either $p$ or $q$'' to mean
+``$p$ or $q$, but not both.''
+
+Disjunction has an identity: $\False \Disj p \Eqv p$.
+
+Disjunction is associative: $(p \Disj q) \Disj r \Eqv p \Disj (q \Disj r)$.
+
+Disjunction is commutative: $p \Disj q \Eqv q \Disj p$.
+
+Disjunction is idempotent: $p \Disj p \Eqv p$.
+
+\subsubsection{Distribution over Conjunction and Disjunction}
+
+The following rules are very useful:
+\begin{align*}
+(p \Conj q) \Disj r
+& \Eqv (p \Disj r) \Conj (q \Disj r) \\
+(p \Disj q) \Conj r
+& \Eqv (p \Conj r) \Disj (q \Conj r) \\
+\end{align*}
+
+\subsubsection{Implication}
+
+For any propositions $p$ and $q$, the \emph{implication} $p \Imp q$
+(read as ``$p$ implies $q$'' or ``if $p$ then $q$'') is \emph{false} iff 
+$p$ is true and $q$ is false:
+\[
+\begin{array}{cc|c}
+p       & q       & p \Imp q \\
+\hline
+\False  & \False  & \True \\
+\False  & \True   & \True \\
+\True   & \False  & \False \\
+\True   & \True   & \True \\
+\end{array}
+\]
+This rule deserves something in the way of explanation.
+
+Say I take $p$ to stand for the proposition ``I am outside in the rain
+without an umbrella'' and $q$ to stand for the proposition ``I am
+getting wet''.  Then the implication $p \Imp q$ stands for ``if I am
+outside in the rain without an umbrella then I am getting wet''.  Let's
+go through each line of the truth table in turn and see how we should
+interpret the implication.
+\begin{description}
+\item $\Not{p} \Conj \Not{q}$: the implication doesn't say
+\emph{anything} about $q$ if $p$ isn't true, so in this
+case we take the implication to be true (we give it the benefit of the
+doubt, if you like.)  For example, I might be standing indoors and be
+perfectly dry.
+\item $\Not{p} \Conj q$: this is much the same situation as above, so
+again we conclude that the implication is still true.  I may be standing
+indoors but also be getting wet -- because I'm having a shower, say.
+\item $p \Conj \Not{q}$: this situation directly contradicts what the
+implication says -- I am standing outside in the rain, but I am
+\emph{not} getting wet!  In this case we must conclude that the
+implication is false (\ie it does not fit with the facts.)
+\item $p \Conj q$: finally, if $p$ \emph{and} $q$ are true, then the
+implication has been shown to be true.
+\end{description}
+
+The second thing to be aware of is that \emph{implication is not
+causation}!  This is a point that tends to lead to much initial
+confusion.  That is, if $p$ stands for ``my name is Ralph'' and $q$
+stands for ``the Moon is made of green cheese'', then it is perfectly
+all right to posit $p \Imp q$ (\ie  ``if my name is Ralph then the Moon
+is made of green cheese.'')
+
+Note that we sometimes prefer to write $q \Bimp p$ which is just another
+way of writing $p \Imp q$.
+
+\subsubsection{Equivalence}
+
+For any propositions $p$ and $q$, the \emph{equivalence} $p \Eqv q$
+(read as ``$p$ is equivalent to $q$'') is \emph{true} iff 
+both $p$ and $q$ are true or both $p$ and $q$ are false:
+\[
+\begin{array}{cc|c}
+p       & q       & p \Imp q \\
+\hline
+\False  & \False  & \True \\
+\False  & \True   & \False \\
+\True   & \False  & \False \\
+\True   & \True   & \True \\
+\end{array}
+\]
+
+\subsubsection{De Morgan's Laws}
+
+The 19th century logician Augustus De Morgan proved two laws:
+\begin{align*}
+\Not{p \Conj q}
+& \Eqv \Not{p} \Disj \Not{q} \\
+\Not{p \Disj q}
+& \Eqv \Not{p} \Conj \Not{q}
+\end{align*}
+which can be seen to follow directly from the truth tables for the
+logical connectives.
+
+We can use De Morgan's laws, plus the fact that $\Not{\Not{p}} \Eqv p$,
+to deduce the following useful identities and implications:
+\begin{align*}
+(p \Eqv q)
+& \Eqv (p \Imp q) \Conj (q \Imp p) \\
+& \Eqv (p \Conj q) \Disj (\Not{p} \Conj \Not{q}) \\
+\\
+(p \Imp q)
+& \Eqv \Not{p} \Disj q \\
+& \Eqv (\Not{q} \Imp \Not{p}) \\
+\\
+(p \Imp q \Conj r)
+& \Eqv (p \Imp q) \Conj (p \Imp r) \\
+\\
+(p \Imp q \Conj r)
+& \Eqv (p \Imp q) \Conj (p \Imp r) \\
+\\
+(p \Disj q \Imp r)
+& \Eqv (p \Imp r) \Conj (q \Imp r) \\
+\\
+(p \Conj q)
+& \Imp p \\
+(p \Conj q)
+& \Imp q \\
+\end{align*}
+(In the second equation, $(p \Imp q) \Eqv (\Not{q} \Imp \Not{p})$, the
+right hand side is referred to as the \emph{contrapositive} form of the
+left.)
+
+\subsubsection{Modus Ponens}
+
+The key rule we're interested in is as follows: if $p$ and $p \Imp q$
+then it must follow that $q$.  The name given to this rule, \emph{modus
+ponens} is Latin for ``mode that affirms''.
+
+From modus ponens, we can infer transitivity of implication: say I know
+that $p \Imp q$ and $q \Imp r$; then given $p$ I can deduce $q$ and
+thence deduce $r$, which means I must also have $p \Imp r$.
+
+Modus ponens also gives us the well known resolution rule
+$(a \Disj q) \Conj \Not{a} \Imp q$:
+\begin{tabular}{rll}
+(1) & $(a \Disj q) \Conj \Not{a}$
+& --- starting point \\
+(2) & $(\Not{a} \Imp q) \Conj \Not{a}$
+& --- from (1) by definition of $\Imp$ \\
+(3) & $q$
+& --- from (2) via modus ponens \\
+(4) & $(a \Disj q) \Conj \Not{a} \Imp q$
+& --- since (3) is a consequence of (1) \\
+QED \\
+\end{tabular}
+
+\subsubsection{Axioms, Goals and Proof}
+
+For any given problem, there is going to be a minimal set of
+propositions that are simply taken as read -- the ground rules of the
+game, if you like.  These statements are known as the problem
+\emph{axioms}.
+
+The question being posed by the problem is usually referred to as the
+\emph{goal}.
+
+A \emph{proof} of a goal is a sequence of steps terminating in inference
+of the goal, where each step infers new statements by appling a rule of
+logic to one or more axioms or previously inferred statements.
+
+\subsubsection{An Example}
+
+\XXX{Check this isn't copyright!  It's been doing the Cambridge Tripos
+rounds for years, at least.}
+
+Consider the following somewhat contorted problem statement:
+\begin{quote}
+If Anna can cancan or Kant can't cant, then Greville will cavil vilely.
+If Greville will cavil vilely, Will will want.  But
+Will \emph{won't} want.  So is it true that Kant \emph{can} cant?
+\end{quote}
+How can we use propositional logic to decide the truth of the question?
+Here's how.  We start by labelling the various propositions:
+\begin{description}
+\item let $a$ stand for ``Anna can cancan'';
+\item let $k$ stand for ``Kant can cant'';
+\item let $g$ stand for ``Greville will cavil vilely'';
+\item and let $w$ stand for ``Will will want''.
+\end{description}
+We can now write the first two statements (which we refer to as our
+\emph{axioms} since they are given to us) as $a \Disj \Not{k} \Imp g$,
+$g \Imp w$ and $\Not{w}$.  The first statement can be further simplified to
+$a \Imp g$ and $\Not{k} \Imp g$.  We will call these three simple rules our
+\emph{axioms}.
+
+The question (which we will refer to as the \emph{goal}) can be written
+as just $k$.
+
+Want we want to know is, can we deduce the goal from the axioms and the
+rules of logic?  In symbols, is the formula
+$(g \Imp w) \Conj (a \Imp g) \Conj (\Not{k} \Imp g) \Conj \Not{w} \Imp k)$
+true.
+
+Perhaps the simplest proof works as follows.  The contrapositive form of
+the axiom $g \Imp w$ is $\Not{w} \Imp \Not{g}$.  The contrapositive form
+of the axiom $\Not{k} \Imp g$ is $\Not{g} \Imp k$.  Since implication is
+transitive, we must therefore have $\Not{w} \Imp k$ as a consequence of
+our axioms.  Now we can apply modus ponens since we have $\Not{w}$ as an
+axiom, hence we must infer $k$.  But this is the goal, hence it is true
+that, given the axioms, Kant can cant!
+
+A more formal presentation of this proof looks like this:\\
+\begin{tabular}{rll}
+(1) & $a \Disj \Not{k} \Imp g$ & --- axiom \\
+(2) & $g \Imp w$ & --- axiom \\
+(3) & $\Not{w}$ & --- axiom \\
+(4) & $\Not{w} \Imp \Not{g}$ & --- contrapositive form of (2) \\
+(5) & $\Not{k} \Imp g$ & --- by (1) \\
+(6) & $\Not{g} \Imp k$ & --- contrapositive form of (5) \\
+(7) & $\Not{w} \Imp k$ & --- by (4), (6) and transitivity of $\Imp$ \\
+(8) & $k$ & --- from (3) and (7) via modus ponens \\
+QED \\
+\end{tabular}
+
+\subsection{Predicate Logic}
+
+The expressive power of propositional logic is rather limited.  The key
+problem is that it makes no provision for making general statements such
+as, ``The square of an odd number is also an odd number.''  Instead one
+is forced into writing down an (in this case) infinite number of
+propositions of the form ``$1$ is an odd number'', ``$1^2$ is an odd
+number'', ``$3$ is an odd number'', ``$3^2$ is an odd number'' and so
+forth.  The relationship between odd numbers and this property of their
+squares is not explicitly represented, other than as a correspondence
+amongst the set of axioms.
+
+\subsubsection{Predicates and Logical Variables}
+
+Predicate logic (otherwise known as the \emph{predicate calculus} or
+\emph{first order logic} or \emph{first order predicate calculus})
+remedies the problem by adding \emph{logical variables} to propositional
+logic.  A predicate therefore describes a more general relationship than
+a proposition.  An instance of a predicate (\ie with values filled in
+for all its arguments) becomes a proposition.  For example, say we write
+$\Odd{X}$ to mean ``$X$ is an odd number,'' then $X$ is a logical
+varialbe, $\Odd$ is a predicate, and the statement $\Odd(3)$ is a
+proposition.
+
+We can now express the relationship between odd numbers and their
+squares as
+$\All{X}{\Odd(X) \Imp \Odd(X^2)}$ -- this reads as, ``For all $X$, if
+$X$ is odd then $X^2$ is odd.''
+(Predicates are also referred to as \emph{relations} in the literature.
+We adopt the convention whereby predicate names begin with a lower case
+letter and variable names begin with an upper case letter.)
+
+Note that predicates may have any number of arguments.  A predicate that
+takes no arguments is therefore just the same as a proposition.
+
+All of the logical rules that apply to the propositional calculus also
+apply to the predicate calculus, along with a few extra rules to deal
+with variables.
+
+\subsubsection{Terms and Types}
+
+The values that logical variables range over are referred to as
+\emph{terms}.  Terms can be thought of as abstract names or labels or
+descriptions of things.  Terms may have structure.
+
+Terms take one of two forms: either a term $t$ is an ordinary logic
+variable $X$ or it is a \emph{functor} $f(t_1, t_2, t_3, \ldots)$
+with zero or more arguments, $t_1$, $t_2$, $t_3$, and so forth, each of
+which are themselves terms.
+
+When we see a logical formula of the form $X = T$ where $T$ is a term,
+we refer to it as a \emph{binding} for the logical variable $X$.  If it
+is true then we say that $X$ is bound to $T$.
+
+A \emph{ground} term is one which contains no variables:
+$@person(ralph)@$ is a ground term, whereas $@person(@X@)@$ is not
+(provided $X$ is not bound to a ground value.)
+
+We group ground terms of similar nature together into sets known as
+\emph{types}.  For instance, we define the type of integers @int@ to
+be the set $\{\ldots, @-2@, @-1@, @0@, @1@, @2@, \ldots\}$, the type of
+characters @char@ to be the set $\{\ldots, @a@, @b@, @c@, \ldots\}$ and
+so on.
+
+Type definitions can be parametric: the type $@maybe@(T)$, for
+instance, is defined as the set of values $\{@no@, @yes@(X) | X:T\}$.
+Instances of this type are $@maybe@(@int@)$, $@maybe@(@char@)$ and so on.
+
+Our type definitions can be recursive.  The type $@list@(T)$
+representing lists could be defined as the set of values
+$\{@nil@, @cons@(X, Y) | X:T, Y:@list@(T)\}$.
+
+By convention use the notation $X:T$ to denote the contraint
+$X \in T$ where $T$ is a type.
+
+(Note that terms are not logical formulae -- if you want variables to
+range over logical formulae as well then you need the second order
+predicate calculus.  However, we do not need such complex machinery for
+our purposes.)
+
+\subsubsection{Unification}
+
+Formulae of the form $t = u$ are referred to as \emph{unifications}.
+There is nothing special about the equality symbol -- it is just another
+relation, albeit one we take for granted.  Unification of functors is
+defined recursively as follows ($t_1$, $t_2$, \ldots, $t_n$, and $t_1'$,
+$t_2'$, \ldots, $t_n'$ are terms and $f$ is the name (\emph{function
+symbol}) of a functor):
+\begin{align*}
+f(t_1, t_2, \ldots, t_n) = f(t_1', t_2', \ldots, t_n')
+& \Eqv t_1 = t_1' \Conj t_2 = t_2' \Conj \ldots \Conj t_n = t_n'
+\end{align*}
+\XXX{Need I say more?}
+
+\subsubsection{Quantification}
+
+Quantifers are used to introduce logic variables to a formula and they
+come in two flavours.
+
+\emph{Universal quantification} is written as $\All{X}{p(X)}$ where
+$p(X)$ stands for any logical formula involving $X$.  The universally
+quantified formula is true iff $p$ really does hold for any possible
+value of $X$.
+
+(Of course, there is usually some \emph{type} constraint on the values
+$X$ can take on, such as ``$X$ must be an integer'', but we usually
+either leave such things implicit or place the type constraint in the
+quantifer: $\All{X:@int@}{p(X)}$.)
+
+\emph{Existential quantification} is written as $\Some{X}{p(X)}$ and is
+true iff there is at least one value for $X$ for which $p$ is true.
+
+If we want to quantify over several variables, we usually write
+$\All{X, Y, Z}{p}$ or $\Some{X, Y, Z}{p}$ as shorthand
+for
+$\All{X}{\All{Y}{\All{Z}{p}}}$ or
+$\Some{X}{\Some{Y}{\Some{Z}{p}}}$ respectively.
+
+A \emph{free variable} in a formula is one which was not introduced by a
+quantifier in that formula -- for instance, $Y$ is a free variable in
+$\All{X}{p(X, Y)}$.  Axioms and goals at the top-level should not
+include any free variables at all.
+
+We introduce a function $\FV$ to compute the set of free variables in a
+term or formula:
+\begin{align*}
+\text{(Over terms)} \\
+\FV(X)
+& = \{X\} \\
+\FV(f(t_1, t_2, \ldots, t_n))
+& = \FV(t_1) \Union \FV(t_2) \Union \ldots \Union \FV(t_n) \\
+\text{(Over formulae)} \\
+\FV(a(t_1, t_2, \ldots, t_n))
+& = \FV(t_1) \Union \FV(t_2) \Union \ldots \Union \FV(t_n) \\
+\FV(\Not{p})
+& = \FV(p) \\
+\FV(p \Conj q)
+& = \FV(p) \Union \FV(q) \\
+\FV(p \Disj q)
+& = \FV(p) \Union \FV(q) \\
+\FV(p \Imp q)
+& = \FV(p) \Union \FV(q) \\
+\FV(\All{X}{p})
+& = \FV(p) \Excluding \{X\} \\
+\FV(\Some{X}{p})
+& = \FV(p) \Excluding \{X\} \\
+\end{align*}
+
+De Morgan's laws extend to cover quantification, giving us the following
+identities:
+\begin{align*}
+\All{X}{p}
+& \Eqv \Not{\Some{X}{\Not{p}}} \\
+\Some{X}{p}
+& \Eqv \Not{\All{X}{\Not{p}}} \\
+\end{align*}
+
+Since the names of quantified variables do not matter, we can rename
+them at will.
+
+\subsubsection{Using Quantifiers}
+
+From $\All{X}{p}$ we can deduce $p[t/X]$ for any term $t$.  The
+expression $p[t/X]$ denotes the application of the \emph{substitution}
+$[t/X]$ to $p$ -- that is, all free occurrences of $X$ in $p$ are
+replaced with $t$.  Substitution works as follows:
+\begin{align*}
+\text{(Over terms)} \\
+X[t/X]
+& = t \\
+Y[t/X]
+& = Y \text{ provided $X$ and $Y$ are different variables} \\
+f(t_1, t_2, \ldots, t_n)[t/X]
+& = f(t_1[t/X], t_2[t/X], \ldots, t_n[t/X]) \\
+\text{(Over formulae)} \\
+a(t_1, t_2, \ldots, t_n)[t/X]
+& = a(t_1[t/X], t_2[t/X], \ldots, t_n[t/X]) \\
+\Not{p}[t/X]
+& = \Not{(p[t/X])} \\
+(p \Conj q)[t/X]
+& = (p[t/X] \Conj q[t/X]) \\
+(p \Disj q)[t/X]
+& = (p[t/X] \Disj q[t/X]) \\
+(p \Imp q)[t/X]
+& = (p[t/X] \Imp q[t/X]) \\
+(\All{X}{p})[t/X]
+& = \All{X}{p} \\
+(\All{Y}{p})[t/X]
+& = \All{Y}{p[t/X]} \text{ provided $X$ and $Y$ are different variables} \\
+(\Some{X}{p})[t/X]
+& = \Some{X}{p} \\
+(\Some{Y}{p})[t/X]
+& = \Some{Y}{p[t/X]} \text{ provided $X$ and $Y$ are different variables} \\
+\end{align*}
+
+From $p(t)$, for any term $t$, we can deduce $\Some{X}{p(X)}$.  Or, more
+correctly, given $p[t/X]$ we conclude $\Some{X}{p}$.
+
+We can simplify quantified formulae:
+\begin{align*}
+\All{X}{p \Conj q}
+& \Eqv \All{X}{p} \Conj \All{X}{q}\\
+\Some{X}{p \Conj q}
+& \Eqv \Some{X}{p} \Conj \Some{X}{q}
+\end{align*}
+
+Provided $X \notin \FV(p)$ can rearrange quantifiers like so:
+\begin{align*}
+p \Conj \All{X}{q}
+& \Eqv \All{X}{p \Conj q} \\
+p \Conj \Some{X}{q}
+& \Eqv \Some{X}{p \Conj q} \\
+\end{align*}
+The constraint is required because we do not want to inadvertently
+\emph{capture} a free variable that happens to be called $X$ in $p$ in
+the quantifier.  We can always move quantifiers out to the outermost
+level by renaming variables as necessary.
+
+\subsubsection{An Example: Schubert's Steamroller}
+
+This rather knotty problem was devised by Mark E. Schubert \XXX{}.
+
+We start off with a statement of the problem in plain English.
+\begin{itemize}
+\item Snails, caterpillars, birds, foxes and wolves are all animals.
+\item Grain is a kind of plant.
+\item Each species of animal eats all types of plants
+or all species of smaller animals that eat some types of plants.
+\item Wolves are bigger than foxes, foxes are bigger than birds, and
+birds are bigger than caterpillars and snails.
+\item Wolves don't eat foxes or grain.  Birds eat caterpillars, but not snails.
+Caterpillars and snails like to eat plants.
+\item \textbf{Is there an animal that eats a grain-eating animal?}
+\end{itemize}
+
+Now let's translate the axioms of the problem into logical formulae:
+\begin{tabular}{rl}
+    &  (Axioms.) \\
+(1a) & $\Animal(\Snail)$ \\
+(1b) & $\Animal(\Caterpillar)$ \\
+(1c) & $\Animal(\Bird)$ \\
+(1d) & $\Animal(\Fox)$ \\
+(1e) & $\Animal(\Wolf)$ \\
+\\
+(2) & $\Plant(\Grain)$ \\
+\\
+(3) & $\All{X}{\Animal(X) \Imp \Herbivorous(X) \Disj \Carnivorous(X)}$ \\
+(3a) & $\All{X}{\Herbivorous(X) \Eqv$ \\
+     & $\qquad \All{Y}{\Eats(X, Y) \Bimp \Plant(Y)}}$ \\
+(3b) & $\All{X}{\Carnivorous(X) \Eqv$ \\
+     & $\qquad \All{Y}{\Eats(X, Y) \Bimp
+                    \BiggerThan(X, Y) \Conj
+                    \Some{Z}{\Plant(Z) \Conj \Eats(Y, Z)}}}$ \\
+                    \\
+(4a) & $\BiggerThan(\Wolf, \Fox)$ \\
+(4b) & $\BiggerThan(\Fox, \Bird)$ \\
+(4c) & $\BiggerThan(\Bird, \Caterpillar)$ \\
+(4d) & $\BiggerThan(\Bird, \Snail)$ \\
+\\
+(5a) & $\Not{\Eats(\Wolf, \Fox)}$ \\
+(5b) & $\Not{\Eats(\Wolf, \Grain)}$ \\
+(5c) & $\Eats(\Bird, \Caterpillar)$ \\
+(5d) & $\Not{\Eats(\Bird, \Snail)}$ \\
+(5e) & $\Herbivorous(\Caterpillar)$ \\
+(5f) & $\Herbivorous(\Snail)$ \\
+\end{tabular}
+
+The goal is then $\Some{X, Y}{\Eats(X, Y) \Conj \Eats(Y, \Grain)}$.
+
+It turns out that the answer to the conundrum is that foxes eat birds
+who eat grain (it's probably easier to write a computer program called a
+\emph{theorem prover} to work this out than to do so by trying out each
+combination by hand\ldots)  But how can we prove this?  Here's how:
+
+\begin{tabular}{rl}
+& (Deduce that wolves are carnivorous.) \\
+(6) & $\Not{\Eats(\Wolf, \Grain)} \Conj \Plant(\Grain)$
+\\ & --- by (5b) and (2) \\
+(7) & $\Some{Y}{\Not{\Eats(\Wolf, Y)} \Conj \Plant(Y)}$
+\\ & --- from (6) \\
+(8) & $\Not{\All{Y}{\Eats(\Wolf, Y) \Disj \Not{\Plant(Y)}}}$
+\\ & --- from (7) \\
+(9) & $\Not{\All{Y}{\Eats(\Wolf, Y) \Bimp \Plant(Y)}}$
+\\ & --- from (8) \\
+(10) & $\Not{\Herbivorous(\Wolf)}$
+\\ & --- from (9) and definition of $\Herbivorous$ (3a) \\
+(11) & $\Carnivorous(\Wolf)$
+\\ & --- by (10) and (3) via resolution \\
+\\
+& (Deduce therefore that foxes are carnivorous.) \\
+(12) & $\All{Y}{\Eats(\Wolf, Y) \Bimp
+            \BiggerThan(\Wolf, Y) \Conj
+            \Some{Z}{\Plant(Z) \Conj \Eats(Y, Z)}}$
+\\ & --- by (11) and (3b) via modus ponens \\
+(13) & $\All{Y}{\Not{\Eats(\Wolf, Y)} \Imp
+            \Not{\BiggerThan(\Wolf, Y)} \Disj
+            \Not{\Some{Z}{\Plant(Z) \Conj \Eats(Y, Z)}}}$
+\\ & --- contrapositive of (12) \\
+(14) & $\Not{\BiggerThan(\Wolf, \Fox)} \Disj
+            \Not{\Some{Z}{\Plant(Z) \Conj \Eats(\Fox, Z)}}$
+\\ & --- by (13) and (5a) via modus ponens \\
+(15) & $\Not{\Some{Z}{\Plant(Z) \Conj \Eats(\Fox, Z)}}$
+\\ & --- by (14) and (4a) via resolution \\
+(16) & $\All{Z}{\Not{\Eats(\Fox, Z)} \Bimp \Plant(Z)}$
+\\ & --- from (15) \\
+(17) & $\Not{\Eats(\Fox, \Grain)}$
+\\ & --- by (16) and (2) via modus ponens \\
+(18) & $\Not{\Eats(\Fox, \Grain)} \Conj \Plant(\Grain)$
+\\ & --- by (17) and (2) \\
+(19) & $\Some{Y}{\Not{\Eats(\Fox, Y)} \Conj \Plant(Y)}$
+\\ & --- by (18) \\
+(20) & $\Not{\All{Y}{\Eats(\Fox, Y) \Bimp \Plant(Y)}}$
+\\ & --- by (19) \\
+(21) & $\Not{\Herbivorous(\Fox)}$
+\\ & --- by definition of $\Herbivorous$ (3a) \\
+(22) & $\Carnivorous(\Fox)$
+\\ & --- by (21) and (3) via resolution \\
+\end{tabular}
+So we've identified that the foxes eat all animals that eat some kind of
+plant.  All we have to do now is show that birds eat grain, and hence
+that foxes eat birds, and we have proved the goal.
+
+\begin{tabular}{rl}
+(23) & $\All{Y}{\Eats(\Snail, Y) \Bimp \Plant(Y)}$
+\\ & --- by definition of $\Herbivorous(\Snail)$ (3a) \\
+(24) & $\Eats(\Snail, \Grain)$
+\\ & --- by (23) and (2) via modus ponens \\
+(25) & $\Plant(\Grain) \Conj \Eats(\Snail, \Grain)$
+\\ & --- by (24) and (2) \\
+(26) & $\Some{Z}{\Plant(Z) \Conj \Eats(\Snail, Z)}$
+\\ & --- by (25) \\
+(27) & $\Not{\Eats(\Bird, \Snail)} \Conj
+        \BiggerThan(\Bird, \Snail) \Conj
+        \Some{Z}{\Plant(Z) \Conj \Eats(\Snail, Z)}$
+\\ & --- by (26), (5d) and (4d) \\
+(28) & $\Some{Y}{
+            \Not{\Eats(\Bird, Y)} \Conj
+            \BiggerThan(\Bird, Y) \Conj
+            \Some{Z}{\Plant(Z) \Conj \Eats(Y, Z)}}$
+\\ & --- by (27) \\
+(29) & $\Not{\All{Y}{
+            \Eats(\Bird, Y) \Bimp
+            \BiggerThan(\Bird, Y) \Conj
+            \Some{Z}{\Plant(Z) \Conj \Eats(Y, Z)}}}$
+\\ & --- by (28) \\
+(30) & $\Not{\Carnivorous(\Bird)}$
+\\ & --- by definition of $\Not{\Carnivorous(\Bird)}$ (3b) \\
+(31) & $\Herbivorous(\Bird)$
+\\ & --- by (30) and (3) via resolution \\
+(32) & $\All{Y}{\Eats(\Bird, Y) \Bimp \Plant(Y)}$
+\\ & --- by definition of $\Herbivorous(\Bird)$ (3a) \\
+(33) & $\Eats(\Bird, \Grain)$
+\\ & --- by (33) and (2) via modus ponens \\
+(34) & $\Plant(\Grain) \Conj \Eats(\Bird, \Grain)$
+\\ & --- by (33) and (2) \\
+(35) & $\Some{Z}{\Plant(Z) \Conj \Eats(\Bird, Z)}$
+\\ & --- by (34) \\
+(36) & $\BiggerThan(\Fox, \Bird) \Conj
+        \Some{Z}{\Plant(Z) \Conj \Eats(\Bird, Z)}$
+\\ & --- by (35) and (4b) \\
+(37) & $\All{Y}{\Eats(\Fox, Y) \Bimp
+            \BiggerThan(\Fox, Y) \Conj
+            \Some{Z}{\Plant(Z) \Conj \Eats(Y, Z)}}$
+\\ & --- by (22) and definition of $\Carnivorous(\Fox)$ (3b) \\
+(38) & $\Eats(\Fox, \Bird)$
+\\ & --- by (37) and (36) via modus ponens \\
+(39) & $\Eats(\Fox, \Bird) \Conj \Eats(\Bird, \Grain)$
+\\ & --- by (38) and (33) \\
+(40) & $\Some{X, Y}{\Eats(X, Y) \Conj \Eats(Y, \Grain)}$
+\\ & --- by (39) \\
+QED \\
+\end{tabular}
+
+Well, that was hard work (in practice, when writing a paper, we would
+omit many of the smaller steps in the above.)  Still, we should now have
+some sort of feel for first order logic.
+
+The point of this exercise is XXX HERE
+
+\subsubsection{Aside on higher order programming?}
+
+\XXX{We can treat closures not as higher order terms, but rather as
+structures containing (amongst other things) \emph{names} of predicates
+which can be interpreted by some special machinery that handles higher
+order application.}
+
+\subsection{Using Predicate Logic for Computation}
+
+Horn clauses.
+
+Proof procedures.
+
+Clark completion.
+
+Negation and the CWA.
+
+Modes.
+
+
+
+\section{Basic Syntax and Terminology}
+
+Predicates.
+
+Procedures.
+
+Goals.
+
+Terms.
+
+Variables.
+
+Quantifiers.
+
+Conjunction, disjunction, negation, conditional.
+
+...
 
 
 
@@ -415,11 +1244,12 @@ a much later section.}
 Mercury is strongly typed.  Every value has a type and every
 predicate associates a particular type with each argument.
 
-\subsection{PRIMITIVE}
+\subsection{Primitive Types}
 
 The primitive Mercury types are @int@, @float@, @char@ and @string@ --
-examples are @123@, @3.141@, @('x')@, and @"foo"@, respectively.\footnote{Mercury also includes tuples, such as @\{"Route", 66\}@,
-and higher order values, namely predicates and functions, among
+examples are @123@, @3.141@, @('x')@, and @"foo"@,
+respectively.\footnote{Mercury also includes tuples, such as @\{"Route",
+66\}@, and higher order values, namely predicates and functions, among
 its primitive types; however, we can ignore these for now.}
 
 While primitive types are recognised by the compiler, no
@@ -467,7 +1297,7 @@ example, @binary_tree(int)@, @binary_tree(string)@ or even
 @binary_tree(binary_tree(...))@.
 
 \begin{itemize}
-\item T here is said to be a type variable.
+\item @T@ here is said to be a type variable.
 \item Variables of any kind in Mercury are distinguished by
   starting with a capital letter.
 \item A type may have several type parameters.
@@ -934,7 +1764,7 @@ mother(cissy, betty).
 The predicates @father/2@ and @mother/2@ take their first argument
 as an input and return a result in the second.  The
 determinism is semidet again because they are not exhaustive:
-some inputs can cause them to fail (e.g. there is no solution
+some inputs can cause them to fail (\eg there is no solution
 for @father(arthur, X)@.)
 \begin{verbatim}
 :- pred parent(person, person).     % Child, Parent.
@@ -949,11 +1779,11 @@ given @Child@ argument this predicate may fail or may have more
 than one solution:
 \begin{itemize}
 \item both @father/2@ and @mother/2@ can fail
-(e.g. if @Child = arthur@);
+(\eg if @Child = arthur@);
 \item just one of @father/2@ or @mother/2@ could succeed
-(e.g. if @Child = bill@);
+(\eg if @Child = bill@);
 \item both @father/2@ and @mother/2@ could succeed
-(e.g. if @Child = cissy@).
+(\eg if @Child = cissy@).
 \end{itemize}
 
 (How failure and multiple solutions affect the execution of a
@@ -1129,13 +1959,11 @@ different clause (when we backtrack we also forget any
 variable bindings we might have made one the way from the
 /choice point/.)
 \begin{verbatim}
-    parent(cissy, Parent)
-    p1 =>
-        father(cissy, Parent)
-        f1 => FAIL because betty \= cissy
-        f2 => FAIL because carl  \= cissy
-        f3 =>
-            Parent = bill
+        parent(cissy, Parent)
+(by p1)     father(cissy, Parent)
+(by f1)         false because betty \= cissy
+(by f2)         false because carl  \= cissy
+(by f3)         Parent = bill
 \end{verbatim}
 So one solution to @parent(cissy, Parent)@ is @Parent = bill@.  We
 obtained this by first expanding the goal according to p1 and
@@ -1148,12 +1976,11 @@ have to forget the binding @Parent = bill@ and try the next
 clause for @parent/2@ (since there are no more clauses for
 @father/2@):
 \begin{verbatim}
-    parent(cissy, Parent)
-    p2 =>
-        mother(cissy, Parent)
-        m1 => FAIL because bill \= cissy
-        m2 => FAIL because carl \= cissy
-        m3 => Parent = betty
+        parent(cissy, Parent)
+(by p1)     mother(cissy, Parent)
+(by m1)         false because bill \= cissy
+(by m2)         false because carl \= cissy
+(by m3)         Parent = betty
 \end{verbatim}
 Now, say we wanted to ask the question ``which ancestor of
 @carl@, if any, is also a parent of @bill@?''  Here's how things
@@ -1161,85 +1988,57 @@ would proceed:\footnote{We have to supply fresh local vars in each
  expansion -- for instance, @Ancestor@ in the expansion of @a2@ has
  been replaced with a new variable @Z@.}
 \begin{verbatim}
-    ancestor(carl, X), parent(bill, Y), X = Y
-    a1 =>
-        parent(carl, X), parent(bill, Y), X = Y
-        p1 =>
-            father(carl, X), parent(bill, Y), X = Y
-            f1 => FAIL because betty \= carl
-            f2 =>
-                X = bill, parent(bill, Y), X = Y
-               =>
-                parent(bill, Y), bill = Y
-                p1 =>
-                    father(bill, Y), bill = Y
-                    f1 => FAIL because betty \= bill
-                    f2 => FAIL because carl  \= bill
-                    f3 => FAIL because cissy \= bill
-                p2 =>
-                    mother(bill, Y), bill = Y
-                    m1 =>
-                        Y = alice, bill = Y
-                       =>
-                        bill = alice
-                       => FAIL because bill  \= alice
-                    m2 => FAIL because carl  \= bill
-                    m3 => FAIL because cissy \= bill
-        p2 =>
-            mother(carl, X), parent(bill, Y), X = Y
-            m1 => FAIL because bill \= carl
-            m2 =>
-                X = betty, parent(bill, Y), X = Y
-               =>
-                parent(bill, Y), betty = Y
-                p1 =>
-                    father(bill, Y), betty = Y
-                    f1 => FAIL because betty \= bill
-                    f2 => FAIL because carl  \= bill
-                    f3 => FAIL because cissy \= bill
-                p2 =>
-                    mother(bill, Y), betty = Y
-                    m1 =>
-                        Y = alice, betty = Y
-                       =>
-                        betty = alice
-                       => FAIL because betty \= alice
-                    m2 => FAIL because carl  \= bill
-                    m3 => FAIL because cissy \= bill
-    a2 =>
-        parent(carl, Z), ancestor(Z, X), parent(bill, Y), X = Y
-        p1 =>
-            father(carl, Z), ancestor(Z, X), parent(bill, Y), X = Y
-            f1 => FAIL because betty \= carl
-            f2 =>
-                Z = bill, ancestor(Z, X), parent(bill, Y), X = Y
-               =>
-                ancestor(bill, X), parent(bill, Y), X = Y
-                a1 =>
-                    parent(bill, X), parent(bill, Y), X = Y
-                    p1 =>
-                        father(bill, X), parent(bill, Y), X = Y
-                        f1 => FAIL because betty \= bill
-                        f2 => FAIL because carl  \= bill
-                        f3 => FAIL because cissy \= bill
-                    p2 =>
-                        mother(bill, X), parent(bill, Y), X = Y
-                        m1 =>
-                            X = alice, parent(bill, Y), X = Y
-                           =>
-                            parent(bill, Y), alice = Y
-                            p1 =>
-                                father(bill, Y), alice = Y
-                                f1 => FAIL because betty \= bill
-                                f2 => FAIL because carl  \= bill
-                                f3 => FAIL because cissy \= bill
-                            p2 =>
-                                mother(bill, Y), alice = Y
-                                m1 =>
-                                    Y = alice, alice = Y
-                                   =>
-                                    alice = alice
-                                   => TRUE
+        ancestor(carl, X), parent(bill, Y), X = Y
+(by a1)     parent(carl, X), parent(bill, Y), X = Y
+(by p1)         father(carl, X), parent(bill, Y), X = Y
+(by f1)             false because betty \= carl
+(by f2)             X = bill, parent(bill, Y), X = Y
+(  =  )             parent(bill, Y), bill = Y
+(by p1)                 father(bill, Y), bill = Y
+(by f1)                     false because bill \= betty
+(by f2)                     false because bill \= carl
+(by f3)                     false because bill \= cissy
+(by p2)                 mother(bill, Y), bill = Y
+(by m1)                     Y = alice, bill = Y
+(  =  )                     bill = alice
+(  =  )                     false because bill \= alice
+(by m2)                     false because bill \= carl
+(by m3)                     false because bill \= cissy
+(by p2)         mother(carl, X), parent(bill, Y), X = Y
+(by m1)             false because carl \= bill
+(by m2)             X = betty, parent(bill, Y), X = Y
+(  =  )             parent(bill, Y), betty = Y
+(by p1)                 father(bill, Y), betty = Y
+(by f1)                     false because bill \= betty
+(by f2)                     false because bill \= carl
+(by f3)                     false because bill \= cissy
+(by p2)                 mother(bill, Y), betty = Y
+(by m1)                     Y = alice, betty = Y
+(  =  )                     betty = alice
+(  =  )                     false because alice \= betty
+(by m2)                     false because bill \= carl
+(by m3)                     false because bill \= cissy
+(by a2)     parent(carl, Z), ancestor(Z, X), parent(bill, Y), X = Y
+(by p1)         father(carl, Z), ancestor(Z, X), parent(bill, Y), X = Y
+(by f1)             false because carl \= betty
+(by f2)             Z = bill, ancestor(Z, X), parent(bill, Y), X = Y
+(  =  )             ancestor(bill, X), parent(bill, Y), X = Y
+(by a1)                 parent(bill, X), parent(bill, Y), X = Y
+(by p1)                     father(bill, X), parent(bill, Y), X = Y
+(by f1)                         false because bill \= betty
+(by f2)                         false because bill \= carl
+(by f3)                         false because bill \= cissy
+(by p2)                     mother(bill, X), parent(bill, Y), X = Y
+(by m1)                         X = alice, parent(bill, Y), X = Y
+(  =  )                         parent(bill, Y), alice = Y
+(by p1)                             father(bill, Y), alice = Y
+(by f1)                                 false because bill \= betty
+(by f2)                                 false because bill \= carl
+(by f3)                                 false because bill \= cissy
+(by p2)                             mother(bill, Y), alice = Y
+(by m1)                                 Y = alice, alice = Y
+(  =  )                                 alice = alice
+(  =  )                                 true
 \end{verbatim}
 So our program concludes that a solution to
 \begin{verbatim}
@@ -1335,7 +2134,7 @@ language.
 
 \subsection{Unifications}
 
-Mercury has but two basic atomic (i.e. indivisible) types of
+Mercury has but two basic atomic (\ie indivisible) types of
 goal: unifications and calls.
 
 A unification is written @X = Y@.  A unification can fail if @X@
@@ -1388,8 +2187,8 @@ whose arguments are variables.  For example
 \end{verbatim}
 becomes
 \begin{verbatim}
-    V_1 = X, V_2 = 2, V_3 = 3, V4 = foo(V_1, V_2, V_3),
-    V_5 = 1, V_6 = 2, V_7 = Z, V8 = foo(V_5, V_6, V_7),
+    V_1 = X, V_2 = 2, V_3 = 3, V_4 = foo(V_1, V_2, V_3),
+    V_5 = 1, V_6 = 2, V_7 = Z, V_8 = foo(V_5, V_6, V_7),
     V_4 = V_8
 \end{verbatim}
 where @V_1@\ldots@V_8@ are all temporary variables
@@ -1427,7 +2226,7 @@ constraints.)
 
 A conjunction executes by trying each of the goals in order.
 If a goal fails then the program backtracks to the nearest
-preceding choice-point (i.e. non-deterministic goal that may
+preceding choice-point (\ie non-deterministic goal that may
 have other solutions).
 
 \subsection{Negation}
@@ -1786,7 +2585,7 @@ name don't care variables.  Since variables that only appear
 once in a clause are usually the result of typographical
 error, the compiler will issue a warning when it sees such
 things.  To get around this problem, giving a variable a
-name that starts with an underscore (e.g. @_X@) tells the compiler that
+name that starts with an underscore (\eg @_X@) tells the compiler that
 you know this is a named don't care variable and that there's
 no need to issue a warning.
 
@@ -1812,8 +2611,8 @@ rather than the somewhat verbose
     square(B, BSquared),
     multiply(4, A, FourA),
     multiply(FourA, C, FourAC),
-    subtract(BSquared, FourAC, Diff),
-    sqrt(Diff, Sqrt),
+    subtract(BSquared, FourAC, BSquaredMinusFourAC),
+    sqrt(BSquaredMinusFourAC, Sqrt),
     add(B, Sqrt, Numerator),
     multiply(2, A, Denominator),
     divide(Numerator, Denominator, X)
@@ -1886,15 +2685,15 @@ determinisms?  Remember to point out (somewhere) that
 functions may also have multiple procedures.  See the ref.
 manual section on Determinism.}
 
-\subsection{PATTERN MATCHING}
+\subsection{Pattern Matching}
 
 \XXX{Dealt with above.}
 
-\subsection{RECURSION}
+\subsection{Recursion}
 
 \XXX{Dealt with above.}
 
-\subsection{CONDITIONAL EXPRESSIONS}
+\subsection{Conditional Expressions}
 
 Conditional (if-then-else) expressions look like this:
 \begin{verbatim}
@@ -1949,7 +2748,7 @@ One unfortunate consequence of being a pure declarative language
 is that IO becomes somewhat more complex than is the case for
 imperative languages.
 
-\subsection{IO \emph{is} a Side-Effect}
+\subsection{IO \emph{Is} a Side-Effect}
 
 One problem is that performing IO necessarily has an effect on the
 outside world that cannot be backtracked over or undone -- there is
@@ -2126,7 +2925,7 @@ write_strings([S1],          IO0, IO) :-
 write_strings([S1, S2 | Ss], IO0, IO) :-
     io__write_string(S1,     IO0, IO1),
     io__write_string(", ",   IO1, IO2),
-    write_strings(Ss,        IO2, IO ),
+    write_strings(Ss,        IO2, IO ).
 \end{verbatim}
 Henceforth we will use state variable syntax rather than
 explicitly numbered IO states.
@@ -2218,7 +3017,7 @@ Another useful predicate the @io@ library module provides is
 Mercury values.  Be aware, though, that if you try to
 print the results of expressions, the compiler may ask you
 to supply more type information to help resolve what
-exactly it is you are printing (i.e. the expression or the
+exactly it is you are printing (\ie the expression or the
 value of the expression.)  This is subtle stuff and will
 be dealt with in a later chapter. \XXX{}
 
@@ -2230,7 +3029,7 @@ typically on of three things can happen:
 \item we successfully read a value of the required type from
   the input stream;
 \item we hit the end-of-file;
-\item an error of some kind occurs (e.g. the input is
+\item an error of some kind occurs (\eg the input is
   malformed or the input source has gone away unexpectedly.)
 \end{enumerate}
 
@@ -2348,7 +3147,7 @@ variable's inst will be one of the following:
   inst);
   \XXX{should the tutorial mention partially instantiated
   values at all?}
-\item[@unique@] where the variable is the only live (i.e. non-@dead@)
+\item[@unique@] where the variable is the only live (\ie non-@dead@)
   reference to its binding;
 \item[@dead@] where the value bound to the variable will never be
   examined again, even on backtracking.
@@ -2382,7 +3181,7 @@ with types, we can give names to modes and even give them
 parameters.
 
 @AfterInst@ must be a refinement of @BeforeInst@ in the sense
-that instantiated (i.e. non-@free@) parts of the value in
+that instantiated (\ie non-@free@) parts of the value in
 question must remain the same, but @free@ parts may become
 bound.  \XXX{This isn't strictly true -- the @laziness@
 module in extras uses a force implementation that changes
@@ -2692,7 +3491,7 @@ Determinism.}
   higher order programming is thereby simplified.
 \item There is a consequence: it is an error for a program to try
   to convert an higher order value with a different sort of
-  inst to @ground@ (e.g. by passing it to something expecting a
+  inst to @ground@ (\eg by passing it to something expecting a
   @ground@ value).  This is necessary because otherwise there
   would be no way of knowing whether a ground value with a
   func type had the standard @func@ inst or not.
@@ -2803,14 +3602,14 @@ predicates, but not types, constructors and functions.
 which does much the same thing, except that names imported via
 @use_module@ \emph{must} be fully qualified.)
 
-\subsection{SUBMODULES AND HIERARCHICAL NAMESPACES}
+\subsection{Submodules and Hierarchical Namespaces}
 
 The module namespace may be structured rather than flat.  Modules can
 also have submodules to form a tree-like namespace.
 
 Submodules come in two flavours, nested and separate.
 
-\subsubsection{NESTED SUBMODULES}
+\subsubsection{Nested Submodules}
 
 Nested submodules appear in the same source file as the parent module.
 
@@ -2897,7 +3696,7 @@ is referring to the function defined in @scalar_vector3@ and that the
 multiplication @R * 3.0@ is referring to the function defined in the
 @vector3_scalar@.
 
-\subsubsection{SEPARATE SUBMODULES}
+\subsubsection{Separate Submodules}
 
 Separate submodules are defined in separate files and must be explicitly
 listed in the parent module in @include_module@ declarations, but are 
@@ -2968,13 +3767,13 @@ same as if they had been written as nested submodules.
 \XXX{Is this the right place to mention the file name mapping option to
 @mmake@?}
 
-\subsubsection{VISIBILITY AND SUBMODULES}
+\subsubsection{Visibility and Submodules}
 
 \XXX{Need to check this one out carefully.}
 
 
 
-\section{HIGHER ORDER PROGRAMMING}
+\section{Higher Order Programming}
 
 Predicates and functions are first class values, just like values of
 type @int@, @string@, @list(char)@ and so forth.  They can be
@@ -2993,7 +3792,7 @@ Indeed, it is one of the key reasons why one should consider a typical
 declarative programming language in preference to the more common
 imperative languages.
 
-\subsection{EXAMPLE: THE MAP FUNCTION}
+\subsection{Example: the Map Function}
 
 It is very common to want to apply a function to each member of a @list@
 to obtain the @list@ of transformed values.  That is, given a function
@@ -3028,7 +3827,7 @@ as required.  Since @map/2@ is polymorphic, it will work for any @F@
 with the appropriate signature -- there is no need to recode it for each
 particular function we wish to map over a @list@.
 
-\subsection{EXAMPLE: THE FOLDR FUNCTION}
+\subsection{Example: the Foldr Function}
 
 \XXX{Should probably reference ``Why Functional Programming Matters''.}
 
@@ -3133,7 +3932,7 @@ functions such as @foldr@.  Such functions enable you to solve the
 general case once and then never have to expend mental or physical
 effort duplicating the scheme for each specific application.
 
-\subsection{LAMBDAS}
+\subsection{Lambdas}
 
 Sometimes it is a little painful to have to name each and every small
 auxiliary function when writing higher order code.  Lambdas are
@@ -3165,7 +3964,7 @@ Their use is justified in the above cases.
 
 \XXX{Don't forget the scope rules.}
 
-\subsection{PARTIAL APPLICATION (CURRYING)}
+\subsection{Partial Application (Currying)}
 
 Looking at the definition of @map@ once more,
 \begin{verbatim}
@@ -3209,33 +4008,33 @@ pred expression may not be.}
 
 \XXX{What about restrictions on partial application?}
 
-\subsection{MODES}
-\subsection{* MONOMORPHISM RESTRICTION}
-\subsection{* MONOMODING RESTRICTION}
-\subsection{* EFFICIENCY}
+\subsection{Modes}
+\subsection{* Monomorphism Restriction}
+\subsection{* Monomoding Restriction}
+\subsection{* Efficiency}
 
 
 
-\section{* TYPE CLASSES}
-\subsection{OO PROGRAMMING}
-\subsection{TYPE CLASS DECLARATIONS}
-\subsubsection{METHOD SIGNATURES}
-\subsubsection{TYPE CLASS CONSTRAINTS}
-\subsection{INSTANCE DECLARATIONS}
-\subsubsection{METHOD IMPLEMENTATIONS}
-\subsubsection{TYPE CLASS CONSTRAINTS}
-\subsection{EXISTENTIALLY QUANTIFIED TYPES}
-\subsubsection{USE}
-\subsubsection{WHY OUTPUT ONLY}
-\subsection{...CONSTRUCTOR CLASSES}
-\subsection{...FUNCTIONAL DEPENDENCIES}
-\subsection{RESTRICTIONS AND EXPLANATIONS THEREOF}
-\subsubsection{ON TYPE CLASS DEFINITIONS}
-\subsubsection{ON INSTANCE DEFINITIONS}
+\section{* Type Classes}
+\subsection{OO Programming}
+\subsection{Type Class Declarations}
+\subsubsection{Method Signatures}
+\subsubsection{Type Class Constraints}
+\subsection{Instance Declarations}
+\subsubsection{Method Implementations}
+\subsubsection{Type Class Constraints}
+\subsection{Existentially Quantified Types}
+\subsubsection{Use}
+\subsubsection{Why Output Only}
+\subsection{...Constructor Classes}
+\subsection{...Functional Dependencies}
+\subsection{Restrictions and Explanations Thereof}
+\subsubsection{On Type Class Definitions}
+\subsubsection{On Instance Definitions}
 
 
 
-\section{LISTS}
+\section{Lists}
 
 Lists are perhaps the single most useful data structure in the
 programmer's armoury.
@@ -3261,7 +4060,7 @@ Also, an expression of the form @[A, B, C | Xs]@ is syntactic sugar for
 These are obviously singly linked lists.  \XXX{Discussion of the pros
 and cons of the various list ADTs out there.}
 
-\subsection{THE MAIN LIST OPERATIONS}
+\subsection{The Main List Operations}
 
 The higher order functions @map@, @foldl@ and @foldr@ provide easy ways
 of iterating over lists, either transforming them member by member or
@@ -3272,7 +4071,7 @@ The section on higher order programming \XXX{} has already dealt with
 discussion here and concentrate on operations we have not previously
 examined.
 
-\subsubsection{MISCELLANY}
+\subsubsection{Miscellany}
 
 \begin{verbatim}
     % length([X1, X2, X3, ..., XN]) = N
@@ -3288,7 +4087,7 @@ length(Xs) = foldl((func(_, N) = N + 1), Xs, 0).
 reverse(Xs) = foldl((func(X, Ys) = [X | Ys]), Xs, []).
 \end{verbatim}
 
-\subsubsection{MEMBERSHIP}
+\subsubsection{Membership}
 
 \XXX{Should have a section on equality and @compare@ and so forth.}
 
@@ -3307,7 +4106,7 @@ member(X, [X | _ ]).
 member(X, [_ | Xs]) :- member(X, Xs).
 \end{verbatim}
 From time to time one wants to access members of a @list@ by their index
-(i.e. distance from the start of the @list@).  There are two sets of
+(\ie distance from the start of the @list@).  There are two sets of
 operations for doing so, depending upon whether it is most convenient to
 give the head of the list an index of 1 or 0:
 \begin{verbatim}
@@ -3334,7 +4133,7 @@ give the head of the list an index of 1 or 0:
 :- func index1(list(T), int) = T.
 \end{verbatim}
 
-\subsubsection{MAPPING}
+\subsubsection{Mapping}
 
 @map@ applies its function argument to each member of its @list@ argument
 and returns the corresponding @list@ of results.
@@ -3375,7 +4174,7 @@ arguments:
 \XXX{Should probably include a subsubsection on zipping and
 interleaving.}
 
-\subsubsection{FOLDING}
+\subsubsection{Folding}
 
 The two main folding operations are @foldl@ and @foldr@.  We have
 already seen a definition of @foldr@ (the version supplied in the
@@ -3409,9 +4208,9 @@ sum(Xs)     = foldl((func(X, A ) = X + A   ), Xs, 0 ).
 prod(Xs)    = foldl((func(X, A ) = X * A   ), Xs, 1 ).
 \end{verbatim}
 
-\subsubsection{XXX MORE TO COME}
+\subsubsection{XXX More To Come}
 
-\subsection{GENERAL ADVICE}
+\subsection{General Advice}
 
 \XXX{This probably deserves its own top-level section.}
 
@@ -3426,67 +4225,67 @@ most useful set of support functions for the problem in hand
 (occasionally an @assoc_list@ may be preferable to a @map@, but in most
 situations it won't be.)
 
-\section{MAPS}
+\section{Maps}
 
 
 
-\section{ARRAYS}
+\section{Arrays}
 
 
 
-\section{COMPILING PROGRAMS}
-\subsection{MMAKE}
-\subsection{COMPILER FLAGS}
-\subsection{COMPILATION GRADES}
+\section{Compiling Programs}
+\subsection{Mmake}
+\subsection{Compiler Flags}
+\subsection{Compilation Grades}
 
 
 
-\section{* STORES}
+\section{* Stores}
 
 
 
-\section{* EXCEPTIONS}
-\subsection{THROWING}
-\subsection{CATCHING}
-\subsubsection{EFFECT ON DETERMINISM}
-\subsubsection{RESTORING (PLAIN) DETERMINISM (PROMISE\_ONLY\_SOLUTION)}
+\section{* Exceptions}
+\subsection{Throwing}
+\subsection{Catching}
+\subsubsection{Effect On Determinism}
+\subsubsection{Restoring (Plain) Determinism (promise\_only\_solution)}
 
 
 
-\section{* FOREIGN LANGUAGE INTERFACE}
-\subsection{DECLARATIONS}
-\subsection{DATA TYPES}
+\section{* Foreign Language Interface}
+\subsection{Declarations}
+\subsection{Data Types}
 
 
 
-\section{* IMPURE CODE}
-\subsection{LEVELS OF PURITY}
-\subsection{EFFECT OF IMPURITY ANNOTATIONS}
-\subsection{PROMISING PURITY (PRAGMA PROMISE\_PURE)}
+\section{* Impure Code}
+\subsection{Levels of Purity}
+\subsection{Effect of Impurity Annotations}
+\subsection{Promising Purity (pragma promise\_pure)}
 
 
 
-\section{* PRAGMAS}
-\subsection{INLINING}
-\subsection{TYPE SPECIALIZATION}
-\subsection{OBSOLESCENCE}
-\subsection{MEMOING}
-\subsection{...PROMISES}
+\section{* Pragmas}
+\subsection{Inlining}
+\subsection{Type Specialization}
+\subsection{Obsolescence}
+\subsection{Memoing}
+\subsection{...Promises}
 
 
 
-\section{* DEBUGGING}
-\subsection{COMPILING FOR DEBUGGING}
-\subsection{BASIC TOUR OF THE DEBUGGER}
-\subsection{DECLARATIVE DEBUGGING}
+\section{* Debugging}
+\subsection{Compiling For Debugging}
+\subsection{Basic Tour of the Debugger}
+\subsection{Declarative Debugging}
 
 
 
-\section{* OPTIMIZATION}
-\subsection{WHEN TO DO IT AND WHEN TO AVOID IT}
-\subsection{PROFILING}
-\subsection{VARIOUS CONSIDERATIONS}
-\subsection{AN OVERVIEW OF CONTEMPORARY OPTIMIZER TECHNOLOGY}
+\section{* Optimization}
+\subsection{When to Do It and When to Avoid It}
+\subsection{Profiling}
+\subsection{Various Considerations}
+\subsection{An Overview of Contemporary Optimizer Technology}
 
 
 

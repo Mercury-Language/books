@@ -1,0 +1,50 @@
+%- Definitions and Customization ----------------------------------------------%
+
+    % \newenvironment{name}[numargs]{begincmds}{endcmds}
+
+    % \newcommand{name}[numargs]{definition}
+    %                           -- (default numargs 0)
+    %                           -- refer to args as #1, #2 etc. in definition
+    %                           -- use % at EOL if definition not finished
+    %                           -- space after a cmd is ignored unless
+    %                           --  preceded by {}
+
+\newcommand{\eg} {e.g.\@ }
+\newcommand{\ie} {i.e.\@ }
+\newcommand{\XXX}[1] {{\small\textbf{XXX} \emph{#1}}}
+
+\newcommand{\Aside}[1]%
+{{\small{\begin{description}\item{\textbf{Aside:}} #1\end{description}}}}
+
+\newcommand{\BoxedPar}[1]%
+{{\center{\fbox{\parbox{\linewidth}{#1}}}}}
+
+\newcommand{\True} {\top}
+\newcommand{\False} {\perp}
+\newcommand{\Not}[1] {\neg{}#1}
+\newcommand{\Conj} {\wedge}
+\newcommand{\Disj} {\vee}
+\newcommand{\Imp} {\Rightarrow}
+\newcommand{\Bimp} {\Leftarrow}
+\newcommand{\Eqv} {\Leftrightarrow}
+\newcommand{\All}[2] {\forall\ #1.\ #2}
+\newcommand{\Some}[2] {\exists\ #1.\ #2}
+
+\newcommand{\Union} {\cup}
+\newcommand{\Intersection} {\cap}
+\newcommand{\Excluding} {\backslash}
+
+\newcommand{\Odd} {\text{odd}}
+\newcommand{\FV} {\text{FV}}
+\newcommand{\Wolf} {\text{wolf}}
+\newcommand{\Fox} {\text{fox}}
+\newcommand{\Bird} {\text{bird}}
+\newcommand{\Caterpillar} {\text{caterpillar}}
+\newcommand{\Snail} {\text{snail}}
+\newcommand{\Animal} {\text{animal}}
+\newcommand{\Herbivorous} {\text{herbivorous}}
+\newcommand{\Carnivorous} {\text{carnivorous}}
+\newcommand{\Eats} {\text{eats}}
+\newcommand{\Plant} {\text{plant}}
+\newcommand{\Grain} {\text{grain}}
+\newcommand{\BiggerThan} {\text{bigger-than}}
