@@ -86,7 +86,7 @@ DECLARATIVE VS IMPERATIVE PROGRAMMING
         This is clearly not true of imperative languages.  Consider
         the following C example:
 
-            [begin code]
+        [begin code]
 
             int g = 0;
 
@@ -108,7 +108,7 @@ DECLARATIVE VS IMPERATIVE PROGRAMMING
                     printf("not equivalent\n");
             }
 
-            [end code]
+        [end code]
 
         According to C semantics, this program should print out "not
         equivalent", proving that the expression f(1) is not equal
@@ -124,16 +124,16 @@ DECLARATIVE VS IMPERATIVE PROGRAMMING
         The nearest Mercury equivalent to the function f() in the C
         program above is 
 
-            [begin code]
+        [begin code]
 
             :- pred f(int, int, int, int).
             :- mode f(in,  out, in,  out) is det.
 
-            f(X, Result, GIn, GOut) :-
-                GOut   = GIn + 1,
-                Result = GOut + X.
+            f(X, Result, Old_Value_of_G, New_Value_of_G) :-
+                New_Value_of_G = Old_Value_of_G + 1,
+                Result         = New_Value_of_G + X.
 
-            [end code]
+        [end code]
 
         Since there are no variables in Mercury (and hence no global
         variables), any "global" state has to be explicitly passed
@@ -165,11 +165,14 @@ DECLARATIVE VS IMPERATIVE PROGRAMMING
 
         To this end, Mercury doesn't support a corner-cutting
         programming style: you /have/ to get the types right, check
-        return codes and so forth - quick lashups are rarely an
-        option.  The payoff is that nine times out of ten Mercury
-        programmers find that a program that compiles also does
-        exactly what was intended; few imperative languages, if any,
-        can make such a claim.
+        return codes and so forth - the quick-and-dirty fix is rarely
+        an option [footnote: Mercury does have support for impure code
+        via calls to another language, but one has to label each such
+        call explicitly; in the end it is often easier just to do the
+        right thing.].  Very often, Mercury programmers find that a
+        program that compiles also does exactly what was intended; in
+        the author's long experience this almost never happens with
+        imperative programs.
 
         [XXX Place to mention types, garbage collection, polymorphism,
         pattern matching, etc etc?]
@@ -205,7 +208,9 @@ DECLARATIVE VS IMPERATIVE PROGRAMMING
 
     MERCURY PHILOSOPHY
 
-        [XXX Haven't I already done this?]
+        [I think I've already covered this one.  Tyson suggests an
+        implementation philosophy section (e.g. no distributed fat) in
+        a much later section.]
 
 TYPES
 
@@ -226,7 +231,7 @@ TYPES
         You can define new types in Mercury as the following examples
         illustrate:
 
-            [begin code]
+        [begin code]
 
             :- type primary_colour
                 --->    red
@@ -236,7 +241,7 @@ TYPES
             :- type rgb_colour
                 --->    rgb(float, float, float).   % red, green, blue.
 
-            [end code]
+        [end code]
 
         Here primary_colour is the name of the new type and its
         /constructors/ (possible values) are red, green and blue.
@@ -247,17 +252,19 @@ TYPES
 
         You can define parametric types
 
-            [begin code]
+        [begin code]
 
             :- type binary_tree(T)
                 --->    leaf
                 ;       branch(T, binary_tree(T), binary_tree(T)).
 
-            [end code]
+        [end code]
 
-        So the type binary_tree(T) has two constructors: leaf/0 and
-        branch/3 which takes a T, a binary_tree(T) and a
-        binary_tree(T) as arguments respectively.
+        T is a /type variable/ that can stand for any type at all.
+        The type binary_tree(T) has two constructors: leaf/0 and
+        branch/3 which takes a value of type T (for any choice of
+        type), a binary_tree(T) and a binary_tree(T) as arguments
+        respectively.
 
         We can have instances of binary_tree(T) for any type T - for
         example, binary_tree(int), binary_tree(string) or even
@@ -274,12 +281,12 @@ TYPES
         You can use other types in your definitions.  For example, we
         could define a more general tree type with
 
-            [begin code]
+        [begin code]
 
             :- type tree(T)
                 --->    tree(T, list(tree(T))).
 
-            [end code]
+        [end code]
 
         So the type tree(T) has a single constructor tree/2 which
         takes a T and a list(tree(T)) as arguments, respectively
@@ -289,14 +296,18 @@ TYPES
         (Note that Mercury doesn't get confused if you use the same
         name for both type and constructor.)
 
+        [NOTE: Tyson suggests that diagrams would make this section
+        easier to understand.]
+
     PATTERN MATCHING
 
         Pattern matching is the primary means of identifying which
         constructor is used for a particular type value.  For example:
 
-            [begin code]
+        [begin code]
 
             :- func insert(binary_tree(T), T) = tree(T).
+            :- mode insert(in, in) = out is det.
 
             insert(leaf, X) =
                 branch(X, leaf, leaf).
@@ -307,7 +318,7 @@ TYPES
                   else               branch(X, L, R)
                 ).
 
-            [end code]
+        [end code]
 
         The first clause matches when the first argument is a leaf/0
         and the second clause matches when the first argument is a
@@ -315,9 +326,10 @@ TYPES
 
         Alternatively one can use explicit unification as in
 
-            [begin code]
+        [begin code]
 
             :- func insert(binary_tree(T), T) = tree(T).
+            :- mode insert(in, in) = out is det.
 
             insert(T0, X) = T :-
                 (
@@ -334,13 +346,14 @@ TYPES
                     )
                 ).
 
-            [end code]
+        [end code]
 
         or unification in an if-then-else:
 
-            [begin code]
+        [begin code]
 
             :- func insert(binary_tree(T), T) = tree(T).
+            :- mode insert(in, in) = out is det.
 
             insert(T0, X) = T :-
                 ( if T0 = leaf then
@@ -356,36 +369,36 @@ TYPES
                     )
                 ).
 
-            [end code]
+        [end code]
 
     EQUIVALENCE TYPES
 
         It is also useful to be able to declare type synonyms.  For
         example:
 
-            [begin code]
+        [begin code]
 
             :- type int_tree == tree(int).
 
-            [end code]
+        [end code]
 
         Mercury would then make no distinction between a reference to
         int_tree and a reference to tree(int).
 
         Equivalence types can also be parametric:
 
-            [begin code]
+        [begin code]
 
             :- type list_tree(T) == tree(list(T)).
 
-            [end code]
+        [end code]
 
     ABSTRACT TYPES
 
         Often one needs to export a type, but hide it's definition.
         Abstract types are used for this purpose:
 
-        [begin code]
+    [begin code]
 
         :- module complex.
         :- interface.
@@ -407,7 +420,7 @@ TYPES
         ... definition of funcs using private rectangular
             representation
 
-        [end code]
+    [end code]
 
         The abstract type declaration in the module interface must be
         matched by a concrete type definition (which may be an
@@ -423,7 +436,7 @@ TYPES
         Just as with C, it is possible to give names to constructor
         fields:
 
-            [begin code]
+        [begin code]
 
             :- type rgb_colour
                 --->    rgb(
@@ -432,7 +445,7 @@ TYPES
                             blue    :: float
                         ).
 
-            [end code]
+        [end code]
 
         Now, if X is a value of type rgb_colour then X ^ red,
         X ^ green and X ^ blue are expressions that return the value
@@ -467,26 +480,26 @@ TYPES
         different constructors of a type may have fields with the same
         name.  For example:
 
-            [begin code]
+        [begin code]
 
             :- type foo ---> foo(a :: int).
 
             :- type bar ---> bar(a :: int).
 
-            [end code]
+        [end code]
 
         would lead to an error since types foo and bar are both
         visible in the same scope and both have constructors with a
         common field name.  The following is acceptable, however:
 
-            [begin code]
+        [begin code]
 
             :- type baz
                 --->    constructor1(a :: int, ...)
                 ;       constructor2(a :: int, ...)
                 ;       constructor3(a :: int, ...).
 
-            [end code]
+        [end code]
 
     * TYPES WITH USER-DEFINED EQUALITY
 
@@ -523,7 +536,7 @@ PREDICATES
 
         A very simple example of a predicate is
 
-            [begin code]
+        [begin code]
 
             :- pred max(int, int, int).         % A, B, Max.
             :- mode max(in,  in,  out) is det.
@@ -531,7 +544,7 @@ PREDICATES
             max(A, B, Max) :-
                 ( if B < A then Max = A else Max = B ).
 
-            [end code]
+        [end code]
 
         This predicate takes two integers, A and B, and succeeds
         binding Max to A if A is greater than B or binding Max to B
@@ -547,20 +560,20 @@ PREDICATES
         For a more interesting example, consider the following small
         genealogical database:
 
-            [begin code]
+        [begin code]
 
             :- type person
                 --->    arthur  ; bill      ; carl
                 ;       alice   ; betty     ; cissy.
 
-            [end code]
+        [end code]
 
         We start by defining predicates that we can use to decide if a
         particular person is male or female.  These predicates are
         labelled semidet because they have at most one solution
         (success) for a given argument.
 
-            [begin code]
+        [begin code]
 
             :- pred male(person).
             :- mode male(in) is semidet.
@@ -574,13 +587,13 @@ PREDICATES
 
             female(Person) :- not male(Person).
 
-            [end code]
+        [end code]
 
         The definition for female/1 states that female(Person)
         succeeds iff male(Person) fails.  (Recall that variables in
         Mercury are distinguished by starting with a capital letter.)
 
-            [begin code]
+        [begin code]
 
             :- pred father(person, person).     % Child, Father.
             :- mode father(in,     out) is semidet.
@@ -596,7 +609,7 @@ PREDICATES
             mother(carl,  betty).
             mother(cissy, betty).
 
-            [end code]
+        [end code]
 
         The predicates father/2 and mother/2 take their first argument
         as an input and return a result in the second.  The
@@ -604,7 +617,7 @@ PREDICATES
         some inputs can cause them to fail (e.g. there is no solution
         for father(
 
-            [begin code]
+        [begin code]
 
             :- pred parent(person, person).     % Child, Parent.
             :- mode parent(in,     out) is nondet.
@@ -612,7 +625,7 @@ PREDICATES
             parent(Child, Parent) :- father(Child, Parent).
             parent(Child, Parent) :- mother(Child, Parent).
 
-            [end code]
+        [end code]
 
         This simply says that the parent of a child is either the
         father or the mother.  The determinism is nondet because for a
@@ -628,7 +641,7 @@ PREDICATES
         (How failure and multiple solutions affect the execution of a
         Mercury program is explained below.)
 
-            [begin code]
+        [begin code]
 
             :- pred ancestor(person, person).   % Person, Ancestor.
             :- mode ancestor(in,     out) is nondet.
@@ -640,7 +653,7 @@ PREDICATES
                 parent(Person, Parent),
                 ancestor(Parent, Ancestor).
 
-            [end code]
+        [end code]
 
         We can now define an ancestor of a Person as being either
         - a parent of that Person or
@@ -675,14 +688,14 @@ PREDICATES
         required extra mode declarations; there is no need to touch
         the definitions themselves!  The extra mode declarations are
 
-            [begin code]
+        [begin code]
 
             :- mode father(out, in) is nondet.   % Infer Child from Father.
             :- mode mother(out, in) is nondet.   % Infer Child from Mother.
             :- mode parent(out, in) is nondet.   % Infer Child from Parent.
             :- mode ancestor(out, in) is nondet. % Infer Person from Ancestor.
 
-            [end code]
+        [end code]
 
         Notice that father/2 and mother/2 are nondet in this mode
         rather than semidet: looking at the definitions we see that
@@ -694,7 +707,7 @@ PREDICATES
         arguments (or even no input arguments...)  For example, we
         might go on to add
 
-            [begin code]
+        [begin code]
 
             :- pred parents(person, person, person).    % Child, Mother, Father.
             :- mode parents(in,     out,    out) is semidet.
@@ -704,7 +717,7 @@ PREDICATES
                 mother(Child, Mother),
                 father(Child, Father).
 
-            [end code]
+        [end code]
 
         The first mode of parents/3 is semidet because both mother/2
         and father/2 are semidet when called with Child as an input.
@@ -722,7 +735,7 @@ PREDICATES
         the definition of parents/3 like this as far as the second
         mode is concerned:
 
-            [begin code]
+        [begin code]
 
             :- mode parents(out, in, in) is nondet.
 
@@ -731,7 +744,7 @@ PREDICATES
                 father(X,     Father),
                 X = Child.
 
-            [end code]
+        [end code]
 
         So here father/2 is being called with (out, in) arguments and
         the parents/3 succeeds if the result X is bound to the same
@@ -740,11 +753,11 @@ PREDICATES
         In effect the compiler has deduced that father/2 has the
         following implied mode:
 
-            [begin code]
+        [begin code]
 
             :- mode father(in, in) is semidet.
 
-            [end code]
+        [end code]
 
         In general, Mercury will reorder each clause body for each
         mode declaration so that results are generated before they are
@@ -761,7 +774,7 @@ PREDICATES
         genealogical database again - this time we're going to label
         the clauses to help us see how programs execute in Mercury.
 
-            [begin code]
+        [begin code]
 
             :- pred father(person, person).     % Child, Father.
             :- mode father(in,     out) is semidet.
@@ -804,7 +817,7 @@ PREDICATES
                 mother(Child, Mother),
                 father(Child, Father).
 
-            [end code]
+        [end code]
 
         First off, we'll consider the goal parent(cissy, Parent).
         Every time we see a goal we try expanding it according to each
@@ -815,7 +828,7 @@ PREDICATES
         variable bindings we might have made one the way from the
         /choice point/.)
 
-            [begin code]
+        [begin code]
 
             parent(cissy, Parent)
             p1 =>
@@ -825,7 +838,7 @@ PREDICATES
                 f3 =>
                     Parent = bill
 
-            [end code]
+        [end code]
 
         So one solution to parent(cissy, Parent) is Parent = bill.  We
         obtained this by first expanding the goal according to p1 and
@@ -838,7 +851,7 @@ PREDICATES
         clause for parent/2 (since there are no more clauses for
         father/2):
 
-            [begin code]
+        [begin code]
 
             parent(cissy, Parent)
             p2 =>
@@ -847,13 +860,13 @@ PREDICATES
                 m2 => FAIL because bill \= cissy
                 m3 => Parent = betty
 
-            [end code]
+        [end code]
 
         Now, say we wanted to ask the question "which ancestor of
         carl, if any, is also a parent of bill?"  Here's how things
         would proceed:
 
-            [begin code]
+        [begin code]
 
             ancestor(carl, X), parent(bill, Y), X = Y
             a1 =>
@@ -938,32 +951,32 @@ PREDICATES
                                             alice = alice
                                            => TRUE
 
-            [end code]
+        [end code]
 
         So our program concludes that a solution to 
 
-            [begin code]
+        [begin code]
 
             ancestor(carl, X), parent(bill, Y), X = Y
 
-            [end code]
+        [end code]
 
         is
 
-            [begin code]
+        [begin code]
 
             X = alice, Y = alice
 
-            [end code]
+        [end code]
 
         (As was indicated earlier, in practice we'd be more likely to
         write the goal as just
 
-            [begin code]
+        [begin code]
 
             ancestor(carl, X), parent(bill, X)
 
-            [end code]
+        [end code]
 
         and let Mercury work out where the implicit unification should
         go.)
@@ -997,7 +1010,7 @@ PREDICATES
 
         Some simple examples:
 
-            [begin code]
+        [begin code]
 
             :- func factorial(int) = int.
 
@@ -1010,7 +1023,7 @@ PREDICATES
                 ( if N =< 2 then 1
                             else fibonacci(N - 1) + fibonacci(N - 2) ).
 
-            [end code]
+        [end code]
 
         These are examples of what is sometimes called "middle
         recursion" where the recursive call is /not/ the last thing
@@ -1035,7 +1048,7 @@ PREDICATES
         example, tail recursive implementations of the above
         functions are
 
-            [begin code]
+        [begin code]
 
             factorial(N) = fac(N, 1).
 
@@ -1049,7 +1062,7 @@ PREDICATES
                 ( if N =< 2 then FN_1
                             else fib(FN_1, FN_1 + FN_2, N - 1) ).
 
-            [end code]
+        [end code]
 
     UNIFICATIONS
 
@@ -1138,30 +1151,67 @@ PREDICATES
         such cannot bind any variables visible outside the negation
         (since the only way not G can succeed is if G fails.)
 
+        Note that not not G is equivalent to G (while not not G would
+        be an odd thing to write, some of the code transformations the
+        compiler performs can generate such things; getting the modes
+        right for such things requires that the compiler observe this
+        simplification rule.)
+
     IF-THEN-ELSE
 
         Mercury's if-then-else construct looks like this:
 
-            [begin code]
+        [begin code]
 
             ( if ConditionGoal then YesGoal else NoGoal )
 
-            [end code]
+        [end code]
 
         (You may also see if-then-elses written as
 
-            [begin code]
+        [begin code]
 
             ( ConditionGoal -> YesGoal ; NoGoal )
 
-            [end code]
+        [end code]
 
         although the author finds this style less appealing.)
 
-        Note that the else clause is /not/ optional in Mercury.  Also,
-        while the parentheses are not always required, it is a very
-        good idea to include them in order to avoid confusing errors
-        with syntactic precedence.
+        On rare occasions (mostly concerned with handling errors) the
+        following abbreviation is useful:
+
+        [begin code]
+
+            ( if ConditionGoal then YesGoal )
+
+        [end code]
+
+        in which case it is taken as shorthand for
+
+        [begin code]
+
+            ( if ConditionGoal then YesGoal else true )
+
+        [end code]
+
+        where true is a built-in goal that always succeeds.
+
+        While the parentheses are not always required, it is a very
+        good idea to include them in order to avoid confusing
+        syntactic precedence errors.  One common exception is a chain
+        of if-then-elses where only the top level of parentheses are
+        necessary:
+
+        [begin code]
+
+            ( if      condition1(...) then code_for_case1(...)
+              else if condition2(...) then code_for_case2(...)
+              else if condition3(...) then code_for_case3(...)
+              ...
+              else                         code_for_fallthrough_case(...)
+            )
+
+        [end code]
 
         An if-then-else goal works just as you would expect, with the
         following provisos:
@@ -1178,6 +1228,37 @@ PREDICATES
           in the ConditionGoal);
         - an if-then-else goal can fail in its entirety just like any
           other compound goal.
+
+        [Ondrej Bojar says examples are necessary here.  Good point.]
+
+        These rules should be clear from the semantics of if-then-else
+        goals.  An if-then-else goal
+
+        [begin code]
+
+            ( if ConditionGoal then YesGoal else NoGoal )
+
+        [end code]
+
+        is equivalent to the disjunction
+
+        [begin code]
+                
+            ( ConditionGoal, YesGoal ; not ConditionGoal, NoGoal )
+
+        [end code]
+
+        but is implemented more efficiently (if ConditionGoal has no
+        solutions this is detected immediately, it doesn't have to be
+        retested in the "else" arm of the disjunction.)
+
+        Since  ConditionGoal is in a negated context in the "else" arm
+        of the disjunction, it cannot produce any outputs that would
+        be used in NoGoal or anything outside the if-then-else as a
+        whole.  It can, however, produce outputs that are only used in
+        the YesGoal.  (The reason for this restriction is slightly
+        subtle and will be explained in more detail later. [NB. It's
+        to do with having mode independent semantics.])
 
     DISJUNCTION
 
@@ -1201,7 +1282,7 @@ PREDICATES
         disjunctions.  For example, the ancestor/2 predicate we
         defined earlier
 
-            [begin code]
+        [begin code]
 
             ancestor(Person, Ancestor) :-
                 parent(Person, Ancestor).
@@ -1210,11 +1291,11 @@ PREDICATES
                 parent(Person, Parent),
                 ancestor(Parent, Ancestor).
 
-            [end code]
+        [end code]
 
         could be written equivalently as
 
-            [begin code]
+        [begin code]
 
             ancestor(Person, Ancestor) :-
                 (
@@ -1224,7 +1305,7 @@ PREDICATES
                     ancestor(Parent, Ancestor)
                 ).
 
-            [end code]
+        [end code]
 
         In general it is better style to use clausal form for
         top-level disjunctions.
@@ -1236,7 +1317,7 @@ PREDICATES
 
         The "string" library module defines the following type:
 
-            [begin code]
+        [begin code]
 
             :- type poly_type
                 --->    f(float)
@@ -1244,7 +1325,7 @@ PREDICATES
                 ;       s(string)
                 ;       c(char).
 
-            [end code]
+        [end code]
 
         which can be used to form heterogeneous collections of the
         primitive types (this is useful amongst other things for
@@ -1254,7 +1335,7 @@ PREDICATES
         poly_type value into a string representation.  Here's how we
         might write the code:
 
-            [begin code]
+        [begin code]
 
             :- pred poly_type_to_string(poly_type, string).
             :- mode poly_type_to_string(in, out) is det.
@@ -1266,7 +1347,7 @@ PREDICATES
                 ;   Poly = c(Char),     char_to_string(Char, String)
                 ).
 
-            [end code]
+        [end code]
 
         The compiler knows that since Poly is an input variable it
         must be bound when the disjunction executes.  It will then 
@@ -1288,14 +1369,14 @@ PREDICATES
         (Aside: in real the above code would probably be written in
         clausal form:
 
-            [begin code]
+        [begin code]
 
             poly_type_to_string(f(F), S) :- float_to_string(F, S)
             poly_type_to_string(i(I), S) :- int_to_string(I, S)
             poly_type_to_string(s(S), S).
             poly_type_to_string(c(C), S) :- char_to_string(C, S)
 
-            [end code]
+        [end code]
 
         The switch would still be detected, of course.)
 
@@ -1345,7 +1426,7 @@ PREDICATES
 
         An example of use:
 
-            [begin code]
+        [begin code]
 
             :- pred all_even(list(int)).
             :- mode all_even(in) is semidet.
@@ -1353,13 +1434,13 @@ PREDICATES
             all_even(Xs) :-
                 all [X] (member(X, Xs)  =>  X `mod` 2 = 0).
 
-            [end code]
+        [end code]
 
     HIGHER ORDER APPLICATION
 
         [XXX I'll talk about this later.]
 
-    NOTE ON VARIABLE NAMES
+    A NOTE ON VARIABLE NAMES
 
         Often one is not interested in a particular output variable
         from a call or unification.  In these cases you can use the
@@ -1376,14 +1457,154 @@ PREDICATES
         no need to issue a warning.
 
 FUNCTIONS
+
+    Functions are deterministic (or semi-deterministic) relations with
+    (at least) one output.
+
+    Essentially, a function is any relation with a single solution for
+    a given set of inputs.
+
+    Functions are so common that Mercury provides special syntax to
+    make working with them easier.  One of the key advantages of
+    functions is that they can be used as parts of expressions, rather
+    than having to have a separate goal computing each subexpression
+    in turn.  That is, one can write
+
+    [begin code]
+
+        X = (B + sqrt(B*B - 4*A*C)) / (2*A)
+
+    [end code]
+
+    rather than
+
+    [begin code]
+
+        BSquared    = B * B,
+        FourA       = 4 * A,
+        FourAC      = FourA * C,
+        Diff        = BSquared - FourAC,
+        Sqrt        = sqrt(Diff),
+        Numerator   = B + Sqrt,
+        Denominator = 2 * A,
+        X           = Numerator / Denominator
+
+    [end code]
+
+    [XXX Would a different example be better using functional preds
+    rather than traditional funcs?]
+
     DEFINITION
+
+        This example illustrates how functions are defined:
+
+        [begin code]
+
+            :- func length(list(T)) = int.
+            :- mode length(in) = out is det.
+
+            length([]      ) = 0.
+            length([_ | Xs]) = 1 + length(Xs).
+
+        [end code]
+
+        Like predicates, functions may be defined using several clauses
+        and make use of pattern matching.
+
+        Functions can also use auxiliary results, including from predicates:
+
+        [begin code]
+
+            :- func take(int, list(T)) = list(T).
+            :- func take(in, in) = out is det.
+
+            take(N, Xs) = Ys :-
+                split(N, Xs, Ys, _).
+
+            :- func drop(int, list(T)) = list(T).
+            :- func take(in, in) = out is det.
+
+            drop(N, Xs) = Zs :-
+                split(N, Xs, _, Zs).
+
+            :- pred split(int, list(T), list(T), list(T)).
+
+            split(N, Xs, Ys, Zs) :-
+                ( if N = 0 then
+                    Ys = [],
+                    Zs = Xs
+                  else if Xs = [X | Xs0] then
+                    Ys = [X | Ys0],
+                    split(N - 1, Xs0, Ys0, Zs)
+                  else
+                    error("split point beyond end of list")
+                ).
+
+        [end code]
+
+        By far the most common mode for a function is
+
+        [begin code]
+
+            :- mode f(in, in, ..., in) = out is det.
+
+        [end code]
+
+        If a function has (just) this sort of mode, then the mode
+        declaration can be ommitted and the compiler will simply assume
+        this mode is what is intended.  Hereafter we will omit unnecessary
+        mode declarations for functions.
+
+        [XXX What exactly are the constraints on function
+        determinisms?  Remember to point out (somewhere) that
+        functions may also have multiple procedures.]
+
     PATTERN MATCHING
+
+        [Dealt with above.]
+
     RECURSION
+
+        [Dealt with above.]
+
     CONDITIONAL EXPRESSIONS
-        OVERVIEW TO SEMIDET PREDICATES
+
+        Conditional expressions look like this:
+
+        [begin code]
+
+            ( if ConditionGoal then YesExpr else NoExpr )
+
+        [end code]
+
+        where the usual rules for if-then-elses apply (in particular,
+        ConditionGoal may bind output variables that are used in
+        YesExpr, but not elsewhere).
+
+        Note that the else clause is /not/ optional in a conditional
+        expression (it would make no sense not to have one.)
+
+    OVERVIEW TO SEMIDET PREDICATES
+
+        [Deal with this in a later section.  It's sort-of advanced
+        stuff.]
+
     POLYMORPHISM
+
+        [Dealt with in section on types.]
+
     * PARTIAL (SEMIDET) FUNCTIONS
+
+        [Leave for later.]
+
     INFIX NOTATION AND SYNTACTIC SUGAR IN GENERAL
+
+        Mercury syntax supports a number of prefix, infix and postfix
+        operators, including all the usual 
+
+    FUNCTION SYMBOLS TO BE AWARE OF
+
+        Integer division etc.
 
 INPUT AND OUTPUT
     UNIQUENESS
