@@ -1,0 +1,1021 @@
+sketch.txt
+Ralph Becket <rafe@cs.mu.oz.au>
+Mon Oct 15 13:05:39 EST 2001
+ vim: ft=txt ts=4 sw=4 et wm=10
+
+[This is intended as a brief sketch of the book, to be used as a guide
+for writing the real text.]
+
+
+
+HELLO, WORLD!
+
+    Because it's traditional...  Type the following into a file called
+    "hello.m".
+
+    [begin code]
+
+        :- module hello.
+
+        :- interface.
+        :- import_module io.
+
+        :- pred main(io, io).
+        :- mode main(di, uo) is det.
+
+        :- implementation.
+        :- import_module string.
+
+            % The show starts here.
+            %
+        main --> io__print("Hello, world!\n").
+
+    [end code]
+
+    Compile and run the program with
+
+    [begin code]
+
+        $ mmake hello.depend
+        $ mmake hello
+        $ ./hello
+        Hello, world!
+
+    [end code]
+
+    We'll start by just listing some of the salient points illustrated
+    by the "Hello, world!" program.
+
+    - Modules live in files with the same name (with a ".m" suffix).
+    - Every module starts with a declaration giving its name.
+    - Non-code directives and declarations are introduced with ":-".
+    - Every declaration ends with a full stop.
+    - Modules are divided into interface and implementation sections.
+    - The interface section lists the things that are exported by the
+      module.  The top-level module in a Mercury program must export a
+      predicate main/2 (functors are conventionally referred to with
+      name/arity).
+    - The implementation section provides the code for the functions
+      and predicates exported in interface section.
+    - A module has to be imported before the things it defines can be
+      used.
+    - The basic computational device in Mercury is the predicate.
+      Predicates have type signatures and mode signatures - the latter
+      specifying which arguments are inputs and which are outputs.
+    - Comments start witha "%" sign and extend to the end of the line.
+
+
+
+DECLARATIVE VS IMPERATIVE PROGRAMMING
+
+    DEFINITIONS
+
+        Imperative: a list of instructions for transforming state.
+
+        Declarative: a specification of /what/ is to be computed.
+
+        Pure declarative programming languages exhibit referential
+        transparency.  In a nutshell, this means that anywhere you see
+        a reference to a definition, you can replace it with the
+        definition itself and it will make no difference.
+
+        In more formal language,
+
+            let x = e in M  ==  M[e/x]
+
+        This is clearly not true of imperative languages.  Consider
+        the following C example:
+
+            [begin code]
+
+            int g = 0;
+
+            int f(int x)
+            {
+                g = g + 1;
+                return x + g;
+            }
+
+            void main(int argc, char **argv)
+            {
+                int tmp = f(1);
+                int a   = tmp  + tmp;
+                int b   = f(1) + f(1);
+
+                if(a == b)
+                    printf("equivalent\n");
+                else
+                    printf("not equivalent\n");
+            }
+
+            [end code]
+
+        According to C semantics, this program should print out "not
+        equivalent", proving that the expression f(1) is not equal
+        to itself!  This sort of thing is great for writing buggy,
+        hard to maintain code.
+
+        Since referential transparency means no side-effects, you
+        can't have variables that change their state as the program
+        evolves.  Instead, a "variable" in a declarative programming
+        language is a label given to a value or the result of a
+        computation.
+
+        The nearest Mercury equivalent to the function f() in the C
+        program above is 
+
+            [begin code]
+
+            :- pred f(int, int, int, int).
+            :- mode f(in,  out, in,  out) is det.
+
+            f(X, Result, GIn, GOut) :-
+                GOut   = GIn + 1,
+                Result = GOut + X.
+
+            [end code]
+
+        Since there are no variables in Mercury (and hence no global
+        variables), any "global" state has to be explicitly passed
+        around wherever it is needed.  In this case f/4 takes the old
+        "state" as its third argument and returns the new "state" in
+        its fourth argument.
+
+    BENEFITS OF DECLARATIVE STYLE
+
+        While the lack of mutable state might seem like a serious
+        drawback to a programmer used only to imperative languages, in
+        practice it turns out to be something of a boon.  Experienced
+        imperative programmers know that fewer globals means clearer,
+        more maintainable, more reusable code with fewer bugs.
+
+        The philosophy behind declarative languages is to simplify the
+        /writing/ of bug free programs and to leave the tedious
+        business of book keeping and optimization to the compiler.
+        Referential transparency means that more optimizations can be
+        applied in more places in a program than is the case with
+        imperative programs, simply because proving that it is safe to
+        apply a particular optimization is so much easier in the
+        absence of side effects.
+
+        Mercury was designed as an industrial strength purely
+        declarative programming language aimed at the rapid
+        development of medium and large scale programs with the
+        emphasis on producing fast, correct programs.
+
+        To this end, Mercury doesn't support a corner-cutting
+        programming style: you /have/ to get the types right, check
+        return codes and so forth - quick lashups are rarely an
+        option.  The payoff is that nine times out of ten Mercury
+        programmers find that a program that compiles also does
+        exactly what was intended; few imperative languages, if any,
+        can make such a claim.
+
+        [XXX Place to mention types, garbage collection, polymorphism,
+        pattern matching, etc etc?]
+
+    PRAGMATISM
+
+        "A foolish consistency is the hobgoblin of small minds."
+            -- Ralph Waldo Emmerson
+
+        Purity is all very well, but the fact remains that
+        occasionally one has to interoperate with code written in
+        impure code and that (very rarely and usually when that last
+        drop of speed is required) some low-level algorithms may be
+        best expressed as impure constructs.
+
+        For the former, Mercury has a simple and well developed
+        foreign language interface allowing the programmer to write
+        foreign code in-line with the Mercury program (provided the
+        Mercury compiler has an appropriate back-end for the foreign
+        language in question - the alternative is to use C as the
+        lingua franca in the traditional style.)  It is the
+        programmer's responsiblility to supply the appropriate purity
+        declarations for predicates defined using foreign code.
+
+        The latter is handled using purity annotations.  Impure code
+        (written in a foreign language) must be labelled as such.
+        These labels also have to be applied to all predicates that
+        use the impure code.  At some point (hopefully) a pure
+        interface can be presented to the programmer, in which case
+        the program must include a "promise" to the compiler that 
+        impurity annotations are not required for users of the
+        top-level predicate with an impure definition.
+
+    MERCURY PHILOSOPHY
+
+        [XXX Haven't I already done this?]
+
+TYPES
+
+    Mercury is strongly typed.  Every value has a type and every
+    predicate associates a particular type with each argument.
+
+    PRIMITIVE
+
+    The primitive Mercury types are int, float, char and string -
+    examples are 123, 3.141, ('x'), and "foo", respectively.
+
+    While primitive types are recognised by the compiler, no
+    operations are.  Operations on the primitive types are defined in
+    modules of the same name in the standard library.
+
+    ALGEBRAIC TYPES
+
+        You can define new types in Mercury as the following examples
+        illustrate:
+
+            [begin code]
+
+            :- type primary_colour
+                --->    red
+                ;       green
+                ;       blue.
+
+            :- type rgb_colour
+                --->    rgb(float, float, float).   % red, green, blue.
+
+            [end code]
+
+        Here primary_colour is the name of the new type and its
+        /constructors/ (possible values) are red, green and blue.
+
+        Similarly rgb_colour is a type with only one constructor,
+        rgb/3, which takes three float arguments (this is rather like
+        a C struct).
+
+        You can define parametric types
+
+            [begin code]
+
+            :- type binary_tree(T)
+                --->    leaf
+                ;       branch(T, binary_tree(T), binary_tree(T)).
+
+            [end code]
+
+        So the type binary_tree(T) has two constructors: leaf/0 and
+        branch/3 which takes a T, a binary_tree(T) and a
+        binary_tree(T) as arguments respectively.
+
+        We can have instances of binary_tree(T) for any type T - for
+        example, binary_tree(int), binary_tree(string) or even
+        binary_tree(binary_tree(...)).
+        
+        - T here is said to be a type variable.
+        - Variables of any kind in Mercury are distinguished by
+          starting with a capital letter.
+        - A type may have several type parameters.
+        - Any variables that appear in the constructor definitions
+          must also appear in the head of the type declaration.
+        - All type variables in the head must be distinct.
+
+        You can use other types in your definitions.  For example, we
+        could define a more general tree type with
+
+            [begin code]
+
+            :- type tree(T)
+                --->    tree(T, list(tree(T))).
+
+            [end code]
+
+        So the type tree(T) has a single constructor tree/2 which
+        takes a T and a list(tree(T)) as arguments, respectively
+        (list(T) is defined in the list module in the standard
+        library.)
+
+        (Note that Mercury doesn't get confused if you use the same
+        name for both type and constructor.)
+
+    PATTERN MATCHING
+
+        Pattern matching is the primary means of identifying which
+        constructor is used for a particular type value.  For example:
+
+            [begin code]
+
+            :- func insert(binary_tree(T), T) = tree(T).
+
+            insert(leaf, X) =
+                branch(X, leaf, leaf).
+
+            insert(branch(A, L, R), X) =
+                ( if      X < A then branch(A, insert(L, X), R)
+                  else if A < X then branch(A, L, insert(R, X))
+                  else               branch(X, L, R)
+                ).
+
+            [end code]
+
+        The first clause matches when the first argument is a leaf/0
+        and the second clause matches when the first argument is a
+        branch/3.
+
+        Alternatively one can use explicit unification as in
+
+            [begin code]
+
+            :- func insert(binary_tree(T), T) = tree(T).
+
+            insert(T0, X) = T :-
+                (
+                    T0 = leaf,
+                    T  = branch(X, leaf, leaf)
+                ;
+                    T0 = branch(A, L, R),
+                    ( if X < A then
+                        T = branch(A, insert(L, X), R)
+                      else if A < X then
+                        T = branch(A, L, insert(R, X))
+                      else
+                        T = branch(X, L, R)
+                    )
+                ).
+
+            [end code]
+
+        or unification in an if-then-else:
+
+            [begin code]
+
+            :- func insert(binary_tree(T), T) = tree(T).
+
+            insert(T0, X) = T :-
+                ( if T0 = leaf then
+                    T  = branch(X, leaf, leaf)
+                  else
+                    T0 = branch(A, L, R),
+                    ( if X < A then
+                        T = branch(A, insert(L, X), R)
+                      else if A < X then
+                        T = branch(A, L, insert(R, X))
+                      else
+                        T = branch(X, L, R)
+                    )
+                ).
+
+            [end code]
+
+    EQUIVALENCE TYPES
+
+        It is also useful to be able to declare type synonyms.  For
+        example:
+
+            [begin code]
+
+            :- type int_tree == tree(int).
+
+            [end code]
+
+        Mercury would then make no distinction between a reference to
+        int_tree and a reference to tree(int).
+
+        Equivalence types can also be parametric:
+
+            [begin code]
+
+            :- type list_tree(T) == tree(list(T)).
+
+            [end code]
+
+    ABSTRACT TYPES
+
+        Often one needs to export a type, but hide it's definition.
+        Abstract types are used for this purpose:
+
+        [begin code]
+
+        :- module complex.
+        :- interface.
+        :- import_module float.
+
+        :- type complex.
+
+        :- func rectangular(float, float) = complex.    % re, im.
+        :- func polar(float, float) = complex.          % r, theta.
+        :- func complex + complex = complex.
+        :- func complex * complex = complex.
+        ...
+
+        :- implementation.
+
+        :- type complex
+            --->    re_im(float, float).
+
+        ... definition of funcs using private rectangular
+            representation
+
+        [end code]
+
+        The abstract type declaration in the module interface must be
+        matched by a concrete type definition (which may be an
+        equivalence) in the implementation section.
+
+        The definition of the abstract type is hidden from users of
+        the complex module.
+
+        Abstract types may also be parametric.
+
+    ALGEBRAIC TYPES WITH FIELDS
+
+        Just as with C, it is possible to give names to constructor
+        fields:
+
+            [begin code]
+
+            :- type rgb_colour
+                --->    rgb(
+                            red     :: float,
+                            green   :: float,
+                            blue    :: float
+                        ).
+
+            [end code]
+
+        Now, if X is a value of type rgb_colour then X ^ red,
+        X ^ green and X ^ blue are expressions that return the value
+        in the corresponding fields.  For example, if we have
+
+            X = rgb(0.1, 0.2, 0.3)
+
+        then
+
+            X ^ red   = 0.1,
+            X ^ green = 0.2,
+            X ^ blue  = 0.3
+
+        A field can be updated in the following way:
+
+            Y = ( X ^ red := 0.4 )
+
+        results in
+
+            Y = rgb(0.4, 0.2, 0.3)
+
+        So updating a field is the same as applying a substitution to
+        a field and obtaining the new value.  We can chain several
+        substitutions together:
+
+            Y = ((( X ^ red   := 0.4 )
+                      ^ green := 0.5 )
+                      ^ blue  := 0.6 )
+
+        * Note that it is currently an error for the same field name to
+        be used in type different /types/ in the same scope.  However,
+        different constructors of a type may have fields with the same
+        name.  For example:
+
+            [begin code]
+
+            :- type foo ---> foo(a :: int).
+
+            :- type bar ---> bar(a :: int).
+
+            [end code]
+
+        would lead to an error since types foo and bar are both
+        visible in the same scope and both have constructors with a
+        common field name.  The following is acceptable, however:
+
+            [begin code]
+
+            :- type baz
+                --->    constructor1(a :: int, ...)
+                ;       constructor2(a :: int, ...)
+                ;       constructor3(a :: int, ...).
+
+            [end code]
+
+    * TYPES WITH USER-DEFINED EQUALITY
+
+        [XXX Defer explanation until later.]
+
+PREDICATES
+
+    In logical terms, a predicate describes a relationship between its
+    arguments.
+
+    Predicates cover not only tests and functions, as found in other
+    languages, but also procedures with multiple return values and
+    even nondeterministic relationships.
+
+    INTRODUCTION
+
+        A predicate is defined by a set of clauses, where each clause
+        takes the form
+
+            Head :- Body.
+
+        This should be read as saying "Head is true if Body is true" with
+        the set of clauses forming an exhaustive specification of the
+        predicate.
+
+        If the body of a predicate is empty, one can just write
+
+            Head.
+
+        These sorts of clauses are called facts.
+
+        A very simple example of a predicate is
+
+            [begin code]
+
+            :- pred max(int, int, int).         % A, B, Max.
+            :- mode max(in,  in,  out) is det.
+
+            max(A, B, Max) :-
+                ( if B < A then Max = A else Max = B ).
+
+            [end code]
+
+        This predicate takes two integers, A and B, and succeeds
+        binding Max to A if A is greater than B or binding Max to B
+        otherwise.  The part of the mode declaration "is det" means
+        that this is a deterministic predicate: it will always succeed
+        and has just one solution for any pair of inputs.
+
+        (This sort of deterministic relation with a single output is
+        called a function.  Functions are so common that Mercury
+        includes special syntax and conventions to simplify working
+        with them.  More of this in a later section.)
+
+        For a more interesting example, consider the following small
+        genealogical database:
+
+            [begin code]
+
+            :- type person
+                --->    arthur  ; bill      ; carl
+                ;       alice   ; betty     ; cissy.
+
+            [end code]
+
+        We start by defining predicates that we can use to decide if a
+        particular person is male or female.  These predicates are
+        labelled semidet because they have at most one solution
+        (success) for a given argument.
+
+            [begin code]
+
+            :- pred male(person).
+            :- mode male(in) is semidet.
+
+            male(arthur).
+            male(bill).
+            male(carl).
+
+            :- pred female(person).
+            :- mode female(in) is semidet.
+
+            female(Person) :- not male(Person).
+
+            [end code]
+
+        The definition for female/1 states that female(Person)
+        succeeds iff male(Person) fails.  (Recall that variables in
+        Mercury are distinguished by starting with a capital letter.)
+
+            [begin code]
+
+            :- pred father(person, person).     % Child, Father.
+            :- mode father(in,     out) is semidet.
+
+            father(betty, arthur).
+            father(carl,  bill).
+            father(cissy, bill).
+
+            :- pred mother(person, person).     % Child, Mother.
+            :- mode mother(in,     out) is semidet.
+
+            mother(bill,  alice).
+            mother(carl,  betty).
+            mother(cissy, betty).
+
+            [end code]
+
+        The predicates father/2 and mother/2 take their first argument
+        as an input and return a result in the second.  The
+        determinism is semidet again because they are not exhaustive:
+        some inputs can cause them to fail (e.g. there is no solution
+        for father(
+
+            [begin code]
+
+            :- pred parent(person, person).     % Child, Parent.
+            :- mode parent(in,     out) is nondet.
+
+            parent(Child, Parent) :- father(Child, Parent).
+            parent(Child, Parent) :- mother(Child, Parent).
+
+            [end code]
+
+        This simply says that the parent of a child is either the
+        father or the mother.  The determinism is nondet because for a
+        given Child argument this predicate may fail or may have more
+        than one solution:
+        - both father/2 and mother/2 can fail
+          (e.g. if Child = arthur);
+        - just one of father/2 or mother/2 could succeed
+          (e.g. if Child = bill);
+        - both father/2 and mother/2 could succeed
+          (e.g. if Child = cissy).
+
+        (How failure and multiple solutions affect the execution of a
+        Mercury program is explained below.)
+
+            [begin code]
+
+            :- pred ancestor(person, person).   % Person, Ancestor.
+            :- mode ancestor(in,     out) is nondet.
+
+            ancestor(Person, Ancestor) :-
+                parent(Person, Ancestor).
+
+            ancestor(Person, Ancestor) :-
+                parent(Person, Parent),
+                ancestor(Parent, Ancestor).
+
+            [end code]
+
+        We can now define an ancestor of a Person as being either a
+        parent of that Person or an ancestor of a parent of the
+        Person.
+
+        Since parent/2 is nondet, so is ancestor/2.
+
+        This table explains the difference between the number of
+        solutions a predicate can have for a given determinism:
+
+            Determinism             Number of Solutions
+                                    Min             Max
+
+            semidet                 0               1
+            nondet                  0               at least one
+            det                     1               1
+            multi                   1               at least one
+
+        (There are a few other determinisms, but we shan't cover them
+        at this point.)
+
+        The compiler will check that your determinism declarations are
+        correct.
+
+        One interesting thing about this database is that there's no
+        reason why it shouldn't be run in reverse.  That is, for any
+        father or mother, we should be able to deduce who their
+        children are and for any ancestor we should be able to work
+        out who their descendants are.
+
+        To gain this extra functionality we have only to add the
+        required extra mode declarations; there is no need to touch
+        the definitions themselves!  The extra mode declarations are
+
+            [begin code]
+
+            :- mode father(out, in) is nondet.   % Infer Child from Father.
+            :- mode mother(out, in) is nondet.   % Infer Child from Mother.
+            :- mode parent(out, in) is nondet.   % Infer Child from Parent.
+            :- mode ancestor(out, in) is nondet. % Infer Person from Ancestor.
+
+            [end code]
+
+        Notice that father/2 and mother/2 are nondet in this mode
+        rather than semidet: looking at the definitions we see that
+        father(Child, bill) has multiple solutions Child = carl and
+        Child = sissy, while mother(Child, betty) also has solutions
+        Child = carl and Child = sissy.
+
+        There is no reason why a predicate cannot have several output
+        arguments (or even no input arguments...)  For example, we
+        might go on to add
+
+            [begin code]
+
+            :- pred parents(person, person, person).    % Child, Mother, Father.
+            :- mode parents(in,     out,    out) is semidet.
+            :- mode parents(out,    in,     in) is nondet.
+
+            parents(Child, Mother, Father) :-
+                mother(Child, Mother),
+                father(Child, Father).
+
+            [end code]
+
+        The first mode of parents/3 is semidet because both mother/2
+        and father/2 are semidet when called with Child as an input.
+
+        The second mode is nondet for similar reasons, but exhibits an
+        interesting property.  At first glance you might think that
+        something will go wrong here: when parents/3 is called in the
+        second mode, initially Mother and Father are inputs and Child
+        is an output.  However, if the call to mother/2 succeeds, then
+        Child will end up being bound to the identifier for some
+        person.  This appears that we would then be trying to call
+        father/2 with /both/ arguments as inputs, but there is no such
+        mode declaration for father/2.  There is no need to worry,
+        however - the compiler will recognise the situation and treat
+        the definition of parents/3 like this as far as the second
+        mode is concerned:
+
+            [begin code]
+
+            :- mode parents(out, in, in) is nondet.
+
+            parents(Child, Mother, Father) :-
+                mother(Child, Mother),
+                father(X,     Father),
+                X = Child.
+
+            [end code]
+
+        So here father/2 is being called with (out, in) arguments and
+        the parents/3 succeeds if the result X is bound to the same
+        value as Child.
+
+        In effect the compiler has deduced that father/2 has the
+        following implied mode:
+
+            [begin code]
+
+            :- mode father(in, in) is semidet.
+
+            [end code]
+
+        In general, Mercury will reorder each clause body for each
+        mode declaration so that results are generated before they are
+        needed - each mode of a predicate is referred to as a
+        /procedure/.
+
+    EXECUTION
+
+        This section explains Mercury's execution model in more
+        detail.  In particular, the notions of failure, backtracking
+        and nondeterminism are addressed.
+
+        Let's start by looking at some of the code for our
+        genealogical database again - this time we're going to label
+        the clauses to help us see how programs execute in Mercury.
+
+            [begin code]
+
+            :- pred father(person, person).     % Child, Father.
+            :- mode father(in,     out) is semidet.
+            :- mode father(out,    in) is nondet.
+
+        f1  father(betty, arthur).
+        f2  father(carl,  bill).
+        f3  father(cissy, bill).
+
+            :- pred mother(person, person).     % Child, Mother.
+            :- mode mother(in,     out) is semidet.
+            :- mode mother(out,    in) is nondet.
+
+        m1  mother(bill,  alice).
+        m2  mother(carl,  betty).
+        m3  mother(cissy, betty).
+
+            :- pred parent(person, person).     % Child, Parent.
+            :- mode parent(in,     out) is nondet.
+            :- mode parent(out,    in) is nondet.
+
+        p1  parent(Child, Parent) :- father(Child, Parent).
+        p2  parent(Child, Parent) :- mother(Child, Parent).
+
+            :- pred ancestor(person, person).   % Person, Ancestor.
+            :- mode ancestor(in,     out) is nondet.
+
+        a1  ancestor(Person, Ancestor) :-
+                parent(Person, Ancestor).
+
+        a2  ancestor(Person, Ancestor) :-
+                parent(Person, Parent),
+                ancestor(Parent, Ancestor).
+
+            :- pred parents(person, person, person).    % Child, Mother, Father.
+            :- mode parents(in,     out,    out) is semidet.
+            :- mode parents(out,    in,     in) is nondet.
+
+        s1  parents(Child, Mother, Father) :-
+                mother(Child, Mother),
+                father(Child, Father).
+
+            [end code]
+
+        First off, we'll consider the goal parent(cissy, Parent).
+        Every time we see a goal we try expanding it according to each
+        clause definition in turn (this is what being referentially
+        transparent is all about).  If we get to a dead end we have to
+        /backtrack/ to the last point where we had a choice and try a
+        different clause (when we backtrack we also forget any
+        variable bindings we might have made one the way from the
+        /choice point/.)
+
+            parent(cissy, Parent)
+            p1 =>
+                father(cissy, Parent)
+                f1 => fail because betty \= cissy
+                f2 => fail because carl  \= cissy
+                f3 =>
+                    Parent = bill
+
+        So one solution to parent(cissy, Parent) is Parent = bill.  We
+        obtained this by first expanding the goal according to p1 and
+        then expanding the resulting goal (father(cissy, Parent))
+        according to each of f1, f2 and f3 until we found one that
+        matched.
+        
+        If the program later has to backtrack over this goal then we
+        have to forget the binding Parent = bill and try the next
+        clause for parent/2 (since there are no more clauses for
+        father/2):
+
+            parent(cissy, Parent)
+            p2 =>
+                mother(cissy, Parent)
+                m1 => fail because bill \= cissy
+                m2 => fail because bill \= cissy
+                m3 => Parent = betty
+
+        Now, say we wanted to ask the question "which ancestor of
+        carl, if any, is also a parent of betty?"  Here's how things
+        would proceed:
+
+            ancestor(carl, X), parent(betty, Y), X = Y
+            a1 =>
+                parent(carl, X), parent(betty, Y), X = Y
+                p1 =>
+                    father(carl, X), parent(betty, Y), X = Y
+                    f1 => fail because betty \= carl
+                    f2 => 
+                        X = bill, parent(betty, Y), X = Y
+                        <=>
+                        parent(betty, Y), bill = Y
+                        p1 =>
+                            father(betty, Y), bill = Y
+                            f1 =>
+                                Y = arthur, bill = Y
+                                <=>
+                                bill = arthur
+                                   => fail because bill \= arthur
+                            f2 => fail because carl \= betty
+                            f3 => fail because cissy \= betty
+                        p2 =>
+                            mother(betty, Y), bill = Y
+                            m1 => fail because bill \= betty
+                            m2 => fail because carl \= betty
+                            m3 => fail because cissy \= betty
+                    f3 => fail because cissy \= carl
+                p2 =>
+                    mother(carl, X), parent(betty, Y), X = Y
+                    m1 => fail because bill \= carl
+                    m2 =>
+                        X = betty, parent(betty, Y), X = Y
+                        <=>
+                        parent(betty, Y), betty = Y
+                        p1 =>
+                            father(betty, Y), betty = Y
+                            f1 =>
+                                Y = arthur, betty = Y
+                                <=>
+                                betty = arthur
+                                    => fail because betty \= arthur
+                            f2 => fail because carl \= betty
+                            f3 => fail because cissy \= betty
+                        p2 =>
+                            mother(betty, Y), betty = Y
+                            ... this will fail similarly
+            a2 =>
+                parent(carl, Z), ancestor(Z, X), parent(betty, Y), X = Y
+                [we have to rename Parent in the expansion; here we used Z]
+                p1 =>
+                    father(carl, Z), ancestor(Z, X), parent(betty, Y), X = Y
+                    f1 => fail because betty \= carl
+                    f2 =>
+                        Z = bill, ancestor(Z, X), parent(betty, Y), X = Y
+                        <=>
+                        ancestor(bill, X), parent(betty, Y), X = Y
+                        a1 =>
+                            parent(bill, X), parent(betty, Y), X = Y
+                            p1 =>
+                                father(bill, X), parent(betty, Y), X = Y
+                                f1 => fail because betty \= bill
+                                f2 => fail because betty \= bill
+                                f3 => fail because betty \= bill
+
+            XXX Bollocks.  This example doesn't work - there is no
+            common ancestor!  Have to add some more names to the
+            database.  Also need a briefer way to report the failures?
+
+
+    RECURSION
+    IF-THEN-ELSE
+    DISJUNCTION
+    SWITCHES
+    BACKTRACKING
+
+FUNCTIONS
+    DEFINITION
+    PATTERN MATCHING
+    RECURSION
+    CONDITIONAL EXPRESSIONS
+        OVERVIEW TO SEMIDET PREDICATES
+    POLYMORPHISM
+    * PARTIAL (SEMIDET) FUNCTIONS
+    INFIX NOTATION AND SYNTACTIC SUGAR IN GENERAL
+
+INPUT AND OUTPUT
+    UNIQUENESS
+    * DETERMINISM RESTRICTIONS
+    * DCG NOTATION IN DETAIL
+
+MODES
+    DIRECTION OF DATA FLOW
+    DETERMINISM CATEGORIES
+    COMMITTED CHOICE
+    * SUBTYPING
+    * UNIQUE MODES
+        DETERMINISM RESTRICTIONS
+        MOSTLY UNIQUE MODES
+    HIGHER ORDER MODES
+        THE STANDARD FUNC MODE
+        STANDARD FUNCS AND THE GROUND INST
+
+MODULES
+    NAMESPACES
+    OVERLOADING AND NAME RESOLUTION
+    SUBMODULES
+        NESTED
+        SEPARATE
+
+HIGHER ORDER PROGRAMMING
+    HIGHER ORDER APPLICATION
+    PRED AND FUNC MODES
+    * MONOMORPHISM RESTRICTION
+
+* TYPE CLASSES
+    OO PROGRAMMING
+    TYPE CLASS DECLARATIONS
+        METHOD SIGNATURES
+        TYPE CLASS CONSTRAINTS
+    INSTANCE DECLARATIONS
+        METHOD IMPLEMENTATIONS
+        TYPE CLASS CONSTRAINTS
+    EXISTENTIALLY QUANTIFIED TYPES
+        USE
+        WHY OUTPUT ONLY
+    ...CONSTRUCTOR CLASSES
+    ...FUNCTIONAL DEPENDENCIES
+    RESTRICTIONS AND EXPLANATIONS THEREOF
+        ON TYPE CLASS DEFINITIONS
+        ON INSTANCE DEFINITIONS
+
+LISTS
+    DESCRIPTION
+    MAP, FOLD & MEMBER
+
+MAPS
+
+ARRAYS
+
+COMPILING PROGRAMS
+    MMAKE
+    COMPILER FLAGS
+    COMPILATION GRADES
+
+* STORES
+
+* EXCEPTIONS
+    THROWING
+    CATCHING
+        EFFECT ON DETERMINISM
+        RESTORING (PLAIN) DETERMINISM (PROMISE_ONLY_SOLUTION)
+
+* FOREIGN LANGUAGE INTERFACE
+    DECLARATIONS
+    DATA TYPES
+
+* IMPURE CODE
+    LEVELS OF PURITY
+    EFFECT OF IMPURITY ANNOTATIONS
+    PROMISING PURITY (PRAGMA PROMISE_PURE)
+
+* PRAGMAS
+    INLINING
+    TYPE SPECIALIZATION
+    OBSOLESCENCE
+    MEMOING
+    ...PROMISES
+
+* DEBUGGING
+    COMPILING FOR DEBUGGING
+    BASIC TOUR OF THE DEBUGGER
+    DECLARATIVE DEBUGGING
+
+* OPTIMIZATION
+    WHEN TO DO IT AND WHEN TO AVOID IT
+    PROFILING
+    VARIOUS CONSIDERATIONS
+    AN OVERVIEW OF CONTEMPORARY OPTIMIZER TECHNOLOGY
+
