@@ -499,12 +499,12 @@ PREDICATES
 
     Predicates cover not only tests and functions, as found in other
     languages, but also procedures with multiple return values and
-    even nondeterministic relationships.
+    even non-deterministic relationships.
 
     INTRODUCTION
 
-        A predicate is defined by a set of clauses, where each clause
-        takes the form
+        A predicate is defined by a set of /clauses/, where each
+        clause takes the form
 
             Head :- Body.
 
@@ -517,6 +517,9 @@ PREDICATES
             Head.
 
         These sorts of clauses are called facts.
+
+        The body of a predicate clause is a /goal/ - a logical formula
+        that must be satisfied in order for the head to hold.
 
         A very simple example of a predicate is
 
@@ -752,7 +755,7 @@ PREDICATES
 
         This section explains Mercury's execution model in more
         detail.  In particular, the notions of failure, backtracking
-        and nondeterminism are addressed.
+        and non-determinism are addressed.
 
         Let's start by looking at some of the code for our
         genealogical database again - this time we're going to label
@@ -1022,6 +1025,8 @@ PREDICATES
         middle recursive predicates into equivalent tail recursive
         predicates that do not incurr a stack overhead.)
 
+        [XXX Include a side-bar or something explaining stack frames?]
+
         Tail recursion describes the situation where the last thing a
         predicate does is call itself.  Since there is nothing left to
         do after the call, the compiler can reuse the current call's
@@ -1046,14 +1051,329 @@ PREDICATES
 
             [end code]
 
+    UNIFICATIONS
 
+        Mercury has but two basic atomic (non-compound) types of goal:
+        unifications and calls.
 
+        A unification is written X = Y.  A unification can fail if X
+        and Y are not unifiable.
 
+        Two values are unifiable if they are "structurally similar" -
+        that is, where you see a type constructor in one, you either
+        see the same type constructor in the other (and the
+        corresponding arguments are also structurally similar) or a
+        variable, which will end up being bound to the corresponding
+        term on the other side if the unification is successful.
+
+        (Note that unlike Prolog, Mercury forbids the aliasing of
+        variables where a partially instantiated data structure
+        contains the same unbound variable in two different places.)
+
+        Unifications, therefore, can be used to bind variables to
+        values, test to see if a variable is bound to a particular
+        constructor, unpack the arguments of a constructor or all of
+        the above.
+
+        Examples:
+
+            X = 123
+                - if X is unbound then it succeeds binding X to the
+                  value 123;
+                - if X is bound then it succeeds iff the value X is
+                  bound to is also 123.
+
+            X = Y
+                - if one of X or Y is bound and the other is not then
+                  this succeeds with the unbound variable being bound
+                  to the same value as the bound variable;
+                - if both are bound then this succeeds iff the two
+                  variables are bound to identical values.
+                  [XXX Should we mention partial instantiation?]
+
+            X = foo(A, B, C)
+                - if X is unbound and A, B and C are bound, then this
+                  succeeds binding X to the value foo(A, B, C) (here
+                  foo/3 is a type constructor);
+                - if X is bound then this succeeds iff X is bound to a
+                  value foo(P, Q, R) and the unifications A = P, B = Q
+                  and C = R succeed - this may result in some of A, B
+                  and C being bound as a result if they are unbound at
+                  the time of the unification.
+
+    CALLS
+
+        The other kind of primitive goal supported by Mercury is the
+        predicate call, p(X1, ..., Xn), which we have already seen in
+        the examples above.
+
+    CONJUNCTION
+
+        A goal of the form G1, G2, ..., Gn is called a conjunction
+        with the separating commas read as "and".  A conjunction
+        succeeds iff a consistent solution to each of the sub-goals G1,
+        G2, ..., Gn can be found by the program.
+
+        (The compiler may have to reorder the sequence of goals in a
+        clause in order to satisfy the mode constraints.  Although one
+        can set a flag to force the compiler to do no more reordering
+        than is necessary, in general this will mean that many
+        optimizations will not be applicable.  The upshot of this is
+        that one should avoid writing code that assumes a particular
+        evaluation order other than that dictated by mode
+        constraints.)
+
+        A conjunction executes by trying each of the goals in order.
+        If a goal fails then the program backtracks to the nearest
+        preceding choice-point (i.e. non-deterministic goal that may
+        have other solutions).
+
+    NEGATION
+
+        A goal of the form not G succeeds iff G has no solutions.  G
+        may be a compound goal, in which case it should be enclosed in
+        parentheses to avoid syntactic precedence problems.
+
+        The sub-goal G is said to be in a /negated context/ and as
+        such cannot bind any variables visible outside the negation
+        (since the only way not G can succeed is if G fails.)
 
     IF-THEN-ELSE
+
+        Mercury's if-then-else construct looks like this:
+
+            [begin code]
+
+            ( if ConditionGoal then YesGoal else NoGoal )
+
+            [end code]
+
+        (You may also see if-then-elses written as
+
+            [begin code]
+
+            ( ConditionGoal -> YesGoal ; NoGoal )
+
+            [end code]
+
+        although the author finds this style less appealing.)
+
+        Note that the else clause is /not/ optional in Mercury.  Also,
+        while the parentheses are not always required, it is a very
+        good idea to include them in order to avoid confusing errors
+        with syntactic precedence.
+
+        An if-then-else goal works just as you would expect, with the
+        following provisos:
+        - if the ConditionGoal is non-deterministic and the YesGoal
+          fails then the program will backtrack into the
+          ConditionGoal;
+        - if there is any solution to the ConditionGoal then the
+          NoGoal will never be executed;
+        - the ConditionGoal may not bind any variables that are
+          visible outside the if-then-else (logically the
+          ConditionGoal is in a negated context and the same rules
+          apply as for ordinary negated goals - however, the YesGoal
+          /can/ bind externally visible variables to results obtained
+          in the ConditionGoal);
+        - an if-then-else goal can fail in its entirety just like any
+          other compound goal.
+
     DISJUNCTION
+
+        Just as conjunction lets you use "and" to construct goals,
+        disjunction lets you use logical "or".  A disjunctive goal
+        takes the form (G1 ; G2 ; ... ; Gn) with the semicolons being
+        read as "or".
+
+        A disjunction succeeds iff any of its disjunct sub-goals
+        succeeds.  A disjunction has as many solutions as all of its
+        disjuncts put together: if one disjunct fails or backtracking
+        exhausts all the solutions for one disjunct then execution
+        proceeds with the next disjunct.  Again, the compiler is
+        generally free to reorder disjuncts, although this should not
+        have a visible impact on programs.  Disjunctions are typically
+        non-deterministic, although switch disjunctions described
+        below are a special case.
+
+        The clausal notation we have been using in the examples above
+        is in fact convenient syntactic sugar for writing top-level
+        disjunctions.  For example, the ancestor/2 predicate we
+        defined earlier
+
+            [begin code]
+
+            ancestor(Person, Ancestor) :-
+                parent(Person, Ancestor).
+
+            ancestor(Person, Ancestor) :-
+                parent(Person, Parent),
+                ancestor(Parent, Ancestor).
+
+            [end code]
+
+        could be written equivalently as
+
+            [begin code]
+
+            ancestor(Person, Ancestor) :-
+                (
+                    parent(Person, Ancestor)
+                ;
+                    parent(Person, Parent),
+                    ancestor(Parent, Ancestor)
+                ).
+
+            [end code]
+
+        In general it is better style to use clausal form for
+        top-level disjunctions.
+
     SWITCHES
-    BACKTRACKING
+
+        Mercury recognises particular forms of (semi-)deterministic
+        disjunction which it can compile very efficiently.
+
+        The "string" library module defines the following type:
+
+            [begin code]
+
+            :- type poly_type
+                --->    f(float)
+                ;       i(int)
+                ;       s(string)
+                ;       c(char).
+
+            [end code]
+
+        which can be used to form heterogeneous collections of the
+        primitive types (this is useful amongst other things for
+        supplying argument lists to string formatting predicates.)
+
+        Now, say we wanted to write a predicate that would convert any
+        poly_type value into a string representation.  Here's how we
+        might write the code:
+
+            [begin code]
+
+            :- pred poly_type_to_string(poly_type, string).
+            :- mode poly_type_to_string(in, out) is det.
+
+            poly_type_to_string(Poly, String) :-
+                (   Poly = f(Float),    float_to_string(Float, String)
+                ;   Poly = i(Int),      int_to_string(Int, String)
+                ;   Poly = s(String)
+                ;   Poly = c(Char),     char_to_string(Char, String)
+                ).
+
+            [end code]
+
+        The compiler knows that since Poly is an input variable it
+        must be bound when the disjunction executes.  It will then 
+        observe that the disjunction has one arm for each possible
+        poly_type constructor (the Poly unifications) and deduce that
+        for any value of Poly, exactly one disjunct applies.  The
+        compiler can therefore emit faster, simpler code for the
+        resulting object code for this disjunction.  These kinds of
+        disjunction are called /switches/ because they are very
+        similar to switch constructs in C.  Moreover, because the rest
+        of each disjunct is deterministic, the compiler can deduce
+        that the switch (and hence the predicate as a whole) must be
+        deterministic.
+
+        Switches are a very elegant way of describing conditions based
+        on unification tests and are typically more efficient than the
+        equivalent if-then-else chains.
+
+        (Aside: in real the above code would probably be written in
+        clausal form:
+
+            [begin code]
+
+            poly_type_to_string(f(F), S) :- float_to_string(F, S)
+            poly_type_to_string(i(I), S) :- int_to_string(I, S)
+            poly_type_to_string(s(S), S).
+            poly_type_to_string(c(C), S) :- char_to_string(C, S)
+
+            [end code]
+
+        The switch would still be detected, of course.)
+
+    IMPLICATION
+
+        Mercury has three types of goal for describing implicative
+        relationships between goals.
+
+            - G1 => G2 is shorthand for (not G1 ; G2);
+            - G1 <= G2 is shorthand for (G2 => G1); and
+            - G1 <=> G2 is shorthand for ((G1 => G2), (G1 <= G2)).
+
+        Note that parentheses are required around G1 and G2 if they
+        are not atomic goals.
+
+    EXISTENTIAL QUANTIFICATION
+
+        Sometimes we only need to know whether a solution exists, but
+        are not interested in the result.  For this we use existential
+        quantification, which looks like this:
+
+            (some [X, Y, Z] G)
+
+        A goal of this form will succeed iff there is a solution to G,
+        but any bindings for X, Y and Z will not be visible outside
+        the quantification - it's rather like saying that X, Y and Z
+        are local variables for the goal G.
+
+        Mercury has an rule that any variables in a clause that do not
+        also appear in the head are implicitly existentially
+        quantified, which means you never actually need to use
+        explicit existential quantification in your programs.
+
+    UNIVERSAL QUANTIFICATION
+
+        On the other hand, we may wish to know whether a particular
+        property holds for all solutions to a particular goal.  This
+        is where universal quantification is useful.
+
+        The goal
+
+            (all [X, Y, Z] G)
+
+        is equivalent to writing
+
+            not (some [X, Y, Z] not G)
+
+        An example of use:
+
+            [begin code]
+
+            :- pred all_even(list(int)).
+            :- mode all_even(in) is semidet.
+
+            all_even(Xs) :-
+                all [X] (member(X, Xs)  =>  X `mod` 2 = 0).
+
+            [end code]
+
+    HIGHER ORDER APPLICATION
+
+        [XXX I'll talk about this later.]
+
+    NOTE ON VARIABLE NAMES
+
+        Often one is not interested in a particular output variable
+        from a call or unification.  In these cases you can use the
+        special variable named "_" (a single underscore) which stands
+        for a different "don't care" variable every time it appears.
+
+        Sometimes, however, it makes programs easier to read if you do
+        name don't care variables.  Since variables that only appear
+        once in a clause are usually the result of typographical
+        error, the compiler will issue a warning when it sees such
+        things.  To get around this problem, /prefixing/ a variable
+        name with an underscore (e.g. "_X") tells the compiler that
+        you know this is a named don't care variable and that there's
+        no need to issue a warning.
 
 FUNCTIONS
     DEFINITION
