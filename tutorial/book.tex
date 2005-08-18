@@ -181,12 +181,21 @@
 
 \chapter{About this book}
 
-Last edited Oct 13 15:28
+Last edited Apr 11 10:40
+
+\textbf{Disclaimer.}
+\\
+This is a work in progress.
 
 \textbf{What is this book for?}
 \\
 A basis for courses teaching or using Mercury.  A tutorial for
 experienced programmers wishing to learn Mercury.
+
+\textbf{What version of Mercury is used in the book?}
+\\
+Any recent release-of-the-day (ROTD) compiler will do.  The text as of today
+(10 April 2005) will work fine for Mercury release 0.12.
 
 \textbf{Who is it aimed at?}
 \\
@@ -219,12 +228,21 @@ techniques (e.g. dynamic type casts for non-ground types).
 I plan to write the introduction last.  It will include a brief description
 of ``what Mercury is all about'' and an explanation of what the book is
 trying to do.
+
+\textbf{Where should I send comments?}
+\\
+Please subscribe to the Mercury users' mailing list by sending an e-mail
+containing the word ``subscribe'' in the body (as opposed to the subject
+line) to \textsf{mercury{\ensuremath{-}}users{\ensuremath{-}}request@cs.mu.oz.au} (this is a very low bandwidth
+mailing list).  Then you can send comments to \textsf{mercury{\ensuremath{-}}users@cs.mu.oz.au}.
+All feedback is very gratefully received, particularly with reference to
+missing topics.
 \setcounter{chapter}{0}
 % vim: ft=tex ff=unix ts=4 sw=4 et tw=76
 
 \chapter{Mercury By Example}
 
-Last edited Jan 28 13:23
+Last edited Feb 2 12:41
 
 This chapter aims to convey through examples a basic feeling for how
 Mercury works.  Because this is the first chapter, we may gloss over some
@@ -1479,7 +1497,10 @@ so it will not warn us about missing possible values for the first argument.
 In the \textsf{fib} program the switch had to be exhaustive, so it could not fail,
 because \textsf{main} was declared to be \textsf{\textbf{det}}.  Had we missed a possible case out
 of that switch, the compiler would have reported the missing case as an
-error.)
+error.  Similarly, because \textsf{rot13b} cannot have more than one solution for
+any input, the compiler will report an error if we have duplicate clauses
+matching the same input.  The compiler won't warn us about such problems if
+we use chains of \textsf{\textbf{if}{\ensuremath{-}}\textbf{then}{\ensuremath{-}}\textbf{else}}s.)
 
 Note that if we felt so inclined, we could make \textsf{rot13b} deterministic by
 including the translation of every possible character!  Of course, there are
@@ -2991,7 +3012,7 @@ explicit type qualification of local vars.}
 
 \chapter{The Mercury mode system}
 
-Last edited Jan 27 17:46
+Last edited Jun 7 16:38
 
 Mercury programs are really just logical formulae written down using a
 particular syntax.  The Mercury compiler, however, needs extra information
@@ -3364,9 +3385,9 @@ the compiler will conclude that conjunction \textsf{small\_prime(X), X {\ensurem
 
 \subsection*{Disjunction}
 
-A sequence of goals separated by commas, \textsf{(G$_{1}$ ; G$_{2}$ ; G$_{3}$ ; ...)}, is called a
-\emph{disjunction}.  The commas are pronounced ``or'' and each subgoal is
-called a \emph{disjunct}.
+A sequence of goals separated by semicolons, \textsf{(G$_{1}$ ; G$_{2}$ ; G$_{3}$ ; ...)}, is
+called a \emph{disjunction}.  The semicolons are pronounced ``or'' and each
+subgoal is called a \emph{disjunct}.
 
 A disjunction can succeed if any disjunct can succeed.
 
@@ -3508,6 +3529,10 @@ variables that are used by \textsf{Gt}.
 \textsf{( \textbf{if} small\_prime(X), X {\ensuremath{>}} 2 \textbf{then} Y {\ensuremath{=}} X {\ensuremath{*}} X \textbf{else} Y {\ensuremath{=}} {\ensuremath{-}}1 )}
 
 has solutions \textsf{Y {\ensuremath{=}} 9}, \textsf{Y {\ensuremath{=}} 25}, and \textsf{Y {\ensuremath{=}} 49}.
+
+\textbf{Prolog programmers take note:} unlike Mercury, Prolog programs
+commit to the first solution of \textsf{Gc}.  The Prolog equivalent of the above
+goal would have \textsf{Y {\ensuremath{=}} 9} as its only solution, not \textsf{Y {\ensuremath{=}} 25} or \textsf{Y {\ensuremath{=}} 49}.
 
 \Note \textsf{( Gc {\ensuremath{-}}{\ensuremath{>}} Gt ; Ge )} is an alternative, albeit old-fashioned, syntax for
 \textsf{( \textbf{if} Gc \textbf{then} Gt \textbf{else} Ge )}.
@@ -3671,7 +3696,8 @@ the same as they were before the goal was tried.
 \subsection*{Specialised insts}
 
 It is occasionally useful to define new \textsf{\textbf{inst}}s matching only subsets of
-possible values that a variable might have.  Consider the following:
+possible values that a variable might have.  Consider the \textsf{\textbf{inst}}
+\textsf{non\_empty\_list} which is defined in the \textsf{list} standard library module:
 
 \begin{small}
 

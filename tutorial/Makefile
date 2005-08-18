@@ -9,7 +9,9 @@ book.dvi:
 
 book.ps: book.dvi
 	dvips book.dvi
+	gzip -c book.ps > book.ps.gz
 
 book.pdf: book.ps
-	ps2pdf book.ps
+	pdflatex book.tex
 
+all: book.dvi book.ps book.pdf

@@ -245,9 +245,9 @@ the compiler will conclude that conjunction #small_prime(X), X = 4# is
 
 \subsection*{Disjunction}
 
-A sequence of goals separated by commas, #(G1 ; G2 ; G3 ; ...)#, is called a
-\emph{disjunction}.  The commas are pronounced ``or'' and each subgoal is
-called a \emph{disjunct}.
+A sequence of goals separated by semicolons, #(G1 ; G2 ; G3 ; ...)#, is
+called a \emph{disjunction}.  The semicolons are pronounced ``or'' and each
+subgoal is called a \emph{disjunct}.
 
 A disjunction can succeed if any disjunct can succeed.
 
@@ -340,6 +340,10 @@ variables that are used by #Gt#.
 #( if small_prime(X), X > 2 then Y = X * X else Y = -1 )#
 
 has solutions #Y = 9#, #Y = 25#, and #Y = 49#.
+
+\textbf{Prolog programmers take note:} unlike Mercury, Prolog programs
+commit to the first solution of #Gc#.  The Prolog equivalent of the above
+goal would have #Y = 9# as its only solution, not #Y = 25# or #Y = 49#.
 
 \Note #( Gc -> Gt ; Ge )# is an alternative, albeit old-fashioned, syntax for
 #( if Gc then Gt else Ge )#.
@@ -452,7 +456,8 @@ the same as they were before the goal was tried.
 \subsection*{Specialised insts}
 
 It is occasionally useful to define new #inst#s matching only subsets of
-possible values that a variable might have.  Consider the following:
+possible values that a variable might have.  Consider the #inst#
+#non_empty_list# which is defined in the #list# standard library module:
 
 %startcode
 :- inst non_empty_list == bound([ground | ground]).

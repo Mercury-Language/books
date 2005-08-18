@@ -659,7 +659,10 @@ so it will not warn us about missing possible values for the first argument.
 In the #fib# program the switch had to be exhaustive, so it could not fail,
 because #main# was declared to be #det#.  Had we missed a possible case out
 of that switch, the compiler would have reported the missing case as an
-error.)
+error.  Similarly, because #rot13b# cannot have more than one solution for
+any input, the compiler will report an error if we have duplicate clauses
+matching the same input.  The compiler won't warn us about such problems if
+we use chains of #if-then-else#s.)
 
 Note that if we felt so inclined, we could make #rot13b# deterministic by
 including the translation of every possible character!  Of course, there are

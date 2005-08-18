@@ -1,14 +1,14 @@
 #!/usr/bin/gawk -f
 
-# Turns `@...@' sequences in tex documents into `\verb@...@'.
+# Turns `#...#' sequences in tex documents into `\verb#...#'.
 # This is necessary for tex documents using
 #
 #	\usepackage{doc}
-#	\MakeShortVerb{\@}
+#	\MakeShortVerb{\#}
 #
 # that are to be processed by latex2html.
 
 /begin{verbatim}/	{ expand = 0 }			# Skip verbatim blocks
 /end{verbatim}/		{ expand = 1 }
-expand && /@/		{ gsub("@[^@]*@", "\\verb&") }	# Prepend \verb to @...@
+expand && /#/		{ gsub("#[^#]*#", "\\verb&") }	# Prepend \verb to #...#
 1							# Print the current line
