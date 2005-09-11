@@ -1,0 +1,17 @@
+#!/bin/sh
+
+TODAYS_DIFF_DIR=diffs-$(date +%Y-%m-%d)
+PREVIOUS_DIFF_DIR=$(ls -d diffs-* 2>/dev/null | tail -2 | head -1)
+
+mkdir -p $TODAYS_DIFF_DIR
+rm -f $TODAYS_DIFF_DIR/diffs
+cp *.polytex $TODAYS_DIFF_DIR
+
+if [ -d "$PREVIOUS_DIFF_DIR" ]
+then
+	for i in *.polytex
+	do
+		[ -f $PREVIOUS_DIFF_DIR/$i -a -f $TODAYS_DIFF_DIR/$i ] &&
+		true diff -u $PREVIOUS_DIFF_DIR/$i $TODAYS_DIFF_DIR/$i >> $TODAYS_DIFF_DIR/diffs
+	done
+fi
