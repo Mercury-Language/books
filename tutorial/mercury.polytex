@@ -1,0 +1,80 @@
+\newcommand{\polytexopenbrace}%
+{\{}
+\newcommand{\polytexclosebrace}%
+{\}}
+\newcommand{\polytexampersand}%
+{\&}
+%beforestart                    \begin{small}
+%afterend                       \end{small}
+%wrapper                        \textsf{&}
+%subst "([^"]*)"                ``\1''
+%subst {			polytexopenbrace
+%subst }			polytexclosebrace
+%subst &			polytexampersand
+%subst \\                       {\ensuremath{\backslash}}
+%subst polytexopenbrace		{\{}
+%subst polytexclosebrace	{\}}
+%subst polytexampersand		{\&}
+%%subst %.*                      \textrm{&}
+%subst %                        \%
+%subst \^                       \char`\^{}
+%subst \~                       \char`\~{}
+%subst \[                       \char`\[{}
+%subst \]                       \char`\]{}
+%subst \$                       \char`\${}
+%subst \|                       $|$
+%subst \<some\>                 \textbf{&}
+%subst \<all\>                  \textbf{&}
+%subst \<func\>                 \textbf{&}
+%subst \<pred\>                 \textbf{&}
+%subst \<solver\>               \textbf{&}
+%subst \<type\>                 \textbf{&}
+%subst \<inst\>                 \textbf{&}
+%subst \<mode\>                 \textbf{&}
+%subst \<is\>                   \textbf{&}
+%subst \<det\>                  \textbf{&}
+%subst \<semidet\>              \textbf{&}
+%subst \<failure\>              \textbf{&}
+%subst \<erroneous\>            \textbf{&}
+%subst \<multi\>                \textbf{&}
+%subst \<nondet\>               \textbf{&}
+%subst \<cc_nondet\>            \textbf{&}
+%subst \<cc_multi\>             \textbf{&}
+%subst \<impure\>               \textit{&}
+%subst \<semipure\>             \textit{&}
+%subst \<if\>                   \textbf{&}
+%subst \<then\>                 \textbf{&}
+%subst \<else\>                 \textbf{&}
+%subst \<not\>                  \textbf{&}
+%subst \<true\>                 \textbf{&}
+%subst \<false\>                \textbf{&}
+%subst \<where\>                \textbf{&}
+%subst \<pragma\>               \textbf{&}
+%subst \<typeclass\>            \textbf{&}
+%subst \<module\>               \textbf{&}
+%subst \<interface\>            \textbf{&}
+%subst \<implementation\>       \textbf{&}
+%subst \<import_module\>        \textbf{&}
+%subst \<use_module\>           \textbf{&}
+%subst \<include_module\>       \textbf{&}
+%subst \<end_module\>           \textbf{&}
+%subst \<with_type\>            \textbf{&}
+%subst \<with_inst\>            \textbf{&}
+%%subst --->                     $\longrightarrow$
+%%subst -->                      $\rightarrow$
+%%subst ->                       $\rightarrow$
+%%subst =<                       $\leq$
+%%subst >=                       $\geq$
+%%subst <=>                      $\Leftrightarrow$
+%%subst <=                       $\Leftarrow$
+%%subst =>                       $\Rightarrow$
+%%subst <<                       $\ll$
+%%subst >>                       $\gg$
+%subst <                        {\ensuremath{<}}
+%subst >                        {\ensuremath{>}}
+%subst =                        {\ensuremath{=}}
+%subst -                        {\ensuremath{-}}
+%subst +                        {\ensuremath{+}}
+%subst *                        {\ensuremath{*}}
+%subst _                        \_
+%subst (\<[A-Z][A-Za-z\_]*)([0-9]+)      \1$_{\2}$

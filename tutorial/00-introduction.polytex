@@ -1,0 +1,62 @@
+% vim: ft=tex ff=unix ts=4 sw=4 et tw=76
+
+
+
+\chapter{About this book}
+
+%include 00-introduction.polytex.date
+
+\textbf{Disclaimer.}
+\\
+This is a work in progress.
+
+\textbf{What is this book for?}
+\\
+A basis for courses teaching or using Mercury.  A tutorial for
+experienced programmers wishing to learn Mercury.
+
+\textbf{What version of Mercury is used in the book?}
+\\
+Any recent release-of-the-day (ROTD) compiler will do.  The text as of today
+(10 April 2005) will work fine for Mercury release 0.12.
+
+\textbf{Who is it aimed at?}
+\\
+Students who have completed at least one year of a computer science
+degree, been exposed to a strongly, statically typed functional programming
+language (\eg ML, Haskell, Miranda), and have some reasonable programming
+experience.
+
+\textbf{What is this book about?}
+\\
+This book is a tutorial on programming in Mercury.  The book should
+provide the reader with enough information to become a competent Mercury
+programmer and knowledge sufficient to understand the Mercury Reference
+Manual, the Mercury Library Reference Manual and the Mercury Users' Guide.
+The book will describe key features of Mercury in detail, including the type
+system, the mode and determinism systems, and programming with
+nondeterminism.
+
+\textbf{What is this book not about?}
+\\
+This book will not teach you how to program in general, nor will it teach
+you a great deal of theory.  It will not teach you how type inference works;
+it will (probably) not teach you about Herbrand universes; it will not
+include an extended treatise on IO in declarative programming languages; it
+will not (in the first place) cover black-belt Mercury programming
+techniques (e.g. dynamic type casts for non-ground types).
+
+\textbf{Where is the introduction?}
+\\
+I plan to write the introduction last.  It will include a brief description
+of ``what Mercury is all about'' and an explanation of what the book is
+trying to do.
+
+\textbf{Where should I send comments?}
+\\
+Please subscribe to the Mercury users' mailing list by sending an e-mail
+containing the word ``subscribe'' in the body (as opposed to the subject
+line) to #mercury-users-request@cs.mu.oz.au# (this is a very low bandwidth
+mailing list).  Then you can send comments to #mercury-users@cs.mu.oz.au#.
+All feedback is very gratefully received, particularly with reference to
+missing topics.
