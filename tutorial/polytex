@@ -10,7 +10,7 @@ set -x
 case $# in
 0)
 	TEXFILE=$(tempfile --dir=/tmp --suffix=.tex)
-	polytex2tex > $TEXFILE
+	./polytex2tex > $TEXFILE
 	latex $TEXFILE && rm $TEXFILE
 	;;
 1)
@@ -22,7 +22,7 @@ case $# in
 	case "$1" in
 	*.polytex)
 		TEXFILE=$(echo "$1" | sed 's/polytex$/tex/')
-		polytex2tex "$1" > $TEXFILE
+		./polytex2tex "$1" > $TEXFILE
 		latex $TEXFILE
 		;;
 	*.tex)

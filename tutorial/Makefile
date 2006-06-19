@@ -4,8 +4,8 @@
 
 book.dvi:
 	for i in *.polytex; do echo "$$(ls -l $$i | gawk '{print "Last edited", $$6, $$7, $$8}')" > $$i.date; done
-	create-diffs-if-necessary
-	polytex book.polytex
+	./create-diffs-if-necessary
+	./polytex book.polytex
 
 book.ps: book.dvi
 	dvips book.dvi
