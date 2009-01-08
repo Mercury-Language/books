@@ -99,8 +99,6 @@ Hello, World!
 Et voila!  (By default, #mmc --make# will construct a local #Mercury#
 directory, if necessary, to hold intermediate files generated during
 compilation.)
-\XXX{Check for consistency throughout whether we're using a #Mercury#
-subdirectory or not when compiling.}
 
 At this point the reader is probably wondering about the meaning of the #io#
 type arguments #IOState_in# and #IOState_out#, and the strange #di# and #uo#
@@ -734,11 +732,11 @@ main(!IO) :-
     ( if
         Ds0 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],  C0 = 0,
         pick(Ds0, G, Ds1),
-        pick(Ds1, T, Ds2),  S1 = G + T + C0,  T = S1 mod 10,       C1 = S1 / 10,
+        pick(Ds1, T, Ds2),  S1 = G+T+C0,  T = S1 mod 10,       C1 = S1/10,
         pick(Ds2, O, Ds3),
-        pick(Ds3, N, Ds4),  S2 = O + N + C1,  A = S2 mod 10,       C2 = S2 / 10,  A \= 0,
+        pick(Ds3, N, Ds4),  S2 = O+N+C1,  A = S2 mod 10,       C2 = S2/10,  A \= 0,
         pick(Ds4, D, Ds5),
-        pick(Ds5, A, Ds6),  S3 = D + A + C2,  C = S3 mod 10,       C3 = S3 / 10,  C \= 0,
+        pick(Ds5, A, Ds6),  S3 = D+A+C2,  C = S3 mod 10,       C3 = S3/10,  C \= 0,
         pick(Ds6, C, _),
         C3 = 0
       then

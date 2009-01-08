@@ -174,75 +174,14 @@
 %%subst <<                       $\ll$
 %%subst >>                       $\gg$
 
-\setcounter{chapter}{-1}
-% vim: ft=tex ff=unix ts=4 sw=4 et tw=76
-
-
-
-\chapter{About this book}
-
-Last edited Jun 19 2006
-
-\textbf{Disclaimer.}
-\\
-This is a work in progress.
-
-\textbf{What is this book for?}
-\\
-A basis for courses teaching or using Mercury.  A tutorial for
-experienced programmers wishing to learn Mercury.
-
-\textbf{What version of Mercury is used in the book?}
-\\
-Any recent release-of-the-day (ROTD) compiler will do.  The text as of today
-(10 April 2005) will work fine for Mercury release 0.12.
-
-\textbf{Who is it aimed at?}
-\\
-Students who have completed at least one year of a computer science
-degree, been exposed to a strongly, statically typed functional programming
-language (\eg ML, Haskell, Miranda), and have some reasonable programming
-experience.
-
-\textbf{What is this book about?}
-\\
-This book is a tutorial on programming in Mercury.  The book should
-provide the reader with enough information to become a competent Mercury
-programmer and knowledge sufficient to understand the Mercury Reference
-Manual, the Mercury Library Reference Manual and the Mercury Users' Guide.
-The book will describe key features of Mercury in detail, including the type
-system, the mode and determinism systems, and programming with
-nondeterminism.
-
-\textbf{What is this book not about?}
-\\
-This book will not teach you how to program in general, nor will it teach
-you a great deal of theory.  It will not teach you how type inference works;
-it will (probably) not teach you about Herbrand universes; it will not
-include an extended treatise on IO in declarative programming languages; it
-will not (in the first place) cover black-belt Mercury programming
-techniques (e.g. dynamic type casts for non-ground types).
-
-\textbf{Where is the introduction?}
-\\
-I plan to write the introduction last.  It will include a brief description
-of ``what Mercury is all about'' and an explanation of what the book is
-trying to do.
-
-\textbf{Where should I send comments?}
-\\
-Please subscribe to the Mercury users' mailing list by sending an e-mail
-containing the word ``subscribe'' in the body (as opposed to the subject
-line) to \textsf{mercury{\ensuremath{-}}users{\ensuremath{-}}request@cs.mu.oz.au} (this is a very low bandwidth
-mailing list).  Then you can send comments to \textsf{mercury{\ensuremath{-}}users@cs.mu.oz.au}.
-All feedback is very gratefully received, particularly with reference to
-missing topics.
+% \setcounter{chapter}{-1}
+% %include 00-introduction.polytex
 \setcounter{chapter}{0}
 % vim: ft=tex ff=unix ts=4 sw=4 et tw=76
 
 \chapter{Mercury By Example}
 
-Last edited Jan 7 12:18
+Last edited Jan 8 16:13
 
 This chapter aims to convey through examples a basic feeling for how
 Mercury works.  Because this is the first chapter, we may gloss over some
@@ -412,8 +351,6 @@ prompt):
 Et voila!  (By default, \textsf{mmc {\ensuremath{-}}{\ensuremath{-}}make} will construct a local \textsf{Mercury}
 directory, if necessary, to hold intermediate files generated during
 compilation.)
-\XXX{Check for consistency throughout whether we're using a \textsf{Mercury}
-subdirectory or not when compiling.}
 
 At this point the reader is probably wondering about the meaning of the \textsf{io}
 type arguments \textsf{IOState\_in} and \textsf{IOState\_out}, and the strange \textsf{di} and \textsf{uo}
@@ -1564,16 +1501,16 @@ Here's a Mercury program to solve this particular cryptarithm:
 
 \begin{ptabular}
 \column{col10}{@{\ }l@{}}
-\column{col68}{@{\ }l@{}}
+\column{col77}{@{\ }l@{}}
 \column{col1}{@{\ }l@{}}
 \column{col14}{@{\ }l@{}}
+\column{col43}{@{\ }l@{}}
 \column{col5}{@{\ }l@{}}
 \column{col26}{@{\ }l@{}}
 \column{col17}{@{\ }l@{}}
 \column{col36}{@{\ }l@{}}
 \column{col7}{@{\ }l@{}}
-\column{col83}{@{\ }l@{}}
-\column{col47}{@{\ }l@{}}
+\column{col64}{@{\ }l@{}}
 \column{col29}{@{\ }l@{}}
 \column{col9}{@{\ }l@{}}
 \column{colend}{@{\ }l@{}}
@@ -1610,29 +1547,29 @@ Here's a Mercury program to solve this particular cryptarithm:
 \nextline
 \fromto{col1}{col9}{\textsf{}}
 \fromto{col9}{col29}{\textsf{pick(Ds$_{1}$, T, Ds$_{2}$),}}
-\fromto{col29}{col47}{\textsf{S$_{1}$ {\ensuremath{=}} G {\ensuremath{+}} T {\ensuremath{+}} C$_{0}$,}}
-\fromto{col47}{col68}{\textsf{T {\ensuremath{=}} S$_{1}$ mod 10,}}
-\fromto{col68}{colend}{\textsf{C$_{1}$ {\ensuremath{=}} S$_{1}$ / 10,}}
+\fromto{col29}{col43}{\textsf{S$_{1}$ {\ensuremath{=}} G{\ensuremath{+}}T{\ensuremath{+}}C$_{0}$,}}
+\fromto{col43}{col64}{\textsf{T {\ensuremath{=}} S$_{1}$ mod 10,}}
+\fromto{col64}{colend}{\textsf{C$_{1}$ {\ensuremath{=}} S$_{1}$/10,}}
 \nextline
 \fromto{col1}{col9}{\textsf{}}
 \fromto{col9}{colend}{\textsf{pick(Ds$_{2}$, O, Ds$_{3}$),}}
 \nextline
 \fromto{col1}{col9}{\textsf{}}
 \fromto{col9}{col29}{\textsf{pick(Ds$_{3}$, N, Ds$_{4}$),}}
-\fromto{col29}{col47}{\textsf{S$_{2}$ {\ensuremath{=}} O {\ensuremath{+}} N {\ensuremath{+}} C$_{1}$,}}
-\fromto{col47}{col68}{\textsf{A {\ensuremath{=}} S$_{2}$ mod 10,}}
-\fromto{col68}{col83}{\textsf{C$_{2}$ {\ensuremath{=}} S$_{2}$ / 10,}}
-\fromto{col83}{colend}{\textsf{A {\ensuremath{\backslash}}{\ensuremath{=}} 0,}}
+\fromto{col29}{col43}{\textsf{S$_{2}$ {\ensuremath{=}} O{\ensuremath{+}}N{\ensuremath{+}}C$_{1}$,}}
+\fromto{col43}{col64}{\textsf{A {\ensuremath{=}} S$_{2}$ mod 10,}}
+\fromto{col64}{col77}{\textsf{C$_{2}$ {\ensuremath{=}} S$_{2}$/10,}}
+\fromto{col77}{colend}{\textsf{A {\ensuremath{\backslash}}{\ensuremath{=}} 0,}}
 \nextline
 \fromto{col1}{col9}{\textsf{}}
 \fromto{col9}{colend}{\textsf{pick(Ds$_{4}$, D, Ds$_{5}$),}}
 \nextline
 \fromto{col1}{col9}{\textsf{}}
 \fromto{col9}{col29}{\textsf{pick(Ds$_{5}$, A, Ds$_{6}$),}}
-\fromto{col29}{col47}{\textsf{S$_{3}$ {\ensuremath{=}} D {\ensuremath{+}} A {\ensuremath{+}} C$_{2}$,}}
-\fromto{col47}{col68}{\textsf{C {\ensuremath{=}} S$_{3}$ mod 10,}}
-\fromto{col68}{col83}{\textsf{C$_{3}$ {\ensuremath{=}} S$_{3}$ / 10,}}
-\fromto{col83}{colend}{\textsf{C {\ensuremath{\backslash}}{\ensuremath{=}} 0,}}
+\fromto{col29}{col43}{\textsf{S$_{3}$ {\ensuremath{=}} D{\ensuremath{+}}A{\ensuremath{+}}C$_{2}$,}}
+\fromto{col43}{col64}{\textsf{C {\ensuremath{=}} S$_{3}$ mod 10,}}
+\fromto{col64}{col77}{\textsf{C$_{3}$ {\ensuremath{=}} S$_{3}$/10,}}
+\fromto{col77}{colend}{\textsf{C {\ensuremath{\backslash}}{\ensuremath{=}} 0,}}
 \nextline
 \fromto{col1}{col9}{\textsf{}}
 \fromto{col9}{colend}{\textsf{pick(Ds$_{6}$, C, \_),}}
@@ -1868,1005 +1805,35 @@ deconstructions, and equality tests.
 \setcounter{chapter}{1}
 % vim: ft=tex ff=unix ts=4 sw=4 et tw=76
 
+\chapter{Lists, IO, and Arithmetic}
 
 
-\chapter{The Mercury type system}
+This chapter covers the basics of three fundamental modules from the
+standard library: \textsf{list} for the list data structure, \textsf{io} for input/output,
+and \textsf{int} for integer arithmetic.
 
-Last edited Feb 2 2005
+Lists are one of the most frequently used data structures.
+The Mercury list data type has two data constructors: \textsf{\char`\[{}\char`\]{}} for the
+empty list and \textsf{\char`\[{}X $|$ Xs\char`\]{}} for the non-empty list whose head (first item) is
+\textsf{X} and whose tail (remainder) is the list \textsf{Xs}.
+Mercury provides some syntactic sugar to make working with lists more
+convenient: \textsf{\char`\[{}1, 2, 3\char`\]{}} is shorthand for \textsf{\char`\[{}1 $|$ \char`\[{}2 $|$ \char`\[{}3 $|$ \char`\[{}\char`\]{}\char`\]{}\char`\]{}\char`\]{}} and
+\textsf{\char`\[{}1, 2 $|$ Xs\char`\]{}} is shorthand for \textsf{\char`\[{}1 $|$ \char`\[{}2 $|$ Xs\char`\]{}\char`\]{}}.
 
-In this chapter we describe the primitive (\ie built-in) Mercury types, and
-how to define and use new types.  The style of this chapter is a little dry,
-so we advise the reader to skim through it the first time around, and then
-dip back into it for reference as occasion demands.
 
-Mercury uses an expressive, statically checked type system similar to
-that of ML and Haskell.  The type system is expressive in the sense that the
-compiler can always infer the type held in a particular variable; apart from
-one exception, which is described below, type casts of the kind found in
-Java and C programs are unnecessary.  Static type checking means that any
-possible type violation in a program is detected at compile-time rather than
-at run-time.  Many common programming errors are, therefore, simply
-inexpressible in Mercury.  A handy secondary benefit of this approach to
-typing is that the compiler can generate highly optimized code.
 
-Mercury also supports dynamic typing and type reflection for the rare cases
-where such things are necessary.  Dynamic typing is supported by a universal
-type that can conceal values of any type at all; however, extracting a
-concealed value does require a checked run-time type cast operation.  Type
-reflection allows a program to examine the structure of values and their
-types.  By way of example, a generic function to compute hash codes for
-values of any type depends upon type reflection.
+\section{Reading and summing a list of ints}
 
-\subsection*{Important!}
-
-Mercury is a purely declarative language.  This means that values are
-immutable: there is no destructive assignment.  Every computation constructs
-a new value for each output.  The compiler may well generate code that uses
-destructive assignment (\eg for efficient array updates), but such things
-are not directly available to the Mercury programmer.
-
-
-
-\section{The primitive types: \textsf{int}, \textsf{float}, \textsf{string}, and \textsf{char}}
-
-\Note The underlying representation of the primitive types
-depends upon the compiler target (C, Java, .Net etc.)  For the C targets
-\textsf{int} corresponds to \textsf{int}, \textsf{float} to \textsf{double}, \textsf{char} to \textsf{char}
-and \textsf{string} to \textsf{char {\ensuremath{*}}}; number ranges, representations, arithmetic
-overflow handling and so forth are dictated by the target machine.
-
-\subsection*{\textsf{int}}
-
-Fixed precision integers are represented by the \textsf{int} type.  Syntactically,
-an \textsf{int} is a sequence of digits, optionally preceded by a minus sign (there
-is no unary plus).  The sequence of digits may be decimal, hexadecimal (if
-preceded by \textsf{0x}), octal (if preceded by \textsf{0o}), or binary (if preceded by
-\textsf{0b}).
-
-Examples: decimal \textsf{{\ensuremath{-}}123}, \textsf{0}, \textsf{42}; hexadecimal \textsf{{\ensuremath{-}}0x7B}, \textsf{0x0}, \textsf{0x2A};
-octal \textsf{{\ensuremath{-}}0o173}, \textsf{0o0}, \textsf{0o52}; binary \textsf{{\ensuremath{-}}0b1111011}, \textsf{0b0}, \textsf{0b101010}.
-
-The sequence \textsf{0'x} denotes the character code for the character \textsf{x}.  For
-example, on an ASCII system \textsf{0'a}, \textsf{0'b}, and \textsf{0'c} denote 97, 98, and 99
-respectively.
-
-The \textsf{int} standard library module must be imported to use any of the
-primitive \textsf{int} operations.
-
-\subsection*{\textsf{float}}
-
-Floating point numbers are represented by the \textsf{float} type, which
-corresponds to the C \textsf{double} type.  Syntactically, a \textsf{float} is a decimal
-floating point number (the decimal point is required), optionally preceded
-by a minus sign, optionally followed by an integer exponent.
-
-These are all equivalent: \textsf{1.414}, \textsf{1414e{\ensuremath{-}}3}, \textsf{.1414e1}, \textsf{0.01414e2};
-either \textsf{e} or \textsf{E} is acceptable as the exponent separator.
-
-The \textsf{float} standard library module must be imported to use any of the
-primitive \textsf{float} operations.  Constants such as \textsf{pi} and \textsf{e} and more
-complex floating point operations, such as the trigonometric functions, are
-defined in the \textsf{math} standard library module.
-
-\subsection*{\textsf{string}}
-
-A string constant is a sequence of characters enclosed in double
-quotes.
-
-Examples: \textsf{`` ''}, \textsf{``Hello, World!{\ensuremath{\backslash}}n''}, \textsf{``{\ensuremath{\backslash}}``Lawks!{\ensuremath{\backslash}}'' I declared.''}.
-
-Certain characters have special syntax referred known as \emph{character
-escapes}:
-
-\begin{tabular}{llll}
-\textsf{{\ensuremath{\backslash}}"} & double quote &
-\textsf{{\ensuremath{\backslash}}{\ensuremath{\backslash}}} & backslash \\
-\textsf{{\ensuremath{\backslash}}'} & single quote &
-\textsf{{\ensuremath{\backslash}}a} & alert (``beep'') \\
-\textsf{{\ensuremath{\backslash}}b} & backspace &
-\textsf{{\ensuremath{\backslash}}r} & carriage return \\
-\textsf{{\ensuremath{\backslash}}f} & form-feed &
-\textsf{{\ensuremath{\backslash}}t} & tab \\
-\textsf{{\ensuremath{\backslash}}n} & newline &
-\textsf{{\ensuremath{\backslash}}v} & vertical tab
-\end{tabular}
-
-
-Characters can also be specified by character code using the sequence
-\textsf{{\ensuremath{\backslash}}xhh{\ensuremath{\backslash}}}, where \textsf{hh} is a hexadecimal number, or \textsf{{\ensuremath{\backslash}}ooo{\ensuremath{\backslash}}}, where \textsf{ooo} is an
-octal number.  the ASCII character \textsf{A}, for example, can also be written
-as \textsf{{\ensuremath{\backslash}}x41{\ensuremath{\backslash}}} or \textsf{{\ensuremath{\backslash}}101{\ensuremath{\backslash}}}.
-
-\Note For arcane reasons, it is a Very Bad Idea to include the \textsf{NUL}
-character, \textsf{{\ensuremath{\backslash}}x00{\ensuremath{\backslash}}}, in strings.
-
-A backslash at the end of a line is ignored in string constants.  Thus
-\\\textsf{``abc{\ensuremath{\backslash}}}\\\textsf{def"}\\ is equivalent to just \textsf{``abcdef''}.  Otherwise, literal
-newlines may appear in a string constant:
-\\\textsf{``pqr}\\\textsf{xyz''}\\ is equivalent to \textsf{``pqr{\ensuremath{\backslash}}nxyz''}.
-
-The \textsf{string} standard library module must be imported to use any of the
-primitive \textsf{string} operations.  In particular it defines \textsf{{\ensuremath{+}}{\ensuremath{+}}}, the string
-concatenatation function --- for example, \textsf{``foo'' {\ensuremath{+}}{\ensuremath{+}} ``bar'' {\ensuremath{=}} ``foobar''}.
-
-\subsection*{\textsf{char}}
-
-Character constants are represented using the \textsf{char} type and,
-syntactically, are single characters (or character escapes or character
-codes as described above) enclosed in single quotes.  Characters that could
-be interpreted as infix operators, such as \textsf{{\ensuremath{+}}} and \textsf{{\ensuremath{*}}}, should be further
-enclosed in parentheses.
-
-Examples: \textsf{'A'}, \textsf{'{\ensuremath{\backslash}}x41{\ensuremath{\backslash}}'}, \textsf{'{\ensuremath{\backslash}}101{\ensuremath{\backslash}}'}, \textsf{'{\ensuremath{\backslash}}''}, \textsf{'{\ensuremath{\backslash}}n'}, \textsf{('{\ensuremath{+}}')}, \textsf{('{\ensuremath{*}}')}.
-
-\XXX{Are we ASCII specific?}
-
-The \textsf{char} standard library module must be imported to use any of the
-primitive operations on \textsf{char}s.
-
-
-
-\section{Tuples}
-
-A tuple is a fixed size vector of values.  Syntactically, a tuple
-\emph{type} is a comma separated sequence of type names enclosed in braces,
-whereas a tuple \emph{value} is a comma separated sequence of values enclosed in
-braces.
-
-Examples:
-\textsf{{\{}111, 'b'{\}}} is a value of type \textsf{{\{}int, char{\}}};
-\textsf{{\{}1.2, 3, ``456''{\}}} is a value of type \textsf{{\{}float, int, string{\}}};
-\textsf{{\{}``a'', {\{}``little'', ``contrived''{\}}{\}}} is a value of type
-\textsf{{\{}string, {\{}string, string{\}}{\}}}.
-
-\Note Unlike lists (described below), tuples are constructed
-and deconstructed as complete entities.  There is no such thing as the head
-or tail of a tuple.  \XXX{Should we include this note at all?  Or move the
-whole tuples section after lists?}
-
-Tuples are occasionally useful for aggregating small numbers of different
-types.  More often than not it is better style to use a discriminated union
-type.
-
-
-
-\section{Lists}
-
-A list is a linear sequence of values sharing the same type.  Syntactically,
-a list is a comma separated sequence of values enclosed in brackets.
-
-Examples:
-\textsf{\char`\[{}\char`\]{}} denotes the empty list, regardless of the list type;
-\textsf{\char`\[{}1, 2, 3\char`\]{}} is a value of type \textsf{list(int)};
-\textsf{\char`\[{}'a', 'b', 'c', 'd'\char`\]{}} is a value of type \textsf{list(char)};
-\textsf{\char`\[{}\char`\[{}1\char`\]{}, \char`\[{}2, 3\char`\]{}, \char`\[{}4\char`\]{}\char`\]{}} is a value of type \textsf{list(list(int))}.
-
-It is an error to mix values of different types inside a list because there
-is no way to give a type to values such as \textsf{\char`\[{}1, ``2'', 3.4\char`\]{}}.
-
-The \textsf{list} standard library module defines the \textsf{list} type and a wealth of
-list operations.  If you forget to import the \textsf{list} module then the
-compiler will issue warnings like this:
-
-\begin{small}
-\textsf{foo.m:031:   error: undefined symbol `[$|$]/2'}\\
-\textsf{foo.m:031:   (the module `list' has not been imported).}
-\end{small}
-
-Lists are actually composed of two kinds of building block: \textsf{\char`\[{}\char`\]{}} (the empty
-list) and \textsf{\char`\[{}$|$\char`\]{}} (the non-empty list constructor, pronounced ``cons'').  If
-\textsf{X} is an \textsf{int}, say, and \textsf{Xs} a \textsf{list(int)}, then \textsf{\char`\[{}$|$\char`\]{}(X, Xs)} is a
-\textsf{list(int)} whose \emph{head} (first member) is \textsf{X} and whose \emph{tail}
-(list of trailing members) is \textsf{Xs}.
-
-Lists are so common that special syntactic sugar exists for them:
-\textsf{\char`\[{}X $|$ Xs\char`\]{}} is shorthand for \textsf{\char`\[{}$|$\char`\]{}(X, Xs)};
-\textsf{\char`\[{}X, Y, Z $|$ Ws\char`\]{}} is shorthand for \textsf{\char`\[{}X $|$ \char`\[{}Y $|$ \char`\[{}Z $|$ Ws\char`\]{}\char`\]{}\char`\]{}};
-and \textsf{\char`\[{}X, Y, Z\char`\]{}} is shorthand for \textsf{\char`\[{}X, Y, Z $|$ \char`\[{}\char`\]{}\char`\]{}}.
-
-
-
-\section{Discriminated union types}
-
-Discriminated unions allow the definition of new, structured types.
-This example shows a representation of playing cards using discriminated
-union types:
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{col23}{@{\ }l@{}}
-\column{col45}{@{\ }l@{}}
-\column{col37}{@{\ }l@{}}
-\column{col65}{@{\ }l@{}}
-\column{col56}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\column{col29}{@{\ }l@{}}
-\fromto{col1}{col23}{\textsf{:{\ensuremath{-}} \textbf{type} playing\_card}}
-\fromto{col23}{col29}{\textsf{{\ensuremath{-}}{\ensuremath{-}}{\ensuremath{-}}{\ensuremath{>}}}}
-\fromto{col29}{colend}{\textsf{card(rank, suit) ; joker.}}
-\nextline
-\fromto{col1}{col23}{\textsf{:{\ensuremath{-}} \textbf{type} rank}}
-\fromto{col23}{col29}{\textsf{{\ensuremath{-}}{\ensuremath{-}}{\ensuremath{-}}{\ensuremath{>}}}}
-\fromto{col29}{col37}{\textsf{ace}}
-\fromto{col37}{col45}{\textsf{; two}}
-\fromto{col45}{col56}{\textsf{; three}}
-\fromto{col56}{colend}{\textsf{; four}}
-\nextline
-\fromto{col1}{col23}{\textsf{}}
-\fromto{col23}{col29}{\textsf{;}}
-\fromto{col29}{col37}{\textsf{five}}
-\fromto{col37}{col45}{\textsf{; six}}
-\fromto{col45}{col56}{\textsf{; seven}}
-\fromto{col56}{colend}{\textsf{; eight}}
-\nextline
-\fromto{col1}{col23}{\textsf{}}
-\fromto{col23}{col29}{\textsf{;}}
-\fromto{col29}{col37}{\textsf{nine}}
-\fromto{col37}{col45}{\textsf{; ten}}
-\fromto{col45}{col56}{\textsf{; jack}}
-\fromto{col56}{col65}{\textsf{; queen}}
-\fromto{col65}{colend}{\textsf{; king.}}
-\nextline
-\fromto{col1}{col23}{\textsf{:{\ensuremath{-}} \textbf{type} suit}}
-\fromto{col23}{col29}{\textsf{{\ensuremath{-}}{\ensuremath{-}}{\ensuremath{-}}{\ensuremath{>}}}}
-\fromto{col29}{colend}{\textsf{clubs ; diamonds ; hearts ; spades.}}
-\nextline
-\end{ptabular}
-
-\end{small}
-The \emph{data constructors} defining the values of the discriminated union
-types appear to the right of the arrows: \textsf{suit} has four possible values,
-\textsf{rank} thirteen, and \textsf{playing\_card} fifty three (fifty two possible \textsf{card}
-values from \textsf{card(ace, clubs)}, \textsf{card(two, clubs)}, all the way up to
-\textsf{card(king, spades)}, plus the \textsf{joker} option).
-
-An exhaustive switch on a discriminated union type must test for every
-possible top-level data constructor.  That is, an exhaustive switch on a
-\textsf{playing\_card} value need only test for \textsf{card(\_, \_)} and \textsf{joker} rather
-than every specific \textsf{card} instance.
-
-(The term ``discriminated union'' is used because a type denotes a union of
-sets of possible values, each of which is distinguished by its data
-constructor.)
-
-
-
-\subsection*{Data constructors with named fields}
-
-The fields of a data constructor can be named:
-\begin{small}
-
-\begin{ptabular}
-\column{col49}{@{\ }l@{}}
-\column{col59}{@{\ }l@{}}
-\column{col1}{@{\ }l@{}}
-\column{col37}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{col37}{\textsf{:{\ensuremath{-}} \textbf{type} bank\_account {\ensuremath{-}}{\ensuremath{-}}{\ensuremath{-}}{\ensuremath{>}} account(}}
-\fromto{col37}{col49}{\textsf{name}}
-\fromto{col49}{colend}{\textsf{:: string,}}
-\nextline
-\fromto{col1}{col37}{\textsf{}}
-\fromto{col37}{col49}{\textsf{account\_no}}
-\fromto{col49}{colend}{\textsf{:: int,}}
-\nextline
-\fromto{col1}{col37}{\textsf{}}
-\fromto{col37}{col49}{\textsf{funds}}
-\fromto{col49}{col59}{\textsf{:: float}}
-\fromto{col59}{colend}{\textsf{).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-We can use field names to access fields directly without having to
-first deconstruct a \textsf{bank\_account} value.  That is, rather than writing
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{col5}{@{\ }l@{}}
-\column{col7}{@{\ }l@{}}
-\column{col9}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{col5}{\hspace*{1.2em}}
-\fromto{col5}{colend}{\textsf{BankAcct {\ensuremath{=}} account(Name, AcctNo, Funds),}}
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{colend}{\textsf{( \textbf{if} Funds {\ensuremath{>}}{\ensuremath{=}} RequestedSum \textbf{then}}}
-\nextline
-\fromto{col1}{col9}{\hspace*{2.4em}}
-\fromto{col9}{colend}{\textsf{... debit RequestedSum from BankAcct ...}}
-\nextline
-\fromto{col1}{col7}{\hspace*{1.8em}}
-\fromto{col7}{colend}{\textsf{\textbf{else}}}
-\nextline
-\fromto{col1}{col9}{\textsf{}}
-\fromto{col9}{colend}{\textsf{... reject debit request ...}}
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{colend}{\textsf{)}}
-\nextline
-\end{ptabular}
-
-\end{small}
-we can write
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{col5}{@{\ }l@{}}
-\column{col7}{@{\ }l@{}}
-\column{col9}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{col5}{\hspace*{1.2em}}
-\fromto{col5}{colend}{\textsf{( \textbf{if} BankAcct\char`\^{}funds {\ensuremath{>}}{\ensuremath{=}} RequestedSum \textbf{then}}}
-\nextline
-\fromto{col1}{col9}{\hspace*{2.4em}}
-\fromto{col9}{colend}{\textsf{... debit RequestedSum from BankAcct ...}}
-\nextline
-\fromto{col1}{col7}{\hspace*{1.8em}}
-\fromto{col7}{colend}{\textsf{\textbf{else}}}
-\nextline
-\fromto{col1}{col9}{\textsf{}}
-\fromto{col9}{colend}{\textsf{... reject debit request ...}}
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{colend}{\textsf{)}}
-\nextline
-\end{ptabular}
-
-\end{small}
-The Mercury compiler automatically generates a \emph{field access function}
-for every named field in a data constructor.  The \textsf{bank\_account} field
-access functions would be defined like this:
-\begin{small}
-
-\begin{ptabular}
-\column{col30}{@{\ }l@{}}
-\column{col1}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{col30}{\textsf{account(A, \_, \_)\char`\^{}name}}
-\fromto{col30}{colend}{\textsf{{\ensuremath{=}} A.}}
-\nextline
-\fromto{col1}{col30}{\textsf{account(\_, B, \_)\char`\^{}account\_no}}
-\fromto{col30}{colend}{\textsf{{\ensuremath{=}} B.}}
-\nextline
-\fromto{col1}{col30}{\textsf{account(\_, \_, C)\char`\^{}funds}}
-\fromto{col30}{colend}{\textsf{{\ensuremath{=}} C.}}
-\nextline
-\end{ptabular}
-
-\end{small}
-Field access functions to ``update'' named fields are also generated:
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{col5}{@{\ }l@{}}
-\column{col7}{@{\ }l@{}}
-\column{col9}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{col5}{\hspace*{1.2em}}
-\fromto{col5}{colend}{\textsf{( \textbf{if} BankAcct\char`\^{}funds {\ensuremath{>}}{\ensuremath{=}} RequestedSum \textbf{then}}}
-\nextline
-\fromto{col1}{col9}{\hspace*{2.4em}}
-\fromto{col9}{colend}{\textsf{NewBankAcct {\ensuremath{=}} (BankAcct\char`\^{}funds :{\ensuremath{=}} BankAcct\char`\^{}funds {\ensuremath{-}} RequestedSum)}}
-\nextline
-\fromto{col1}{col7}{\hspace*{1.8em}}
-\fromto{col7}{colend}{\textsf{\textbf{else}}}
-\nextline
-\fromto{col1}{col9}{\textsf{}}
-\fromto{col9}{colend}{\textsf{... reject debit request ...}}
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{colend}{\textsf{)}}
-\nextline
-\end{ptabular}
-
-\end{small}
-The expression \textsf{(BankAcct\char`\^{}funds :{\ensuremath{=}} X)} returns a value identical to
-\textsf{BankAcct} except the \textsf{funds} field will contain \textsf{X}.
-The \textsf{bank\_account} field access update functions would be defined like this:
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{col32}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\column{col38}{@{\ }l@{}}
-\fromto{col1}{col32}{\textsf{( account(\_, B, C)\char`\^{}name}}
-\fromto{col32}{col38}{\textsf{:{\ensuremath{=}} A}}
-\fromto{col38}{colend}{\textsf{) {\ensuremath{=}} account(A, B, C).}}
-\nextline
-\fromto{col1}{col32}{\textsf{( account(A, \_, C)\char`\^{}account\_no}}
-\fromto{col32}{col38}{\textsf{:{\ensuremath{=}} B}}
-\fromto{col38}{colend}{\textsf{) {\ensuremath{=}} account(A, B, C).}}
-\nextline
-\fromto{col1}{col32}{\textsf{( account(A, B, \_)\char`\^{}funds}}
-\fromto{col32}{col38}{\textsf{:{\ensuremath{=}} C}}
-\fromto{col38}{colend}{\textsf{) {\ensuremath{=}} account(A, B, C).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-Note that you do not have to name every field of a data constructor; unnamed
-fields can only be ``read'' or ``updated'' by explicitly deconstructing or
-constructing the entire data constructor value.
-
-\emph{You are not allowed to use the same field name in
-different types defined in the same module.}  This is an error:
-\begin{small}
-
-\begin{ptabular}
-\column{col20}{@{\ }l@{}}
-\column{col1}{@{\ }l@{}}
-\column{col14}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{col14}{\textsf{:{\ensuremath{-}} \textbf{type} cat}}
-\fromto{col14}{col20}{\textsf{{\ensuremath{-}}{\ensuremath{-}}{\ensuremath{-}}{\ensuremath{>}}}}
-\fromto{col20}{colend}{\textsf{cat(name :: string).}}
-\nextline
-\fromto{col1}{col14}{\textsf{:{\ensuremath{-}} \textbf{type} dog}}
-\fromto{col14}{col20}{\textsf{{\ensuremath{-}}{\ensuremath{-}}{\ensuremath{-}}{\ensuremath{>}}}}
-\fromto{col20}{colend}{\textsf{dog(name :: string).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-Instead use distinct field names, such as \textsf{cat\_name} and \textsf{dog\_name},
-or use a single type with two data constructors (the same field
-name can be used in different data constructors of the same type.)
-
-\emph{A field access may fail if a data type has more than one data
-constructor.}  For example, given
+We begin with a simple example: reading in some numbers and computing
+their sum.
+Start by putting the the usual header boilerplate in a file
+\textsf{listdemo.m}:
 \begin{small}
 
 \begin{ptabular}
 \column{col1}{@{\ }l@{}}
 \column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{type} playing\_card {\ensuremath{-}}{\ensuremath{-}}{\ensuremath{-}}{\ensuremath{>}} card(card\_rank :: rank, card\_suit :: suit) ; joker.}}
-\nextline
-\end{ptabular}
-
-\end{small}
-A goal featuring the expression \textsf{Card\char`\^{}card\_rank} will fail if \textsf{Card} happens
-to be a \textsf{joker}.
-
-\emph{Field accesses can be chained together.}
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{type} employee {\ensuremath{-}}{\ensuremath{-}}{\ensuremath{-}}{\ensuremath{>}} employee(id :: int, contact :: contact\_details).}}
-\nextline
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{type} contact\_details {\ensuremath{-}}{\ensuremath{-}}{\ensuremath{-}}{\ensuremath{>}} contact\_details(address :: string, phone :: int).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-If \textsf{Employee} contains a value of type \textsf{employee} then the expression
-\textsf{Employee\char`\^{}contact\char`\^{}address} is the \textsf{address} field of the \textsf{contact}
-field of the \textsf{employee} constructor.
-
-\emph{Nested fields can be updated.}
-The expression \textsf{Employee\char`\^{}contact\char`\^{}address :{\ensuremath{=}} NewAddr} denotes a copy of
-\textsf{Employee} with the \textsf{address} field of the \textsf{contact} field of the \textsf{employee}
-data constructor updated to hold \textsf{NewAddr}.
-
-Parentheses can change the meaning of an update expression:\\
-\textsf{(Employee\char`\^{}contact)\char`\^{}address :{\ensuremath{=}} NewAddr} denotes an updated copy of the
-\textsf{contact} field of the \textsf{employee} data constructor (\ie the type of this
-expression is \textsf{contact\_details}, not \textsf{employee}.)
-
-One final remark: it is also possible to explicitly define field access
-functions, for instance for ``virtual fields'' that are computed rather than
-stored in a data constructor or for update functions that perform sanity
-checks on their arguments.  User defined field access functions are
-described fully in Chapter \XXX{}.
-
-
-
-\section{Polymorphic types}
-
-\emph{Polymorphic} types are types parameterised by
-\emph{type variables}.  A polymorphic binary tree type carrying values at
-the branches could be defined like this:
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{type} tree(T) {\ensuremath{-}}{\ensuremath{-}}{\ensuremath{-}}{\ensuremath{>}} leaf ; branch(tree(T), T, tree(T)).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-This is just a discriminated union type with a type argument, \textsf{T}.  \textsf{T} can
-match any type at all, so \textsf{tree(int)}, \textsf{tree(string)}, \textsf{tree(list(char))} are
-all refinements of \textsf{tree(T)}.
-
-Examples:
-\textsf{branch(branch(leaf, 1, leaf), 2, branch(leaf, 3, leaf))}
-is a value of type \textsf{tree(int)};
-\textsf{branch(leaf, {\{}'a', 65{\}}, branch(leaf, {\{}'b', 66{\}}, leaf))}
-is a value of type \textsf{tree({\{}char, int{\}})}; and
-\textsf{leaf} is a value of every \textsf{tree} type.
-
-The canonical example of a polymorphic data type is the \textsf{list} type defined
-in the \textsf{list} standard library module:
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{type} list(T) {\ensuremath{-}}{\ensuremath{-}}{\ensuremath{-}}{\ensuremath{>}} \char`\[{}\char`\]{} ; \char`\[{}T $|$ list(T)\char`\]{}.}}
-\nextline
-\end{ptabular}
-
-\end{small}
-The \textsf{maybe} type defined in the \textsf{std\_util} standard library module is
-another useful polymorphic type:
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{type} maybe(T) {\ensuremath{-}}{\ensuremath{-}}{\ensuremath{-}}{\ensuremath{>}} no ; yes(T).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-This type is commonly used to represent optional values (had the
-database community known about \textsf{maybe} types they never would have invented
-\textsf{NULL}s and wrecked the relational model\ldots)
-
-Once one has polymorphic types, it is natural to want to define polymorphic
-predicates and functions.  The \textsf{list} module \textsf{length} function works for
-lists of every type thanks to the type argument in its signature (it is
-just convention that we have reused the name \textsf{T} here --- any variable name
-would do):
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{col19}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{func} length(list(T)) {\ensuremath{=}} int.}}
-\nextline
-\nextline
-\fromto{col1}{col19}{\textsf{length(\char`\[{}\char`\]{})}}
-\fromto{col19}{colend}{\textsf{{\ensuremath{=}} 0.}}
-\nextline
-\fromto{col1}{col19}{\textsf{length(\char`\[{}\_ $|$ Xs\char`\]{})}}
-\fromto{col19}{colend}{\textsf{{\ensuremath{=}} 1 {\ensuremath{+}} length(Xs).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-The first clause
-defines the length of the empty list to be \textsf{0}; the second clause defines
-the length of a non-empty list \textsf{\char`\[{}\_ $|$ Xs\char`\]{}} to be \textsf{1} for the head (the
-underscore says we don't care what that happens to be) plus the length of
-the tail, \textsf{Xs}.
-
-Here is an example of a polymorphic predicate to decide whether a given
-value resides in an ordered binary tree of the type we defined at the start
-of this section (by ordered we mean that smaller values appear to the left
-of larger values in the tree):
-\begin{small}
-
-\begin{ptabular}
-\column{col21}{@{\ }l@{}}
-\column{col1}{@{\ }l@{}}
-\column{col5}{@{\ }l@{}}
-\column{col26}{@{\ }l@{}}
-\column{col9}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{pred} search(tree(T)::in, T::in) \textbf{is} \textbf{semidet}.}}
-\nextline
-\nextline
-\fromto{col1}{col26}{\textsf{search(branch(L, X, R),}}
-\fromto{col26}{colend}{\textsf{Y) :{\ensuremath{-}}}}
-\nextline
-\fromto{col1}{col5}{\hspace*{1.2em}}
-\fromto{col5}{colend}{\textsf{O {\ensuremath{=}} ordering(X, Y),}}
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{col9}{\textsf{(}}
-\fromto{col9}{col21}{\textsf{O {\ensuremath{=}} ({\ensuremath{<}}),}}
-\fromto{col21}{colend}{\textsf{search(R, Y)}}
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{col9}{\textsf{;}}
-\fromto{col9}{colend}{\textsf{O {\ensuremath{=}} ({\ensuremath{=}})}}
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{col9}{\textsf{;}}
-\fromto{col9}{col21}{\textsf{O {\ensuremath{=}} ({\ensuremath{>}}),}}
-\fromto{col21}{colend}{\textsf{search(L, Y)}}
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{colend}{\textsf{).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-The \textsf{ordering} function is built-in to Mercury and compares any two values
-of the same type, returning a result of type \textsf{comparison\_result}:
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{type} comparison\_result {\ensuremath{-}}{\ensuremath{-}}{\ensuremath{-}}{\ensuremath{>}} ({\ensuremath{<}}) ; ({\ensuremath{=}}) ; ({\ensuremath{>}}).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-As you can see, data constructor names don't necessarily have to be
-alphanumeric.  These data constructor names must appear in parentheses to
-stop the Mercury parser from interpreting them as infix operators.  This is
-also an example of \emph{overloading}, where the same name may be used for
-more than one purpose provided there is no ambiguity.
-
-After calling \textsf{ordering}, \textsf{search} switches on \textsf{O} to decide what to do
-next: if the value at the current \textsf{branch}, \textsf{X}, is less than the value we
-are searching for, \textsf{Y}, then search should procede down the right subtree,
-\textsf{R}.  If \textsf{X {\ensuremath{=}} Y} then the search terminates successfully.  Otherwise, \textsf{X} is
-greater than \textsf{Y} and the search should procede down the left subtree, \textsf{L}.
-The absence of a clause for \textsf{leaf} values means that any search that reaches
-a \textsf{leaf} will fail.
-
-
-
-\section{Equivalence types}
-
-Readability is often improved by giving simple names to complex types or
-by using more meaningful names for a specific uses of general types:
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{col17}{@{\ }l@{}}
-\column{col45}{@{\ }l@{}}
-\column{col28}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{col17}{\textsf{:{\ensuremath{-}} \textbf{type} height}}
-\fromto{col17}{col28}{\textsf{{\ensuremath{=}}{\ensuremath{=}} float.}}
-\fromto{col28}{colend}{\textsf{\% In metres.}}
-\nextline
-\fromto{col1}{col17}{\textsf{:{\ensuremath{-}} \textbf{type} radius}}
-\fromto{col17}{col28}{\textsf{{\ensuremath{=}}{\ensuremath{=}} float.}}
-\fromto{col28}{colend}{\textsf{\% In metres.}}
-\nextline
-\fromto{col1}{col17}{\textsf{:{\ensuremath{-}} \textbf{type} volume}}
-\fromto{col17}{col28}{\textsf{{\ensuremath{=}}{\ensuremath{=}} float.}}
-\fromto{col28}{colend}{\textsf{\% In cubic metres.}}
-\nextline
-\nextline
-\fromto{col1}{col45}{\textsf{:{\ensuremath{-}} \textbf{func} volume\_of\_cylinder(height, radius)}}
-\fromto{col45}{colend}{\textsf{{\ensuremath{=}} volume.}}
-\nextline
-\fromto{col1}{col45}{\textsf{:{\ensuremath{-}} \textbf{func} volume\_of\_sphere(radius)}}
-\fromto{col45}{colend}{\textsf{{\ensuremath{=}} volume.}}
-\nextline
-\end{ptabular}
-
-\end{small}
-\XXX{Move this stuff about comments to chapter 1.}
-(The \textsf{\%} sign introduces a comment, which extends to the end of the line.)
-Here we define the types \textsf{height}, \textsf{radius} and \textsf{volume} to be equivalent to
-(\ie interchangeable with) type \textsf{float}.  We could have just declared
-\textsf{volume\_of\_cylinder} using
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{func} volume\_of\_cylinder(float, float) {\ensuremath{=}} float.}}
-\nextline
-\end{ptabular}
-
-\end{small}
-but then we would be morally obliged to include a comment explaining which
-arguments correspond to which measurements.
-
-Equivalence types can also be parameterized.  For example:
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{col33}{@{\ }l@{}}
-\column{col5}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{col33}{\textsf{:{\ensuremath{-}} \textbf{type} dictionary(Key, Value)}}
-\fromto{col33}{colend}{\textsf{{\ensuremath{=}}{\ensuremath{=}} list({\{}Key, Value{\}}).}}
-\nextline
-\nextline
-\fromto{col1}{col5}{\hspace*{1.2em}}
-\fromto{col5}{colend}{\textsf{\% search(Dict, Key, Value) unifies Value \textbf{if} there \textbf{is} an association}}
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{colend}{\textsf{\% for Key in Dict, but fails otherwise.}}
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{colend}{\textsf{\%}}
-\nextline
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{pred} search(dictionary(Key, Value)::in, Key::in, Value::out) \textbf{is} \textbf{semidet}.}}
-\nextline
-\nextline
-\fromto{col1}{colend}{\textsf{search(\char`\[{}{\{}K, V{\}} $|$ Dict\char`\]{}, Key, Value) :{\ensuremath{-}}}}
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{colend}{\textsf{( \textbf{if} Key {\ensuremath{=}} K \textbf{then} Value {\ensuremath{=}} V \textbf{else} search(Dict, Key, Value) ).}}
-\nextline
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{colend}{\textsf{\% set(Dict, Key, Value) returns an updated version of Dict}}
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{colend}{\textsf{\% associating Key with Value.}}
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{colend}{\textsf{\%}}
-\nextline
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{func} set(dictionary(Key, Value), Key, Value) {\ensuremath{=}} dictionary(Key, Value).}}
-\nextline
-\nextline
-\fromto{col1}{colend}{\textsf{set(Dict, Key, Value) {\ensuremath{=}} \char`\[{}{\{}Key, Value{\}} $|$ Dict\char`\]{}.}}
-\nextline
-\end{ptabular}
-
-\end{small}
-
-
-
-\section{Abstract types}
-
-It is virtually always a Bad Idea to reveal implementation detail to the
-user of a module.  Mercury ensures that predicate and function
-\emph{definitions} are private to a module because they cannot appear in the
-\textsf{\textbf{interface}} section of a module.  Abstract types allow the same kind of
-information hiding for types.  An abstract type is one that is
-\emph{declared} in the \textsf{\textbf{interface}} section of a module, but \emph{defined} in
-the \textsf{\textbf{implementation}} section.
-
-Here's how we would use abstract types if we wanted to export the
-\textsf{dictionary} type defined above:
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{col5}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{module} dictionary.}}
-\nextline
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{interface}.}}
-\nextline
-\nextline
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{type} dictionary(Key, Value).}}
-\nextline
-\nextline
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{pred} search(dictionary(Key, Value)::in, Key::in, Value::out) \textbf{is} \textbf{semidet}.}}
-\nextline
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{func} set(dictionary(Key, Value), Key, Value) {\ensuremath{=}} dictionary(Key, Value).}}
-\nextline
-\nextline
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{implementation}.}}
-\nextline
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{import\_module} list.}}
-\nextline
-\nextline
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{type} dictionary(Key, Value) {\ensuremath{=}}{\ensuremath{=}} list({\{}Key, Value{\}}).}}
-\nextline
-\nextline
-\fromto{col1}{colend}{\textsf{search(\char`\[{}{\{}K, V{\}} $|$ Dict\char`\]{}, Key, Value) :{\ensuremath{-}}}}
-\nextline
-\fromto{col1}{col5}{\hspace*{1.2em}}
-\fromto{col5}{colend}{\textsf{( \textbf{if} Key {\ensuremath{=}} K \textbf{then} Value {\ensuremath{=}} V \textbf{else} search(Dict, Key, Value) ).}}
-\nextline
-\nextline
-\fromto{col1}{colend}{\textsf{set(Dict, Key, Value) {\ensuremath{=}} \char`\[{}{\{}Key, Value{\}} $|$ Dict\char`\]{}.}}
-\nextline
-\end{ptabular}
-
-\end{small}
-Observe the \textsf{\textbf{type}} declaration in the \textsf{\textbf{interface}} section: it gives the name
-of the type and its arguments, but nothing else.  Further down, in the
-\textsf{\textbf{implementation}} section, we give a definition for \textsf{dictionary}.  At some
-later point we may reimplement \textsf{dictionary} as an ordered list or
-binary tree or some other more efficient structure.  Such a change would not
-affect the interface of the \textsf{dictionary} module (because \textsf{dictionary} is an
-abstract type), so no changes would be required by users of the module.
-
-
-
-\section{Higher order types}
-
-Mercury considers functions and predicates to be values just as much as it
-does \textsf{int}s, \textsf{string}s and \textsf{list}s.  Consider the higher order \textsf{map}
-function (as defined in the \textsf{list} standard library module) which takes a
-function from \textsf{T$_{1}$} values to \textsf{T$_{2}$} values, a list of \textsf{T$_{1}$} values, and returns
-a list of \textsf{T$_{2}$} values:
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{col19}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{func} map(\textbf{func}(T$_{1}$) {\ensuremath{=}} T$_{2}$, list(T$_{1}$)) {\ensuremath{=}} list(T$_{2}$).}}
-\nextline
-\nextline
-\fromto{col1}{col19}{\textsf{map(\_, \char`\[{}\char`\]{})}}
-\fromto{col19}{colend}{\textsf{{\ensuremath{=}} \char`\[{}\char`\]{}.}}
-\nextline
-\fromto{col1}{col19}{\textsf{map(F, \char`\[{}X $|$ Xs\char`\]{})}}
-\fromto{col19}{colend}{\textsf{{\ensuremath{=}} \char`\[{}F(X) $|$ map(F, Xs)\char`\]{}.}}
-\nextline
-\end{ptabular}
-
-\end{small}
-The first clause says that mapping over the empty list returns the empty
-list.  The second clause says that mapping the function \textsf{F} over the
-non-empty list \textsf{\char`\[{}X $|$ Xs\char`\]{}} is the list whose head is \textsf{F(X)} (\ie the result
-of applying \textsf{F} to \textsf{X}) and whose tail is the result of mapping \textsf{F} over
-\textsf{Xs}.
-
-The thing to observe here is the argument type \textsf{\textbf{func}(T$_{1}$) {\ensuremath{=}} T$_{2}$}, which
-illustrates the syntax for function types.
-
-This next example illustrates the syntax for predicate types (this predicate
-is also defined in the \textsf{list} standard library module):
-\begin{small}
-
-\begin{ptabular}
-\column{col10}{@{\ }l@{}}
-\column{col20}{@{\ }l@{}}
-\column{col1}{@{\ }l@{}}
-\column{col14}{@{\ }l@{}}
-\column{col5}{@{\ }l@{}}
-\column{col43}{@{\ }l@{}}
-\column{col44}{@{\ }l@{}}
-\column{col26}{@{\ }l@{}}
-\column{col53}{@{\ }l@{}}
-\column{col72}{@{\ }l@{}}
-\column{col63}{@{\ }l@{}}
-\column{col55}{@{\ }l@{}}
-\column{col37}{@{\ }l@{}}
-\column{col8}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{col10}{\textsf{:{\ensuremath{-}} \textbf{pred}}}
-\fromto{col10}{col43}{\textsf{filter(\textbf{pred}(T),}}
-\fromto{col43}{col53}{\textsf{list(T),}}
-\fromto{col53}{col63}{\textsf{list(T),}}
-\fromto{col63}{col72}{\textsf{list(T)}}
-\fromto{col72}{colend}{\textsf{).}}
-\nextline
-\fromto{col1}{col10}{\textsf{:{\ensuremath{-}} \textbf{mode}}}
-\fromto{col10}{col43}{\textsf{filter(in(\textbf{pred}(in) \textbf{is} \textbf{semidet}),}}
-\fromto{col43}{col53}{\textsf{in,}}
-\fromto{col53}{col63}{\textsf{out,}}
-\fromto{col63}{col72}{\textsf{out}}
-\fromto{col72}{colend}{\textsf{) \textbf{is} \textbf{det}.}}
-\nextline
-\nextline
-\fromto{col1}{colend}{\textsf{filter(\_, \char`\[{}\char`\]{}, \char`\[{}\char`\]{}, \char`\[{}\char`\]{}).}}
-\nextline
-\fromto{col1}{colend}{\textsf{filter(P, \char`\[{}X $|$ Xs\char`\]{}, Ys, Zs) :{\ensuremath{-}}}}
-\nextline
-\fromto{col1}{col5}{\hspace*{1.2em}}
-\fromto{col5}{colend}{\textsf{filter(P, Xs, Ys$_{0}$, Zs$_{0}$),}}
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{col8}{\textsf{(}}
-\fromto{col8}{col14}{\textsf{\textbf{if}}}
-\fromto{col14}{col20}{\textsf{P(X)}}
-\fromto{col20}{col26}{\textsf{\textbf{then}}}
-\fromto{col26}{col37}{\textsf{Ys {\ensuremath{=}} \char`\[{}X $|$}}
-\fromto{col37}{col44}{\textsf{Ys$_{0}$\char`\]{},}}
-\fromto{col44}{col55}{\textsf{Zs {\ensuremath{=}}}}
-\fromto{col55}{colend}{\textsf{Zs$_{0}$}}
-\nextline
-\fromto{col1}{col20}{\textsf{}}
-\fromto{col20}{col26}{\textsf{\textbf{else}}}
-\fromto{col26}{col37}{\textsf{Ys {\ensuremath{=}}}}
-\fromto{col37}{col44}{\textsf{Ys$_{0}$,}}
-\fromto{col44}{col55}{\textsf{Zs {\ensuremath{=}} \char`\[{}X $|$}}
-\fromto{col55}{colend}{\textsf{Zs$_{0}$\char`\]{}}}
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{colend}{\textsf{).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-the goal \textsf{filter(P, As, Bs, Cs)} unifies \textsf{Bs} with the list of members of
-\textsf{As} that satisfy \textsf{P} and unifies \textsf{Cs} with the list of members of \textsf{As}
-that don't.  The first clause says that filtering the empty list yeilds two
-empty lists.  The second clause says that filtering \textsf{\char`\[{}X $|$ Xs\char`\]{}} through the
-predicate \textsf{P} is the result of filtering \textsf{Xs} through \textsf{P} and adding \textsf{X} to
-the first result if \textsf{P(X)} (\ie if \textsf{P} succeeds given \textsf{X}), or adding \textsf{X} to
-the second result if it doesn't.
-
-The first new thing here is the separation of \emph{type}
-information from \emph{mode} information in the declarations for \textsf{filter}.
-Mercury requires a separate \textsf{\textbf{mode}} declaration if you do not supply mode and
-determinism details in the \textsf{\textbf{pred}} declaration.
-The two declarations could be combined thus
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{col18}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{col18}{\textsf{:{\ensuremath{-}} \textbf{pred} filter(}}
-\fromto{col18}{colend}{\textsf{\textbf{pred}(T)::in(\textbf{pred}(in) \textbf{is} \textbf{semidet}),}}
-\nextline
-\fromto{col1}{col18}{\textsf{}}
-\fromto{col18}{colend}{\textsf{list(T)::in, list(T)::out, list(T)::out) \textbf{is} \textbf{det}.}}
-\nextline
-\end{ptabular}
-
-\end{small}
-However, having separate \textsf{\textbf{pred}} and \textsf{\textbf{mode}} declarations 
-highlights that the \emph{type} of \textsf{filter}'s higher order argument
-is written \textsf{\textbf{pred}(T)}.  (Separate \textsf{\textbf{mode}} declarations are examined in more
-detail in Chapter \XXX{}.)  \XXX{Do I need to explain the parameterised \textsf{in}
-mode?}
-
-In general, higher order programming with predicates is more complicated
-than with functions because of the need to also specify the modes for the
-higher order arguments.
-
-
-
-\section{\textsf{univ}, the universal type}
-
-The \textsf{univ} type provides support for dynamically typed programming.
-Mercury's type system is so expressive that \textsf{univ} is hardly ever necessary.
-However, should you require it, here is (a slightly abridged version of) the
-interface to \textsf{univ} as defined in the \textsf{std\_util} standard library module:
-\begin{small}
-
-\begin{ptabular}
-\column{col10}{@{\ }l@{}}
-\column{col1}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{col10}{\textsf{:{\ensuremath{-}} \textbf{type}}}
-\fromto{col10}{colend}{\textsf{univ.}}
-\nextline
-\fromto{col1}{col10}{\textsf{:{\ensuremath{-}} \textbf{func}}}
-\fromto{col10}{colend}{\textsf{univ(T) {\ensuremath{=}} univ.}}
-\nextline
-\fromto{col1}{col10}{\textsf{:{\ensuremath{-}} \textbf{pred}}}
-\fromto{col10}{colend}{\textsf{univ\_to\_type(univ::in, T::out) \textbf{is} \textbf{semidet}.}}
-\nextline
-\end{ptabular}
-
-\end{small}
-The \textsf{univ} function turns an argument of any type into a \textsf{univ} value (this
-is an example of overloading a name for a type and a function).  The
-\textsf{univ\_to\_type} predicate turns a \textsf{univ} value into a value of type \textsf{T} (what
-\textsf{T} denotes depends upon the context of the call to \textsf{univ\_to\_type}) if that
-is the type of value contained in the \textsf{univ}, and fails otherwise.
-
-We said earlier that a value like \textsf{\char`\[{}1, ``2'', 3.4\char`\]{}} would be rejected because
-it cannot be given a type.  This is true, but we can achieve much the same
-end by writing \textsf{\char`\[{}univ(1), univ(``2''), univ(3.4)\char`\]{}}, which does have a type,
-\textsf{list(univ)}.
-
-To illustrate the use of \textsf{univ\_to\_type}, here is a program to print out
-\textsf{univ}s:
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{col34}{@{\ }l@{}}
-\column{col5}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{module} print\_univs.}}
+\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{module} listdemo.}}
 \nextline
 \fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{interface}.}}
 \nextline
@@ -2878,747 +1845,182 @@ To illustrate the use of \textsf{univ\_to\_type}, here is a program to print out
 \nextline
 \fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{implementation}.}}
 \nextline
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{import\_module} list, std\_util, string.}}
-\nextline
-\nextline
-\fromto{col1}{colend}{\textsf{main(!IO) :{\ensuremath{-}}}}
-\nextline
-\fromto{col1}{col5}{\hspace*{1.2em}}
-\fromto{col5}{col34}{\textsf{print\_univ(univ(1),}}
-\fromto{col34}{colend}{\textsf{!IO),}}
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{col34}{\textsf{print\_univ(univ(``2''),}}
-\fromto{col34}{colend}{\textsf{!IO),}}
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{col34}{\textsf{print\_univ(univ(3.4),}}
-\fromto{col34}{colend}{\textsf{!IO),}}
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{col34}{\textsf{print\_univ(univ({\{}5, 6, 7{\}}),}}
-\fromto{col34}{colend}{\textsf{!IO).}}
+\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{import\_module} list, int, string.}}
 \nextline
 \end{ptabular}
 
 \end{small}
-\begin{small}
-
-\begin{ptabular}
-\column{col85}{@{\ }l@{}}
-\column{col76}{@{\ }l@{}}
-\column{col79}{@{\ }l@{}}
-\column{col1}{@{\ }l@{}}
-\column{col16}{@{\ }l@{}}
-\column{col5}{@{\ }l@{}}
-\column{col7}{@{\ }l@{}}
-\column{col36}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{pred} print\_univ(univ::in, io::di, io::uo) \textbf{is} \textbf{det}.}}
-\nextline
-\nextline
-\fromto{col1}{colend}{\textsf{print\_univ(U, !IO) :{\ensuremath{-}}}}
-\nextline
-\fromto{col1}{col5}{\hspace*{1.2em}}
-\fromto{col5}{col16}{\textsf{( \textbf{if}}}
-\fromto{col16}{col36}{\textsf{univ\_to\_type(U, C)}}
-\fromto{col36}{col76}{\textsf{\textbf{then} io.format(``a char, \%c{\ensuremath{\backslash}}n'',}}
-\fromto{col76}{col79}{\textsf{\char`\[{}}}
-\fromto{col79}{col85}{\textsf{c(C)}}
-\fromto{col85}{colend}{\textsf{\char`\]{}, !IO)}}
-\nextline
-\fromto{col1}{col7}{\hspace*{1.8em}}
-\fromto{col7}{col16}{\textsf{\textbf{else} \textbf{if}}}
-\fromto{col16}{col36}{\textsf{univ\_to\_type(U, S)}}
-\fromto{col36}{col76}{\textsf{\textbf{then} io.format(``a string, {\ensuremath{\backslash}}``\%s{\ensuremath{\backslash}}''{\ensuremath{\backslash}}n'',}}
-\fromto{col76}{col79}{\textsf{\char`\[{}}}
-\fromto{col79}{col85}{\textsf{s(S)}}
-\fromto{col85}{colend}{\textsf{\char`\]{}, !IO)}}
-\nextline
-\fromto{col1}{col7}{\textsf{}}
-\fromto{col7}{col16}{\textsf{\textbf{else} \textbf{if}}}
-\fromto{col16}{col36}{\textsf{univ\_to\_type(U, I)}}
-\fromto{col36}{col76}{\textsf{\textbf{then} io.format(``an int, \%d{\ensuremath{\backslash}}n'',}}
-\fromto{col76}{col79}{\textsf{\char`\[{}}}
-\fromto{col79}{col85}{\textsf{i(I)}}
-\fromto{col85}{colend}{\textsf{\char`\]{}, !IO)}}
-\nextline
-\fromto{col1}{col7}{\textsf{}}
-\fromto{col7}{col16}{\textsf{\textbf{else} \textbf{if}}}
-\fromto{col16}{col36}{\textsf{univ\_to\_type(U, F)}}
-\fromto{col36}{col76}{\textsf{\textbf{then} io.format(``a float, \%f{\ensuremath{\backslash}}n'',}}
-\fromto{col76}{col79}{\textsf{\char`\[{}}}
-\fromto{col79}{col85}{\textsf{f(F)}}
-\fromto{col85}{colend}{\textsf{\char`\]{}, !IO)}}
-\nextline
-\fromto{col1}{col7}{\textsf{}}
-\fromto{col7}{col16}{\textsf{\textbf{else}}}
-\fromto{col16}{colend}{\textsf{io.format(``no idea...{\ensuremath{\backslash}}n'', \char`\[{}\char`\]{}, !IO)}}
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{colend}{\textsf{).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-Compiling and running this program, we get
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{{\ensuremath{>}} mmc {\ensuremath{-}}{\ensuremath{-}}make print\_univs}}
-\nextline
-\fromto{col1}{colend}{\textsf{Making Mercury/int3s/print\_univs.int3}}
-\nextline
-\fromto{col1}{colend}{\textsf{Making Mercury/cs/print\_univs.c}}
-\nextline
-\fromto{col1}{colend}{\textsf{Making Mercury/os/print\_univs.o}}
-\nextline
-\fromto{col1}{colend}{\textsf{Making print\_univs}}
-\nextline
-\fromto{col1}{colend}{\textsf{{\ensuremath{>}} ./print\_univs}}
-\nextline
-\fromto{col1}{colend}{\textsf{an int, 1}}
-\nextline
-\fromto{col1}{colend}{\textsf{a string, ``2''}}
-\nextline
-\fromto{col1}{colend}{\textsf{a float, 3.400000}}
-\nextline
-\fromto{col1}{colend}{\textsf{no idea...}}
-\nextline
-\end{ptabular}
-
-\end{small}
-So how does \textsf{univ\_to\_type} know that \textsf{C} is a \textsf{char}, \textsf{S} a string, and so
-forth?  The answer is the compiler automatically infers these types from
-context: the argument of a \textsf{c} data constructor in an \textsf{io.format} argument
-list must be a \textsf{char}; the argument of an \textsf{s} data constructor must be a
-\textsf{string}; similarly \textsf{I} must be an \textsf{int} and \textsf{F} a \textsf{float}.  Information
-about each result type is supplied to the \textsf{univ\_to\_type} calls via extra
-arguments inserted by the Mercury compiler.
-
-Full details of the run-time type information (RTTI) scheme are beyond the
-scope of this book.  The interested reader is referred to the documentation
-for the \textsf{std\_util} module in the Mercury Library Reference Manual and the
-relevant parts of the Mercury Reference Manual.
-
-
-
-\section{Useful types defined in the Mercury standard library}
-
-The Mercury standard library defines many useful types, the most common of
-which are examined in more detail in Chapter \XXX{}.  These include \textsf{bool}
-for boolean values, \textsf{graph} for graph processing, \textsf{list} for stacks and
-sequences, \textsf{map} for dictionaries, \textsf{queue} for first-in first-out (FIFO)
-queues, \textsf{pqueue} for priority queues, \textsf{random} for random numbers, and \textsf{set}
-for sets.  The \textsf{std\_util} module defines miscellaneous utility types such as
-\textsf{univ}, \textsf{maybe}, \textsf{unit} (the ``dummy'' type), and \textsf{pair}.  Many more types
-are defined in the standard library, but the above suffice for the majority
-of data structures.
-
-
-
-\section{More advanced types\ldots}
-
-Mercury's type system includes two more advanced aspects each with a
-separate chapter.  Chapter \XXX{} describes type classes and existentially
-quantified types which exist to support object oriented programming styles.
-Chapter \XXX{} describes types with user-defined equality and comparison
-relations; these are so-called \emph{non-canonical} types in which a given
-semantic value may be represented in more than one way.
-
-
-
-\XXX{I haven't really mentioned type inference, nor have I mentioned
-explicit type qualification of local vars.}
-\setcounter{chapter}{2}
-% vim: ft=tex ff=unix ts=4 sw=4 et tw=76
-
-
-
-\chapter{The Mercury mode system}
-
-Last edited Aug 18 2005
-
-Mercury programs are really just logical formulae written down using a
-particular syntax.  The Mercury compiler, however, needs extra information
-to turn these logical formulae into something the computer can execute.
-Specifically, it needs to know which arguments of a predicate 
-can be inputs and which outputs.  This information is conveyed using
-\emph{argument modes} and \emph{determinism categories}.
-
-This chapter explains the mode system and how it is used.
-
-\section{Predicates and procedures}
-
-Every predicate must have a declaration specifying which arguments can be
-inputs and which outputs.  Consider the following implementation of a
-telephone directory in which phone numbers can be looked-up by name:
-\begin{small}
-
-\begin{ptabular}
-\column{col10}{@{\ }l@{}}
-\column{col21}{@{\ }l@{}}
-\column{col1}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{col10}{\textsf{:{\ensuremath{-}} \textbf{pred}}}
-\fromto{col10}{colend}{\textsf{phone(string::in, int::out) \textbf{is} \textbf{semidet}.}}
-\nextline
-\nextline
-\fromto{col1}{col21}{\textsf{phone(``Ian'',}}
-\fromto{col21}{colend}{\textsf{66532).}}
-\nextline
-\fromto{col1}{col21}{\textsf{phone(``Julien'',}}
-\fromto{col21}{colend}{\textsf{66532).}}
-\nextline
-\fromto{col1}{col21}{\textsf{phone(``Peter'',}}
-\fromto{col21}{colend}{\textsf{66540).}}
-\nextline
-\fromto{col1}{col21}{\textsf{phone(``Ralph'',}}
-\fromto{col21}{colend}{\textsf{66532).}}
-\nextline
-\fromto{col1}{col21}{\textsf{phone(``Zoltan'',}}
-\fromto{col21}{colend}{\textsf{66514).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-The style of \textsf{\textbf{pred}} declaration used here is called a \textsf{\textbf{pred}}-\textsf{\textbf{mode}}
-declaration and is syntactic sugar for two separate declarations:
-\begin{small}
-
-\begin{ptabular}
-\column{col10}{@{\ }l@{}}
-\column{col1}{@{\ }l@{}}
-\column{col31}{@{\ }l@{}}
-\column{col25}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{col10}{\textsf{:{\ensuremath{-}} \textbf{pred}}}
-\fromto{col10}{col25}{\textsf{phone(string,}}
-\fromto{col25}{colend}{\textsf{int).}}
-\nextline
-\fromto{col1}{col10}{\textsf{:{\ensuremath{-}} \textbf{mode}}}
-\fromto{col10}{col25}{\textsf{phone(in,}}
-\fromto{col25}{col31}{\textsf{out)}}
-\fromto{col31}{colend}{\textsf{\textbf{is} \textbf{semidet}.}}
-\nextline
-\end{ptabular}
-
-\end{small}
-The plain \textsf{\textbf{pred}} declaration tells us the argument types; the \textsf{\textbf{mode}}
-declaration tells us the \emph{argument modes} (\textsf{in} or \textsf{out}) and the
-corresponding \emph{determinism category} (\textsf{\textbf{semidet}}).
-
-It is natural to want to call some predicates in more than one way --- if we
-want to use \textsf{phone} to perform ``reverse look-ups'', for instance.  In such
-cases more than one \textsf{\textbf{mode}} declaration is necessary (\textsf{\textbf{pred}}-\textsf{\textbf{mode}} shorthand
-can only be used for singly-moded predicates).
-
-To allow reverse look-ups with \textsf{phone} all that is necessary is to (a) use
-separate \textsf{\textbf{pred}} and \textsf{\textbf{mode}} declarations and (b) add an extra \textsf{\textbf{mode}}
-declaration:
-\begin{small}
-
-\begin{ptabular}
-\column{col10}{@{\ }l@{}}
-\column{col1}{@{\ }l@{}}
-\column{col31}{@{\ }l@{}}
-\column{col25}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{col10}{\textsf{:{\ensuremath{-}} \textbf{pred}}}
-\fromto{col10}{col25}{\textsf{phone(string,}}
-\fromto{col25}{colend}{\textsf{int).}}
-\nextline
-\fromto{col1}{col10}{\textsf{:{\ensuremath{-}} \textbf{mode}}}
-\fromto{col10}{col25}{\textsf{phone(in,}}
-\fromto{col25}{col31}{\textsf{out)}}
-\fromto{col31}{colend}{\textsf{\textbf{is} \textbf{semidet}.}}
-\nextline
-\fromto{col1}{col10}{\textsf{:{\ensuremath{-}} \textbf{mode}}}
-\fromto{col10}{col25}{\textsf{phone(out,}}
-\fromto{col25}{col31}{\textsf{in)}}
-\fromto{col31}{colend}{\textsf{\textbf{is} \textbf{nondet}.}}
-\nextline
-\end{ptabular}
-
-\end{small}
-
-The first \textsf{\textbf{mode}} declaration
-\begin{small}
-
-\begin{ptabular}
-\column{col10}{@{\ }l@{}}
-\column{col1}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{col10}{\textsf{:{\ensuremath{-}} \textbf{mode}}}
-\fromto{col10}{colend}{\textsf{phone(in, out) \textbf{is} \textbf{semidet}.}}
-\nextline
-\end{ptabular}
-
-\end{small}
-says that if we call \textsf{phone} giving its first argument as an input and
-taking its second as an output, then the result is semideterministic: every
-name in the directory appears exactly once, but not all names are
-listed.  The goal \textsf{phone(``Harald'', HaraldsNum)} will obviously fail, but
-\textsf{phone(``Ralph'', RalphsNum)} will succeed unifying \textsf{RalphsNum} with \textsf{66532}.
-
-The second \textsf{\textbf{mode}} declaration
-\begin{small}
-
-\begin{ptabular}
-\column{col10}{@{\ }l@{}}
-\column{col1}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{col10}{\textsf{:{\ensuremath{-}} \textbf{mode}}}
-\fromto{col10}{colend}{\textsf{phone(out, in) \textbf{is} \textbf{nondet}.}}
-\nextline
-\end{ptabular}
-
-\end{small}
-says that if we call \textsf{phone} with its second
-argument given as input and take its first argument as output, then the
-result is nondeterministic: it can fail because the goal
-\textsf{phone(Person, 12345)} will fail, but the goal \textsf{phone(Person, 66532)}
-has no less than three possible solutions --- \textsf{Person {\ensuremath{=}} ``Ian''},
-\textsf{Person {\ensuremath{=}} ``Julien''}, and \textsf{Person {\ensuremath{=}} ``Ralph''} --- each of which will be
-computed on backtracking.
-
-\Note Each \textsf{\textbf{mode}} declaration specifies a \emph{procedure} to be derived
-from the predicate definition.  The compiler generates code separately for
-each procedure of a predicate, reordering goals to ensure that every
-variable is instantiated (\eg by some earlier unification or call) before it
-is used in an input in a unification or call.  Mode information is also used
-to decide whether a unification with a data constructor is a construction or
-deconstruction.
-
-The compiler verifies that the determinism category for a procedure
-properly describes the behaviour of the procedure.  The compiler will
-issue an error if a procedure can fail or have multiple solutions when its
-declared determinism category says otherwise.  Moreover, the compiler will
-report an error if a deterministic switch is incomplete, telling you
-which cases have been missed (Prolog programmers dream of having error
-detection like this\ldots)
-
-\subsection*{Implied modes}
-
-An \emph{implied mode} is one where an output argument is supplied as
-an input in a procedure call.  Consider the goal \textsf{phone(``Ralph'', 66540)}.
-The compiler gets around this situation by placing a new, temporary variable
-in the output position and then adding a unification goal, giving
-\textsf{phone(``Ralph'', Tmp), Tmp {\ensuremath{=}} 66540}.
-
-\section{The determinism categories}
-
-A determinism category tells us whether a particular procedure can fail and
-whether it may have more than one solution:
-
-\begin{tabular}{lr}
-Determinism category    & Number of solutions \\
-\hline
-\textsf{\textbf{det}}                   & $1$ \\
-\textsf{\textbf{semidet}}               & $\leq 1$ \\
-\textsf{\textbf{multi}}                 & $\geq 1$ \\
-\textsf{\textbf{nondet}}                & $\geq 0$ \\
-\textsf{\textbf{failure}}               & $0$ \\
-\end{tabular}
-
-There are three other determinsm categories that are only occasionally
-needed: \textsf{\textbf{erroneous}}, which is used for predicates that only terminate by
-throwing an exception (exceptions are described in Chapter \XXX{}), and
-\textsf{\textbf{cc\_multi}} and \textsf{\textbf{cc\_nondet}} which are used for committed-choice
-nondeterminism (see Chapter \XXX{}).
-
-\subsection*{Some examples}
-
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{pred} square(int::in, int::out) \textbf{is} \textbf{det}.}}
-\nextline
-\fromto{col1}{colend}{\textsf{square(X, X {\ensuremath{*}} X).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-\textsf{square} is \textsf{\textbf{det}}: it cannot fail and every input has a single solution for
-the output.
-
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{col5}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{pred} absolute\_square\_root(float::in, float::out) \textbf{is} \textbf{semidet}}}
-\nextline
-\fromto{col1}{colend}{\textsf{absolute\_square\_root(X, AbsSqrtX) :{\ensuremath{-}}}}
-\nextline
-\fromto{col1}{col5}{\hspace*{1.2em}}
-\fromto{col5}{colend}{\textsf{X {\ensuremath{>}}{\ensuremath{=}} 0.0,}}
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{colend}{\textsf{AbsSqrtX {\ensuremath{=}} math.sqrt(X).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-\textsf{absolute\_square\_root} is \textsf{\textbf{semidet}}: it fails for negative inputs while
-non-negative inputs each have a single solution.
-
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{pred} small\_prime(int::out) \textbf{is} \textbf{multi}.}}
-\nextline
-\fromto{col1}{colend}{\textsf{small\_prime(2).}}
-\nextline
-\fromto{col1}{colend}{\textsf{small\_prime(3).}}
-\nextline
-\fromto{col1}{colend}{\textsf{small\_prime(5).}}
-\nextline
-\fromto{col1}{colend}{\textsf{small\_prime(7).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-\textsf{small\_prime} is \textsf{\textbf{multi}}: it cannot fail and it has more than one solution.
-
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{col5}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{pred} small\_prime\_factor(int::in, int::out) \textbf{is} \textbf{nondet}.}}
-\nextline
-\fromto{col1}{colend}{\textsf{small\_prime\_factor(X, P) :{\ensuremath{-}}}}
-\nextline
-\fromto{col1}{col5}{\hspace*{1.2em}}
-\fromto{col5}{colend}{\textsf{small\_prime(P),}}
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{colend}{\textsf{X mod P {\ensuremath{=}} 0.}}
-\nextline
-\end{ptabular}
-
-\end{small}
-\textsf{small\_prime\_factor} is \textsf{\textbf{nondet}}: \textsf{small\_prime\_factor(11, A)}, for instance,
-will fail, but \textsf{small\_prime\_factor(6, A)} has solutions \textsf{A {\ensuremath{=}} 2} and \textsf{A {\ensuremath{=}} 3}.
-
-Finally, the built-in predicate \textsf{\textbf{false}}, which takes no arguments, has
-determinism \textsf{\textbf{failure}}: it never succeeds.  The opposite of \textsf{\textbf{false}} is the
-built-in predicate \textsf{\textbf{true}} which has no arguments and always succeeds (and is
-therefore \textsf{\textbf{det}}).
-
-\Note The determinism category of a goal with no output arguments is either
-\textsf{\textbf{det}}, \textsf{\textbf{semidet}}, or \textsf{\textbf{failure}}.  Consider the following:
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{col5}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{pred} has\_small\_prime\_factor(int::in) \textbf{is} \textbf{semidet}.}}
-\nextline
-\fromto{col1}{colend}{\textsf{has\_small\_prime\_factor(X) :{\ensuremath{-}}}}
-\nextline
-\fromto{col1}{col5}{\hspace*{1.2em}}
-\fromto{col5}{colend}{\textsf{small\_prime(P),}}
-\nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{colend}{\textsf{X mod P {\ensuremath{=}} 0.}}
-\nextline
-\end{ptabular}
-
-\end{small}
-Because there are no outputs, Mercury ensures that the goal
-\\\textsf{has\_small\_prime\_factor(15)}, say, will not succeed more than once, even
-though \textsf{small\_prime(P)} has two solutions, \textsf{P {\ensuremath{=}} 3} and \textsf{P {\ensuremath{=}} 5}, satisfying 
-\textsf{15 mod P {\ensuremath{=}} 0}.
-
-\section{Determinism}
-
-These rules specify how determinism categories for compound goals are
-derived (with a little experience this quickly becomes second nature).
-The determinism category of a goal is derived from the instantiation state
-of its arguments at the time the goal is executed.
-
-\Note Remember that the compiler reorders the goals in a predicate
-separately for each \textsf{\textbf{mode}} declaration for the predicate.  A running program
-does not make decisions about which procedures should be executed when
-calling predicates; this is decided in advance by the Mercury compiler.
-
-\subsection*{Unifications}
-
-Whether a unification is a construction, deconstruction, assignment or
-equality test depends upon which variables are instantiated and which are
-not at the time the unification is executed.
-
-A unification \textsf{X {\ensuremath{=}} data\_ctor(Y$_{1}$, Y$_{2}$, Y$_{3}$)} is a \emph{construction} if \textsf{Y$_{1}$},
-\textsf{Y$_{2}$}, and \textsf{Y$_{3}$} are initially instantiated and \textsf{X} is not.  Constructions are
-always \textsf{\textbf{det}}.  Afterwards, \textsf{X} will be instantiated.
-
-A unification \textsf{X {\ensuremath{=}} data\_ctor(Y$_{1}$, Y$_{2}$, Y$_{3}$)} is a \emph{deconstruction} if \textsf{X}
-is initially instantiated.  Afterwards, \textsf{Y$_{1}$}, \textsf{Y$_{2}$}, and \textsf{Y$_{3}$} will be
-instantiated.  Deconstructions are almost always \textsf{\textbf{semidet}} (in certain
-circumstances a deconstruction may have determinism category \textsf{\textbf{det}} if it is
-guaranteed to succeed or \textsf{\textbf{failure}} if it is guaranteed to fail).
-
-A unification \textsf{X {\ensuremath{=}} Y} is an \emph{assignment} if precisely one of \textsf{X} or \textsf{Y}
-is initially instantiated.  Afterwards, both variables will be instantiated.
-Assignments are always \textsf{\textbf{det}}.
-
-A unification \textsf{X {\ensuremath{=}} Y} is an \emph{equality test} if both \textsf{X} and \textsf{Y} are
-initially instantiated.  Equality tests are always \textsf{\textbf{semidet}}.
-
-\subsection*{Procedure calls}
-
-For a predicate call \textsf{p(X$_{1}$, X$_{2}$, X$_{3}$)}, which procedure of \textsf{p} is executed
-depends upon which \textsf{\textbf{mode}} declaration for predicate \textsf{p} best matches the
-instantiation states of \textsf{X$_{1}$}, \textsf{X$_{2}$}, and \textsf{X$_{3}$} at the time the call is
-executed.  The determinism category of the goal is that of the called
-procedure, adjusted for any implied modes (\ie extra unifications added
-because some output arguments of the procedure are already instantiated at
-the time of the call).
-
-For example, the goal \textsf{phone(``Zoltan'', ZoltansNumber)} is compiled as a call
-to the \textsf{(in, out) \textbf{is} \textbf{det}} procedure of \textsf{phone}.  The goal
-\textsf{phone(Person, 66540)} is compiled as a call to the \textsf{(out, in) \textbf{is} \textbf{nondet}}
-procedure of \textsf{phone}.  The goal \textsf{phone(``Ralph'', 66532)} requires an implied
-mode and may be compiled either as \textsf{phone(``Ralph'', Tmp), Tmp {\ensuremath{=}} 66532} or
-\textsf{phone(Tmp, 66532), Tmp {\ensuremath{=}} ``Ralph''}, both of which are \textsf{\textbf{semidet}}.
-
-\subsection*{Conjunction}
-
-A sequence of goals separated by commas, \textsf{G$_{1}$, G$_{2}$, G$_{3}$, ...}, is called a
-\emph{conjunction}.  The commas are pronounced ``and'' and each subgoal is
-called a \emph{conjunct}.
-
-A conjunction can fail if any conjunct can fail.
-
-A conjunction can succeed if every conjunct can succeed.
-
-A conjunction can have multiple solutions if it can succeed
-and one or more conjuncts have multiple solutions.
-
-\Note These rules are a conservative (\ie safe) approximation.  For example,
-the compiler will conclude that conjunction \textsf{small\_prime(X), X {\ensuremath{=}} 4} is
-\textsf{\textbf{semidet}}, even though we can see that this goal has to fail.
-
-\subsection*{Disjunction}
-
-A sequence of goals separated by semicolons, \textsf{(G$_{1}$ ; G$_{2}$ ; G$_{3}$ ; ...)}, is
-called a \emph{disjunction}.  The semicolons are pronounced ``or'' and each
-subgoal is called a \emph{disjunct}.
-
-A disjunction can succeed if any disjunct can succeed.
-
-A disjunction can have multiple solutions if more than one disjunct can
-succeed or one or more disjuncts can have multiple solutions.
-
-\Note Switches are a special case.  A switch is a disjunction that
-deconstructs a particular variable against a different data constructor in
-each disjunct.  If, apart from the deconstructions, every disjunct is \textsf{\textbf{det}},
-then the switch is \textsf{\textbf{det}} if the set of deconstructions is exhaustive and
-\textsf{\textbf{semidet}} if not.
-
-For example, even though both \textsf{p} and \textsf{q} (below) define switches on \textsf{X},
-\textsf{p} is \textsf{\textbf{det}} because its switch is exhaustive, whereas \textsf{q} is \textsf{\textbf{semidet}}
-because its switch is not:
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{col13}{@{\ }l@{}}
-\column{col44}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{type} ott {\ensuremath{-}}{\ensuremath{-}}{\ensuremath{-}}{\ensuremath{>}} one ; two ; three.}}
-\nextline
-\nextline
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{pred} p(ott::in, int::out) \textbf{is} \textbf{det}.}}
-\nextline
-\fromto{col1}{col13}{\textsf{p(X, Y) :{\ensuremath{-}}}}
-\fromto{col13}{col44}{\textsf{( X {\ensuremath{=}} one, Y {\ensuremath{=}} 1 ; X {\ensuremath{=}} two,}}
-\fromto{col44}{colend}{\textsf{Y {\ensuremath{=}} 2 ; X {\ensuremath{=}} three, Y {\ensuremath{=}} 3 ).}}
-\nextline
-\nextline
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{pred} q(ott::in, int::out) \textbf{is} \textbf{semidet}.}}
-\nextline
-\fromto{col1}{col13}{\textsf{q(X, Y) :{\ensuremath{-}}}}
-\fromto{col13}{col44}{\textsf{( X {\ensuremath{=}} one, Y {\ensuremath{=}} 1 ; X {\ensuremath{=}} three,}}
-\fromto{col44}{colend}{\textsf{Y {\ensuremath{=}} 3 ).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-
-\Note Disjunction binds less tightly than conjunction:
-\\\textsf{( G$_{11}$, G$_{12}$ , G$_{13}$ ; G$_{21}$ ; G$_{31}$, G$_{32}$ )}
-\\is equivalent to
-\\\textsf{( (G$_{11}$, G$_{12}$, G$_{13}$) ; G$_{21}$ ; (G$_{31}$, G$_{32}$) )}.
-
-\Note A definition spanning multiple clauses is equivalent to a
-definition using a single clause containing a disjunction.  That is
+Now we want to define the \textsf{main} predicate to read in a line of input,
+convert it to a list of integers, and do something with them (in this case,
+print out their sum).
 \begin{small}
 
 \begin{ptabular}
 \column{col11}{@{\ }l@{}}
 \column{col1}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{col11}{\textsf{p(one,}}
-\fromto{col11}{colend}{\textsf{1).}}
-\nextline
-\fromto{col1}{col11}{\textsf{p(two,}}
-\fromto{col11}{colend}{\textsf{2).}}
-\nextline
-\fromto{col1}{col11}{\textsf{p(three,}}
-\fromto{col11}{colend}{\textsf{3).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-is semantically and operationally identical to
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
 \column{col13}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{col13}{\textsf{p(X, Y) :{\ensuremath{-}}}}
-\fromto{col13}{colend}{\textsf{( X {\ensuremath{=}} one, Y {\ensuremath{=}} 1 ; X {\ensuremath{=}} two, Y {\ensuremath{=}} 2 ; X {\ensuremath{=}} three, Y {\ensuremath{=}} 3 ).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-
-\Note If any disjunct instantiates a variable that is used outside the
-disjunction, then every disjunct in the disjunction must also instantiate
-that variable.  That is, the Mercury compiler will report a mode error if a
-program contains a disjunction that instantiates \textsf{X} in some disjuncts, but
-not others, and \textsf{X} is also needed outside the disjunction.  For instance,
-the following is illegal because \textsf{Y}, which appears outside the disjunction,
-is instantiated in the first and second disjuncts, but not the third:
-
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{col13}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{pred} p(number::in, int::out) \textbf{is} \textbf{det}.}}
-\nextline
-\fromto{col1}{col13}{\textsf{p(X, Y) :{\ensuremath{-}}}}
-\fromto{col13}{colend}{\textsf{( X {\ensuremath{=}} one, Y {\ensuremath{=}} 1 ; X {\ensuremath{=}} two, Y {\ensuremath{=}} 2 ; X {\ensuremath{=}} three ).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-
-\subsection*{Negation}
-
-A goal \textsf{(\textbf{not} G)} is called the \emph{negation} of \textsf{G}.  The negation fails
-if \textsf{G} succeeds, and vice versa.  The negation succeeds if \textsf{G} fails and
-fails if \textsf{G} succeeds.
-
-\Note \textsf{G} is said to occur inside a \emph{negated context} and is
-not allowed to instantiate variables that also occur outside the negation.
-
-\Note Negation binds more tightly than conjunction, hence
-\textsf{\textbf{not} G$_{1}$, G$_{2}$, ...} is equivalent to \textsf{(\textbf{not} G$_{1}$), G$_{2}$, ...}.  To negate a
-conjunction, put the conjunction in parentheses: \textsf{\textbf{not} (G$_{1}$, G$_{2}$, ...)}
-
-\Note \textsf{X {\ensuremath{\backslash}}{\ensuremath{=}} Y} is syntactic sugar for \textsf{\textbf{not} (X {\ensuremath{=}} Y)}.
-
-\subsection*{If-then-else goals}
-
-The declarative semantics for a goal \textsf{( \textbf{if} Gc \textbf{then} Gt \textbf{else} Ge )} are
-identical to those of \textsf{( Gc, Gt ; (\textbf{not} Gc), Ge )}.  The operational
-semantics are more efficient, though: if there are no solutions to \textsf{Gc},
-the program immediately executes \textsf{Ge}.
-
-If any of \textsf{Gc}, \textsf{Gt}, or \textsf{Ge} can fail then the \textsf{\textbf{if}}-\textsf{\textbf{then}}-\textsf{\textbf{else}} can fail.
-
-If any of \textsf{Gc}, \textsf{Gt}, or \textsf{Ge} can have multiple solutions then the
-\textsf{\textbf{if}}-\textsf{\textbf{then}}-\textsf{\textbf{else}} can have multiple solutions.
-
-\Note \textsf{Gc} is not allowed to instantiate variables that are used outside the
-\textsf{\textbf{if}}-\textsf{\textbf{then}}-\textsf{\textbf{else}}.  This is because, semantically, \textsf{Gc} appears in a
-negated context.  It is all right, however, for \textsf{Gc} to instantiate
-variables that are used by \textsf{Gt}.
-
-\Note Execution can backtrack into \textsf{Gc}.  For example,
-
-\textsf{( \textbf{if} small\_prime(X), X {\ensuremath{>}} 2 \textbf{then} Y {\ensuremath{=}} X {\ensuremath{*}} X \textbf{else} Y {\ensuremath{=}} {\ensuremath{-}}1 )}
-
-has solutions \textsf{Y {\ensuremath{=}} 9}, \textsf{Y {\ensuremath{=}} 25}, and \textsf{Y {\ensuremath{=}} 49}.
-
-\textbf{Prolog programmers take note:} unlike Mercury, Prolog programs
-commit to the first solution of \textsf{Gc}.  The Prolog equivalent of the above
-goal would have \textsf{Y {\ensuremath{=}} 9} as its only solution, not \textsf{Y {\ensuremath{=}} 25} or \textsf{Y {\ensuremath{=}} 49}.
-
-\Note \textsf{( Gc {\ensuremath{-}}{\ensuremath{>}} Gt ; Ge )} is an alternative, albeit old-fashioned, syntax for
-\textsf{( \textbf{if} Gc \textbf{then} Gt \textbf{else} Ge )}.
-
-\section{Procedures and code reordering}
-
-The aim of this section is to give the reader some understanding of code
-reordering.  This knowledge is not required to write Mercury programs, but
-it can help the programmer understand mode-related error messages from the
-compiler.
-
-We will illustrate using the \textsf{append} predicate defined in the \textsf{list}
-standard library module.  The declarative semantics of
-\textsf{append(Xs, Ys, Zs)} is that the list \textsf{Zs} is the concatentation of lists
-\textsf{Xs} and \textsf{Ys}.  So \textsf{append(\char`\[{}1\char`\]{}, \char`\[{}2, 3\char`\]{}, \char`\[{}1, 2, 3\char`\]{})} is true, but
-\textsf{append(\char`\[{}2, 3\char`\]{}, \char`\[{}1\char`\]{}, \char`\[{}1, 2, 3\char`\]{})} is not.
-
-\begin{small}
-
-\begin{ptabular}
-\column{col10}{@{\ }l@{}}
-\column{col1}{@{\ }l@{}}
 \column{col5}{@{\ }l@{}}
-\column{col43}{@{\ }l@{}}
-\column{col27}{@{\ }l@{}}
-\column{col37}{@{\ }l@{}}
+\column{col62}{@{\ }l@{}}
 \column{col9}{@{\ }l@{}}
 \column{colend}{@{\ }l@{}}
-\fromto{col1}{col10}{\textsf{:{\ensuremath{-}} \textbf{pred}}}
-\fromto{col10}{col27}{\textsf{append(list(T),}}
-\fromto{col27}{col37}{\textsf{list(T),}}
-\fromto{col37}{colend}{\textsf{list(T)).}}
-\nextline
-\fromto{col1}{col10}{\textsf{:{\ensuremath{-}} \textbf{mode}}}
-\fromto{col10}{col27}{\textsf{append(in,}}
-\fromto{col27}{col37}{\textsf{in,}}
-\fromto{col37}{col43}{\textsf{out)}}
-\fromto{col43}{colend}{\textsf{\textbf{is} \textbf{det}.}}
-\nextline
-\fromto{col1}{col10}{\textsf{:{\ensuremath{-}} \textbf{mode}}}
-\fromto{col10}{col27}{\textsf{append(out,}}
-\fromto{col27}{col37}{\textsf{out,}}
-\fromto{col37}{col43}{\textsf{in)}}
-\fromto{col43}{colend}{\textsf{\textbf{is} \textbf{multi}.}}
-\nextline
-\nextline
-\fromto{col1}{colend}{\textsf{append(Xs, Ys, Zs) :{\ensuremath{-}}}}
+\fromto{col1}{colend}{\textsf{main(!IO) :{\ensuremath{-}}}}
 \nextline
 \fromto{col1}{col5}{\hspace*{1.2em}}
+\fromto{col5}{colend}{\textsf{io.write\_string(``Type in a few integers separated by spaces:{\ensuremath{\backslash}}n'', !IO),}}
+\nextline
+\fromto{col1}{col5}{\textsf{}}
+\fromto{col5}{colend}{\textsf{io.read\_line\_as\_string(Result, !IO),}}
+\nextline
+\fromto{col1}{col5}{\textsf{}}
 \fromto{col5}{colend}{\textsf{(}}
 \nextline
 \fromto{col1}{col9}{\hspace*{2.4em}}
-\fromto{col9}{colend}{\textsf{Xs {\ensuremath{=}} \char`\[{}\char`\]{}, Zs {\ensuremath{=}} Ys}}
+\fromto{col9}{colend}{\textsf{Result {\ensuremath{=}} eof}}
 \nextline
 \fromto{col1}{col5}{\textsf{}}
 \fromto{col5}{colend}{\textsf{;}}
 \nextline
 \fromto{col1}{col9}{\textsf{}}
-\fromto{col9}{colend}{\textsf{Xs {\ensuremath{=}} \char`\[{}X $|$ Xs$_{0}$\char`\]{}, append(Xs$_{0}$, Ys, Zs$_{0}$), Zs {\ensuremath{=}} \char`\[{}X $|$ Zs$_{0}$\char`\]{}}}
+\fromto{col9}{colend}{\textsf{Result {\ensuremath{=}} error(ErrorCode),}}
+\nextline
+\fromto{col1}{col9}{\textsf{}}
+\fromto{col9}{colend}{\textsf{io.format(``\%s{\ensuremath{\backslash}}n'', \char`\[{}s(io.error\_message(ErrorCode))\char`\]{}, !IO)}}
+\nextline
+\fromto{col1}{col5}{\textsf{}}
+\fromto{col5}{colend}{\textsf{;}}
+\nextline
+\fromto{col1}{col9}{\textsf{}}
+\fromto{col9}{colend}{\textsf{Result {\ensuremath{=}} ok(String),}}
+\nextline
+\fromto{col1}{col9}{\textsf{}}
+\fromto{col9}{colend}{\textsf{( \textbf{if} string\_to\_ints(String, Ints) \textbf{then}}}
+\nextline
+\fromto{col1}{col13}{\hspace*{3.6em}}
+\fromto{col13}{colend}{\textsf{process\_ints(Ints, !IO)}}
+\nextline
+\fromto{col1}{col11}{\hspace*{3em}}
+\fromto{col11}{colend}{\textsf{\textbf{else}}}
+\nextline
+\fromto{col1}{col13}{\textsf{}}
+\fromto{col13}{col62}{\textsf{io.write\_string("I think you've made a mistake.}}
+\fromto{col62}{colend}{\textsf{Try again.{\ensuremath{\backslash}}n", !IO),}}
+\nextline
+\fromto{col1}{col13}{\textsf{}}
+\fromto{col13}{colend}{\textsf{main(!IO)}}
+\nextline
+\fromto{col1}{col9}{\textsf{}}
+\fromto{col9}{colend}{\textsf{)}}
+\nextline
+\fromto{col1}{col5}{\textsf{}}
+\fromto{col5}{colend}{\textsf{).}}
+\nextline
+\end{ptabular}
+
+\end{small}
+This all looks straightforward.
+Next we have to define the \textsf{string\_to\_ints}
+and \textsf{process\_ints} predicates.
+\begin{small}
+
+\begin{ptabular}
+\column{col1}{@{\ }l@{}}
+\column{col5}{@{\ }l@{}}
+\column{colend}{@{\ }l@{}}
+\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{pred} string\_to\_ints(string::in, list(int)::out) \textbf{is} \textbf{semidet}.}}
+\nextline
+\nextline
+\fromto{col1}{colend}{\textsf{string\_to\_ints(String, Ints) :{\ensuremath{-}}}}
+\nextline
+\fromto{col1}{col5}{\hspace*{1.2em}}
+\fromto{col5}{colend}{\textsf{IntStrings {\ensuremath{=}} string.words(String),}}
+\nextline
+\fromto{col1}{col5}{\textsf{}}
+\fromto{col5}{colend}{\textsf{strings\_to\_ints(IntStrings, Ints).}}
+\nextline
+\nextline
+\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{pred} strings\_to\_ints(list(string)::in, list(int)::out) \textbf{is} \textbf{semidet}.}}
+\nextline
+\nextline
+\fromto{col1}{colend}{\textsf{strings\_to\_ints(\char`\[{}\char`\]{}, \char`\[{}\char`\]{}).}}
+\nextline
+\nextline
+\fromto{col1}{colend}{\textsf{strings\_to\_ints(\char`\[{}IntString $|$ IntStrings\char`\]{}, \char`\[{}Int $|$ Ints\char`\]{}) :{\ensuremath{-}}}}
+\nextline
+\fromto{col1}{col5}{\textsf{}}
+\fromto{col5}{colend}{\textsf{string.to\_int(IntString, Int),}}
+\nextline
+\fromto{col1}{col5}{\textsf{}}
+\fromto{col5}{colend}{\textsf{strings\_to\_ints(IntStrings, Ints).}}
+\nextline
+\end{ptabular}
+
+\end{small}
+The \textsf{string\_to\_ints} is predicate is \textsf{\textbf{semidet}} because it calls
+\textsf{strings\_to\_ints}, which can fail; \textsf{strings\_to\_ints} is \textsf{\textbf{semidet}} because it
+calls \textsf{string.to\_int} which can fail.
+
+Observe the argument types used here: \textsf{list(string)} and \textsf{list(int)},
+meaning ``list of strings'' and ``list of ints'' respectively.
+In Mercury,
+each list can only hold members of a single type --- for
+example, you can't mix ints and strings in the same list.
+
+The \textsf{string.words} function splits one string into a list of strings, taking
+whitespace (spaces, tabs, etc.) to be the ``word'' separator.
+For example, \textsf{string.words(`` 1 2 3 '') {\ensuremath{=}} \char`\[{}``1'', ``2'', ``3''\char`\]{}}.
+
+The first clause of \textsf{strings\_to\_ints} converts the empty list of strings
+into the empty list of integers.
+The second clause converts the non-empty
+list of strings \textsf{\char`\[{}IntString $|$ IntStrings\char`\]{}} into the list of ints
+\textsf{\char`\[{}Int $|$ Ints\char`\]{}} using \textsf{string.to\_int} to convert \textsf{IntString} to \textsf{Int} and
+calling itself recursively to convert \textsf{IntStrings} to \textsf{Ints}.
+
+Despite how it looks, the output \textsf{\char`\[{}Int $|$ Ints\char`\]{}} in the second clause
+of \textsf{strings\_to\_ints} is actually constructed \emph{after} the body of the
+clause has run, to ensure that \textsf{Int} and \textsf{Ints} have been given values.
+That is, the Mercury compiler converts the definition given above into
+something like this:
+\begin{small}
+
+\begin{ptabular}
+\column{col1}{@{\ }l@{}}
+\column{col5}{@{\ }l@{}}
+\column{col45}{@{\ }l@{}}
+\column{col9}{@{\ }l@{}}
+\column{colend}{@{\ }l@{}}
+\fromto{col1}{colend}{\textsf{strings\_to\_ints(Input, Output) :{\ensuremath{-}}}}
+\nextline
+\fromto{col1}{col5}{\hspace*{1.2em}}
+\fromto{col5}{colend}{\textsf{\% Switch on Input.}}
+\nextline
+\fromto{col1}{col5}{\textsf{}}
+\fromto{col5}{colend}{\textsf{(}}
+\nextline
+\fromto{col1}{col9}{\hspace*{2.4em}}
+\fromto{col9}{col45}{\textsf{Input {\ensuremath{=}} \char`\[{}\char`\]{},}}
+\fromto{col45}{colend}{\textsf{\% Deconstruction (i.e., pattern matching).}}
+\nextline
+\fromto{col1}{col9}{\textsf{}}
+\fromto{col9}{col45}{\textsf{Output {\ensuremath{=}} \char`\[{}\char`\]{}}}
+\fromto{col45}{colend}{\textsf{\% Construction.}}
+\nextline
+\fromto{col1}{col5}{\textsf{}}
+\fromto{col5}{colend}{\textsf{;}}
+\nextline
+\fromto{col1}{col9}{\textsf{}}
+\fromto{col9}{col45}{\textsf{Input {\ensuremath{=}} \char`\[{}IntString $|$ IntStrings\char`\]{},}}
+\fromto{col45}{colend}{\textsf{\% Deconstruction.}}
+\nextline
+\fromto{col1}{col9}{\textsf{}}
+\fromto{col9}{colend}{\textsf{string.to\_int(IntString, Int),}}
+\nextline
+\fromto{col1}{col9}{\textsf{}}
+\fromto{col9}{colend}{\textsf{strings\_to\_ints(IntStrings, Ints),}}
+\nextline
+\fromto{col1}{col9}{\textsf{}}
+\fromto{col9}{col45}{\textsf{Output {\ensuremath{=}} \char`\[{}Int $|$ Ints\char`\]{}}}
+\fromto{col45}{colend}{\textsf{\% Construction.}}
 \nextline
 \fromto{col1}{col5}{\textsf{}}
 \fromto{col5}{colend}{\textsf{).}}
@@ -3627,402 +2029,320 @@ standard library module.  The declarative semantics of
 
 \end{small}
 
-This code needs no reordering for the \textsf{(in, in, out) \textbf{is} \textbf{det}} mode, where
-\textsf{Xs} and \textsf{Ys} start off instantiated and \textsf{Zs} starts off uninstantiated.
-The first disjunct works like this:
-
-\begin{tabular}{lp{0.3\linewidth}l}
-1 & \textsf{Xs {\ensuremath{=}} \char`\[{}\char`\]{}} & Deconstruct \textsf{Xs}\\
-2 & \textsf{Zs {\ensuremath{=}} Ys} & Assign \textsf{Zs}\\
-\end{tabular}
-
-and the second disjunct works like this:
-
-\begin{tabular}{lp{0.3\linewidth}p{0.6\linewidth}}
-1 & \textsf{Xs {\ensuremath{=}} \char`\[{}X $|$ Xs$_{0}$\char`\]{}} & Deconstruct \textsf{Xs}, instantiating \textsf{X} and \textsf{Xs$_{0}$}\\
-2 & \textsf{append(Xs$_{0}$, Ys, Zs$_{0}$)} & Call the \textsf{(in, in, out)} procedure, instantiating
-\textsf{Zs$_{0}$}\\
-3 & \textsf{Zs {\ensuremath{=}} \char`\[{}X $|$ Zs$_{0}$\char`\]{}} & Construct \textsf{Zs}\\
-\end{tabular}
-
-Because each disjunct deconstructs \textsf{Xs} in a different way, this disjunction
-is a switch.  Because the switch is exhaustive, and the other goals in each
-disjunct are \textsf{\textbf{det}}, the switch as a whole is \textsf{\textbf{det}}.
-
-The \textsf{(out, out, in) \textbf{is} \textbf{multi}} mode, where only \textsf{Zs} is initially
-instantiated, does require some reordering in order to ensure that every
-variable is instantiated before it is needed.  The first disjunct becomes
-
-\begin{tabular}{lp{0.3\linewidth}l}
-1 & \textsf{Xs {\ensuremath{=}} \char`\[{}\char`\]{}} & Construct \textsf{Xs}\\
-2 & \textsf{Zs {\ensuremath{=}} Ys} & Assign \textsf{Ys}\\
-\end{tabular}
-
-and the second disjunct becomes
-
-\begin{tabular}{lp{0.3\linewidth}p{0.6\linewidth}}
-1 & \textsf{Zs {\ensuremath{=}} \char`\[{}X $|$ Zs$_{0}$\char`\]{}} & Deconstruct \textsf{Zs}, instantiating \textsf{X} and \textsf{Zs$_{0}$}\\
-2 & \textsf{append(Xs$_{0}$, Ys, Zs$_{0}$)} & Call the \textsf{(out, out, in)} procedure, instantiating
-\textsf{Xs$_{0}$} and \textsf{Ys}\\
-3 & \textsf{Xs {\ensuremath{=}} \char`\[{}X $|$ Xs$_{0}$\char`\]{}} & Construct \textsf{Xs}\\
-\end{tabular}
-
-Since this disjunction is not a switch and the first disjunct always leads
-to a solution, the disjunction as a whole is \textsf{\textbf{multi}} in this case.
-
-\Note The Mercury compiler reorders code as little as possible.  However,
-programmers should not write code that depends upon any particular order of
-evaluation --- code can also be reordered by various optimizations!  In
-particular, it is a bad idea to write something like
-\textsf{( \textbf{if} X {\ensuremath{\backslash}}{\ensuremath{=}} 0, Z {\ensuremath{=}} Y / X \textbf{then} ... \textbf{else} ... )}, assuming that the test for \textsf{X}
-being non-zero will guarantee that this code cannot lead to a
-division-by-zero error at run-time.  It is certainly possible that the test
-and the division may be compiled the other way around.
-
-\section{Insts and subtypes}
-
-So far we have only talked about variables going from being uninstantiated
-to being instantiated.  It turns out to be useful to also keep track of the
-possible values a variable can have when it is instantiated.  Mercury uses
-\textsf{\textbf{inst}}s for this purpose.  An \textsf{\textbf{inst}} represents the possible
-instantiantiation states of a variable at a particular point in a program.
-
-The most basic \textsf{\textbf{inst}}s are \textsf{free}, meaning a variable is uninstantiated, and
-\textsf{ground}, meaning a variable is instantiated with some unknown value of the
-appropriate type.
-
-The built-in \textsf{\textbf{mode}}s \textsf{in} and \textsf{out} are defined using the following syntax:
-
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{col14}{@{\ }l@{}}
-\column{col26}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{col14}{\textsf{:{\ensuremath{-}} \textbf{mode} in}}
-\fromto{col14}{col26}{\textsf{{\ensuremath{=}}{\ensuremath{=}} (ground}}
-\fromto{col26}{colend}{\textsf{{\ensuremath{>}}{\ensuremath{>}} ground).}}
-\nextline
-\fromto{col1}{col14}{\textsf{:{\ensuremath{-}} \textbf{mode} out}}
-\fromto{col14}{col26}{\textsf{{\ensuremath{=}}{\ensuremath{=}} (free}}
-\fromto{col26}{colend}{\textsf{{\ensuremath{>}}{\ensuremath{>}} ground).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-
-That is, an \textsf{in} mode argument of a goal must be \textsf{ground} (\ie be
-instantiated with some value) before the goal is executed and will also be
-\textsf{ground} afterwards, while an \textsf{out} mode argument must be \textsf{free} (\ie not
-instantiated) before the goal is executed, but will be \textsf{ground} afterwards.
-
-\Note If a goal fails or backtracks then the \textsf{\textbf{inst}}s of its arguments stay
-the same as they were before the goal was tried.
-
-\subsection*{Specialised insts}
-
-It is occasionally useful to define new \textsf{\textbf{inst}}s matching only subsets of
-possible values that a variable might have.  Consider the \textsf{\textbf{inst}}
-\textsf{non\_empty\_list} which is defined in the \textsf{list} standard library module:
-
-\begin{small}
-
-\begin{ptabular}
-\column{col10}{@{\ }l@{}}
-\column{col1}{@{\ }l@{}}
-\column{col36}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{inst} non\_empty\_list {\ensuremath{=}}{\ensuremath{=}} bound(\char`\[{}ground $|$ ground\char`\]{}).}}
-\nextline
-\nextline
-\fromto{col1}{col10}{\textsf{:{\ensuremath{-}} \textbf{pred}}}
-\fromto{col10}{colend}{\textsf{head(list(T), T).}}
-\nextline
-\fromto{col1}{col10}{\textsf{:{\ensuremath{-}} \textbf{mode}}}
-\fromto{col10}{col36}{\textsf{head(in,}}
-\fromto{col36}{colend}{\textsf{out) \textbf{is} \textbf{semidet}.}}
-\nextline
-\fromto{col1}{col10}{\textsf{:{\ensuremath{-}} \textbf{mode}}}
-\fromto{col10}{col36}{\textsf{head(in(non\_empty\_list),}}
-\fromto{col36}{colend}{\textsf{out) \textbf{is} \textbf{det}.}}
-\nextline
-\nextline
-\fromto{col1}{colend}{\textsf{head(Xs, X) :{\ensuremath{-}} Xs {\ensuremath{=}} \char`\[{}X $|$ \_\char`\]{}.}}
-\nextline
-\end{ptabular}
-
-\end{small}
-
-The \textsf{\textbf{inst}} declaration defines \textsf{non\_empty\_list} to mean ``bound to the list
-data constructor \textsf{\char`\[{}$|$\char`\]{}} whose first argument has inst \textsf{ground} and whose
-second argument has inst \textsf{ground}''.
-
-The first mode for \textsf{head} tells us that if all we know about the first
-argument is that it is \textsf{ground} (\ie it could be bound to any value of type
-\textsf{list(T)}, including \textsf{\char`\[{}\char`\]{}}) then a call to \textsf{head} is semidet.
-
-The second mode for \textsf{head} says that if we know the first argument is a
-non-empty list (\ie whatever value it has, it's top-most data constructor
-must be \textsf{\char`\[{}$|$\char`\]{}} with two \textsf{ground} arguments) then a call to \textsf{head} is
-guaranteed to succeed.
-
-The second \textsf{\textbf{mode}} declaration uses the built-in parameterised form of the
-\textsf{in} argument mode, which is defined like this:
-
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{mode} in(I) {\ensuremath{=}}{\ensuremath{=}} (I {\ensuremath{>}}{\ensuremath{>}} I).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-
-where \textsf{I} is an \textsf{\textbf{inst}} parameter.  \textsf{in(non\_empty\_list)} is therefore
-equivalent to writing \textsf{(non\_empty\_list {\ensuremath{>}}{\ensuremath{>}} non\_empty\_list)}.  There is also a
-built-in parameterised \textsf{out} argument mode, defined thus:
-
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{mode} out(I) {\ensuremath{=}}{\ensuremath{=}} (free {\ensuremath{>}}{\ensuremath{>}} I).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-
-When compiling the procedure for the second mode of \textsf{head}, the Mercury
-compiler uses the information about the inst of the first argument, \textsf{Xs}, to
-infer that the goal \textsf{Xs {\ensuremath{=}} \char`\[{}X $|$ \_\char`\]{}} must (a) be a deconstruction and (b) must
-succeed because whatever value \textsf{Xs} has matches the pattern \textsf{\char`\[{}\_ $|$ \_\char`\]{}}.
-
-\Note A value with a \textsf{bound(...)} \textsf{\textbf{inst}} can always be used in a context
-where a \textsf{ground} value is expected, but not the other way around.
-
-\XXX{Mention the alternative \textsf{\textbf{inst}} definition syntax.}
-
-\subsection*{Recursively defined insts}
-
-It is possible to describe quite complicated instantiation states.  The
-following \textsf{\textbf{inst}}s, for instance, describe lists of even and odd lengths
-respectively:
-
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{col27}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{col27}{\textsf{:{\ensuremath{-}} \textbf{inst} even\_length\_list}}
-\fromto{col27}{colend}{\textsf{{\ensuremath{=}}{\ensuremath{=}} bound(\char`\[{}\char`\]{} ; \char`\[{}ground $|$ odd\_length\_list\char`\]{}).}}
-\nextline
-\fromto{col1}{col27}{\textsf{:{\ensuremath{-}} \textbf{inst} odd\_length\_list}}
-\fromto{col27}{colend}{\textsf{{\ensuremath{=}}{\ensuremath{=}} bound(\char`\[{}ground $|$ even\_length\_list\char`\]{}).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-
-The first \textsf{\textbf{inst}} declaration defines \textsf{even\_length\_list} to mean ``bound
-\emph{either} to \textsf{\char`\[{}\char`\]{}} \emph{or} to \textsf{\char`\[{}$|$\char`\]{}} with two arguments, the first
-having \textsf{\textbf{inst}} \textsf{ground} and the second having \textsf{\textbf{inst}} \textsf{odd\_length\_list}
-(multiple possibilities in a \textsf{bound} expression are separated by
-semicolons).
-
-The second \textsf{\textbf{inst}} declaration defines \textsf{odd\_length\_list} to mean ``bound to
-\textsf{\char`\[{}$|$\char`\]{}} with two arguments, the first having \textsf{\textbf{inst}} \textsf{ground} and the second
-having inst \textsf{even\_length\_list}.''
-
-\subsection*{Partial instantiation}
-
-A partially instantiated value is one whose \textsf{\textbf{inst}} is \textsf{bound(...)} where
-the \textsf{...} part contains \textsf{free} sub-insts, either directly or indirectly.
-
-Partial instantiation is not currently supported for several reasons,
-including the difficulty of analysing such code, the difficulty of
-maintaining such code, and the difficulty of compiling such code
-efficiently.
-
-\section{Uniqueness}
-
-A \textsf{bound(...)} inst is said to be \emph{shared} --- that is, it corresponds
-to a value that may be referred to, directly or indirectly, by more than one
-variable at a given point in the program.
-
-Mercury has a special inst, \textsf{unique}, which is like \textsf{ground}, but it means
-that there is precisely one reference to the \textsf{unique} data at this point in
-the program.  The counterpart to \textsf{unique}, is \textsf{clobbered}.  A variable with
-\textsf{\textbf{inst}} \textsf{clobbered} may never be used again (\eg because the value it refers
-to is now out-of-date or has been overwritten with something else).
-
-The most common use of uniqueness is for managing IO.  All the IO operations
-defined in the \textsf{io} standard library module include two arguments of type
-\textsf{io}, with modes \textsf{di} and \textsf{uo} respectively.  \textsf{di} stands for ``destructive
-input'' and \textsf{uo} stands for ``unique output''.  These \textsf{\textbf{mode}}s are built-in
-and defined thus:
-
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{col13}{@{\ }l@{}}
-\column{col25}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{col13}{\textsf{:{\ensuremath{-}} \textbf{mode} di}}
-\fromto{col13}{col25}{\textsf{{\ensuremath{=}}{\ensuremath{=}} (unique}}
-\fromto{col25}{colend}{\textsf{{\ensuremath{>}}{\ensuremath{>}} clobbered).}}
-\nextline
-\fromto{col1}{col13}{\textsf{:{\ensuremath{-}} \textbf{mode} uo}}
-\fromto{col13}{col25}{\textsf{{\ensuremath{=}}{\ensuremath{=}} (free}}
-\fromto{col25}{colend}{\textsf{{\ensuremath{>}}{\ensuremath{>}} unique).}}
-\nextline
-\end{ptabular}
-
-\end{small}
-
-To illustrate, consider these \textsf{\textbf{pred}} declarations taken from the \textsf{io}
-module:
-
-\begin{small}
-
-\begin{ptabular}
-\column{col1}{@{\ }l@{}}
-\column{colend}{@{\ }l@{}}
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{pred} io.write\_string(string::in, io::di, io::uo) \textbf{is} \textbf{det}.}}
-\nextline
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{pred} io.write\_int(int::in, io::di, io::uo) \textbf{is} \textbf{det}.}}
-\nextline
-\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{pred} io.nl(io::di, io::uo) \textbf{is} \textbf{det}.}}
-\nextline
-\end{ptabular}
-
-\end{small}
-
-and the following code snippet:
-
+Finally, we need to define the \textsf{process\_ints} predicate.
 \begin{small}
 
 \begin{ptabular}
 \column{col1}{@{\ }l@{}}
 \column{col5}{@{\ }l@{}}
 \column{colend}{@{\ }l@{}}
+\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{pred} process\_ints(list(int)::in, io::di, io::uo) \textbf{is} \textbf{det}.}}
+\nextline
+\nextline
+\fromto{col1}{colend}{\textsf{process\_ints(Ints, !IO) :{\ensuremath{-}}}}
+\nextline
 \fromto{col1}{col5}{\hspace*{1.2em}}
-\fromto{col5}{colend}{\textsf{io.write\_string(``The meaning of life \textbf{is} '', IO$_{0}$, IO$_{1}$),}}
+\fromto{col5}{colend}{\textsf{io.format(``Sum: \%d{\ensuremath{\backslash}}n'', \char`\[{}i(sum\_ints(Ints))\char`\]{}, !IO).}}
 \nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{colend}{\textsf{io.write\_int(42, IO$_{1}$, IO$_{2}$),}}
 \nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{colend}{\textsf{io.nl(IO$_{2}$, IO$_{3}$)}}
+\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{func} sum\_ints(list(int)) {\ensuremath{=}} int.}}
+\nextline
+\nextline
+\fromto{col1}{colend}{\textsf{sum\_ints(\char`\[{}\char`\]{}) {\ensuremath{=}} 0.}}
+\nextline
+\fromto{col1}{colend}{\textsf{sum\_ints(\char`\[{}X $|$ Xs\char`\]{}) {\ensuremath{=}} X {\ensuremath{+}} sum\_ints(Xs).}}
+\nextline
+\end{ptabular}
+
+\end{small}
+The \textsf{sum\_ints} function defines the sum of the empty list to be zero (why?)
+and the sum of the non-empty list \textsf{\char`\[{}X $|$ Xs\char`\]{}} to be \textsf{X} plus the sum of the
+list \textsf{Xs}.
+
+Let's see it in action:
+\begin{small}
+
+\begin{ptabular}
+\column{col1}{@{\ }l@{}}
+\column{col33}{@{\ }l@{}}
+\column{colend}{@{\ }l@{}}
+\fromto{col1}{colend}{\textsf{\char`\${} mmc {\ensuremath{-}}{\ensuremath{-}}make listdemo}}
+\nextline
+\fromto{col1}{colend}{\textsf{...}}
+\nextline
+\fromto{col1}{colend}{\textsf{\char`\${} ./listdemo}}
+\nextline
+\fromto{col1}{colend}{\textsf{Type in a few integers separated by spaces:}}
+\nextline
+\fromto{col1}{colend}{\textsf{$|$ two four one three}}
+\nextline
+\fromto{col1}{col33}{\textsf{I think you've made a mistake.}}
+\fromto{col33}{colend}{\textsf{Try again.}}
+\nextline
+\fromto{col1}{colend}{\textsf{Type in a few integers separated by spaces:}}
+\nextline
+\fromto{col1}{colend}{\textsf{$|$ 2 4 1 3}}
+\nextline
+\fromto{col1}{colend}{\textsf{Sum: 10}}
 \nextline
 \end{ptabular}
 
 \end{small}
 
-The \textsf{io} type arguments denote ``states of the world''.  These \textsf{io} states
-are updated when IO actions are performed.  One can never go back to an
-earlier state (you can't unplay a piece of music or unprint a document),
-so each IO action clobbers the \textsf{io} state passed to it and produces
-and new \textsf{io} state as its result.  Similarly, because one cannot copy the
-state of the world, \textsf{io} states have to be unique.  These constraints ensure
-that the above code snippet executes in the expected order --- that is,
-first the string \textsf{``The meaning of life \textbf{is} ''} will be printed
-(clobbering \textsf{IO$_{0}$} and producing \textsf{IO$_{1}$}), then the number \textsf{42}
-(clobbering \textsf{IO$_{1}$} and producing \textsf{IO$_{2}$}), and finally a newline (clobbering
-\textsf{IO$_{2}$} and producing \textsf{IO$_{3}$}).
 
-Say we were to accidentally reuse \textsf{IO$_{0}$} in the second goal:
 
+\section{The minium and maximum of a list of ints}
+
+Now we extend our program to find the minimum and maximum of the input:
+\begin{small}
+
+\begin{ptabular}
+\column{col1}{@{\ }l@{}}
+\column{col5}{@{\ }l@{}}
+\column{col7}{@{\ }l@{}}
+\column{col9}{@{\ }l@{}}
+\column{colend}{@{\ }l@{}}
+\fromto{col1}{colend}{\textsf{process\_ints(Ints, !IO) :{\ensuremath{-}}}}
+\nextline
+\fromto{col1}{col5}{\hspace*{1.2em}}
+\fromto{col5}{colend}{\textsf{io.format(``Sum: \%d{\ensuremath{\backslash}}n'', \char`\[{}i(sum\_ints(Ints))\char`\]{}, !IO),}}
+\nextline
+\fromto{col1}{col5}{\textsf{}}
+\fromto{col5}{colend}{\textsf{( \textbf{if}}}
+\nextline
+\fromto{col1}{col9}{\hspace*{2.4em}}
+\fromto{col9}{colend}{\textsf{min\_ints(Ints, Min),}}
+\nextline
+\fromto{col1}{col9}{\textsf{}}
+\fromto{col9}{colend}{\textsf{max\_ints(Ints, Max)}}
+\nextline
+\fromto{col1}{col7}{\hspace*{1.8em}}
+\fromto{col7}{colend}{\textsf{\textbf{then}}}
+\nextline
+\fromto{col1}{col9}{\textsf{}}
+\fromto{col9}{colend}{\textsf{io.format(``Min: \%d{\ensuremath{\backslash}}n'', \char`\[{}i(Min)\char`\]{}, !IO),}}
+\nextline
+\fromto{col1}{col9}{\textsf{}}
+\fromto{col9}{colend}{\textsf{io.format(``Max: \%d{\ensuremath{\backslash}}n'', \char`\[{}i(Max)\char`\]{}, !IO)}}
+\nextline
+\fromto{col1}{col7}{\textsf{}}
+\fromto{col7}{colend}{\textsf{\textbf{else}}}
+\nextline
+\fromto{col1}{col9}{\textsf{}}
+\fromto{col9}{colend}{\textsf{\textbf{true}}}
+\nextline
+\fromto{col1}{col5}{\textsf{}}
+\fromto{col5}{colend}{\textsf{).}}
+\nextline
+\end{ptabular}
+
+\end{small}
+Note: \textsf{\textbf{true}} is the Mercury built-in predicate that always succeeds and is used
+where we need to ``do nothing''; there is a corresponding \textsf{\textbf{false}} predicate
+that always fails.
 \begin{small}
 
 \begin{ptabular}
 \column{col1}{@{\ }l@{}}
 \column{col5}{@{\ }l@{}}
 \column{colend}{@{\ }l@{}}
+\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{pred} min\_ints(list(int)::in, int::out) \textbf{is} \textbf{semidet}.}}
+\nextline
+\nextline
+\fromto{col1}{colend}{\textsf{min\_ints(\char`\[{}X $|$ Xs\char`\]{}, Min) :{\ensuremath{-}}}}
+\nextline
 \fromto{col1}{col5}{\hspace*{1.2em}}
-\fromto{col5}{colend}{\textsf{io.write\_string(``The meaning of life \textbf{is} '', IO$_{0}$, IO$_{1}$),}}
+\fromto{col5}{colend}{\textsf{Min {\ensuremath{=}} min\_ints\_2(Xs, X).}}
 \nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{colend}{\textsf{io.write\_int(42, IO$_{0}$, IO$_{2}$),}}
 \nextline
-\fromto{col1}{col5}{\textsf{}}
-\fromto{col5}{colend}{\textsf{io.nl(IO$_{2}$, IO$_{3}$)}}
+\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{func} min\_ints\_2(list(int), int) {\ensuremath{=}} int.}}
+\nextline
+\nextline
+\fromto{col1}{colend}{\textsf{min\_ints\_2(\char`\[{}\char`\]{}, Min) {\ensuremath{=}} Min.}}
+\nextline
+\fromto{col1}{colend}{\textsf{min\_ints\_2(\char`\[{}X $|$ Xs\char`\]{}, Min) {\ensuremath{=}} min\_ints\_2(Xs, int.min(X, Min)).}}
+\nextline
+\nextline
+\fromto{col1}{colend}{\textsf{\char`\[{}...and similarly for max\_ints...\char`\]{}}}
 \nextline
 \end{ptabular}
 
 \end{small}
-
-The Mercury compiler will report the following error
-(line 27 in file \textsf{foo.m} is the call to \textsf{io.write\_string}):
-
+\textsf{min\_ints} is \textsf{\textbf{semidet}} because it will fail if the input is the empty list
+--- unlike \textsf{sum\_ints}, there is no sensible value for the minimum of the
+empty list, hence we don't supply a clause matching this case.
+If we really wanted to we could add the following:
 \begin{small}
 
 \begin{ptabular}
 \column{col1}{@{\ }l@{}}
-\column{col16}{@{\ }l@{}}
+\column{col5}{@{\ }l@{}}
 \column{colend}{@{\ }l@{}}
-\fromto{col1}{col16}{\textsf{foo.m:027: In}}
-\fromto{col16}{colend}{\textsf{clause for `main(di, uo)':}}
+\fromto{col1}{colend}{\textsf{min\_ints(\char`\[{}\char`\]{}, \_) :{\ensuremath{-}}}}
 \nextline
-\fromto{col1}{col16}{\textsf{foo.m:027:}}
-\fromto{col16}{colend}{\textsf{in argument 2 of call to predicate `io.write\_string/3':}}
+\fromto{col1}{col5}{\hspace*{1.2em}}
+\fromto{col5}{colend}{\textsf{\textbf{false}.}}
 \nextline
-\fromto{col1}{col16}{\textsf{foo.m:027:}}
-\fromto{col16}{colend}{\textsf{unique{\ensuremath{-}}\textbf{mode} error: the called procedure would clobber}}
+\end{ptabular}
+
+\end{small}
+where \textsf{\_} stands for ``don't care''.
+In practice we simply omit clauses like this.
+
+\textsf{min\_ints\_2} is \textsf{\textbf{det}} (it's a function): it uses an ``accumulator'',
+\textsf{Min}, to track the smallest value seen so far and is defined for both empty
+and non-empty lists.
+The \textsf{int.min} function, from the \textsf{int} module in the
+standard Mercury library, simply returns the smaller of its two arguments.
+
+Here's our updated program in action:
+\begin{small}
+
+\begin{ptabular}
+\column{col1}{@{\ }l@{}}
+\column{colend}{@{\ }l@{}}
+\fromto{col1}{colend}{\textsf{\char`\${} mmc {\ensuremath{-}}{\ensuremath{-}}make listdemo}}
 \nextline
-\fromto{col1}{col16}{\textsf{foo.m:027:}}
-\fromto{col16}{colend}{\textsf{its argument, but variable `IO$_{0}$' \textbf{is} still live.}}
+\fromto{col1}{colend}{\textsf{...}}
+\nextline
+\fromto{col1}{colend}{\textsf{\char`\${} ./listdemo}}
+\nextline
+\fromto{col1}{colend}{\textsf{Type in a few integers separated by spaces:}}
+\nextline
+\fromto{col1}{colend}{\textsf{$|$ 2 4 1 3}}
+\nextline
+\fromto{col1}{colend}{\textsf{Sum: 10}}
+\nextline
+\fromto{col1}{colend}{\textsf{Min: 1}}
+\nextline
+\fromto{col1}{colend}{\textsf{Max: 4}}
 \nextline
 \end{ptabular}
 
 \end{small}
 
-\Note Procedures that can clobber arguments must have determinism category
-\textsf{\textbf{det}} or \textsf{\textbf{cc\_multi}}.  They must always succeed and produce a single result.
-The reason for this is that once an argument is clobbered, which could
-happen at any point during the execution of the procedure, there is no way
-of un-clobbering it on failure or backtracking.  Consequently it is also an
-error for code to backtrack into such procedures.  For the rare cases where
-one needs to do such things, the reader is referred to the section on
-backtrackable destructive update in the Mercury reference manual which
-discusses ``mostly uniqueness''.
+We can make our program slightly more efficient by computing the minimum and
+maximum values in a single pass of the input list:
+\begin{small}
 
-Other modules in the standard library that use uniqueness are \textsf{array} and
-\textsf{store}.  The \textsf{array} module implements arrays with $O(1)$ look-up and set
-operations.  It achieves this by using destructive update for the array set
-operation.  This is quite safe because arrays are unique: the `old' version
-of the array is clobbered by the update operation so it can never
-be referred to again; the `new' version of the array is simply the updated
-`old' version.  The \textsf{store} module allows one to construct safe,
-pointer-based structures.  Pointer referents can be accessed and updated in
-$O(1)$ time by using the same technique as for arrays.  Chapter XXX
-describes these modules in more detail.
+\begin{ptabular}
+\column{col1}{@{\ }l@{}}
+\column{col5}{@{\ }l@{}}
+\column{col7}{@{\ }l@{}}
+\column{col9}{@{\ }l@{}}
+\column{colend}{@{\ }l@{}}
+\fromto{col1}{colend}{\textsf{process\_ints(Ints, !IO) :{\ensuremath{-}}}}
+\nextline
+\fromto{col1}{col5}{\hspace*{1.2em}}
+\fromto{col5}{colend}{\textsf{io.format(``Sum: \%d{\ensuremath{\backslash}}n'', \char`\[{}i(sum\_ints(Ints))\char`\]{}, !IO),}}
+\nextline
+\fromto{col1}{col5}{\textsf{}}
+\fromto{col5}{colend}{\textsf{( \textbf{if} min\_max\_ints(Ints, Min, Max) \textbf{then}}}
+\nextline
+\fromto{col1}{col9}{\hspace*{2.4em}}
+\fromto{col9}{colend}{\textsf{io.format(``Min: \%d{\ensuremath{\backslash}}n'', \char`\[{}i(Min)\char`\]{}, !IO),}}
+\nextline
+\fromto{col1}{col9}{\textsf{}}
+\fromto{col9}{colend}{\textsf{io.format(``Max: \%d{\ensuremath{\backslash}}n'', \char`\[{}i(Max)\char`\]{}, !IO)}}
+\nextline
+\fromto{col1}{col7}{\hspace*{1.8em}}
+\fromto{col7}{colend}{\textsf{\textbf{else}}}
+\nextline
+\fromto{col1}{col9}{\textsf{}}
+\fromto{col9}{colend}{\textsf{\textbf{true}}}
+\nextline
+\fromto{col1}{col5}{\textsf{}}
+\fromto{col5}{colend}{\textsf{).}}
+\nextline
+\nextline
+\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{pred} min\_max\_ints(list(int)::in, int::out, int::out) \textbf{is} \textbf{semidet}.}}
+\nextline
+\nextline
+\fromto{col1}{colend}{\textsf{min\_max\_ints(\char`\[{}X $|$ Xs\char`\]{}, Min, Max) :{\ensuremath{-}}}}
+\nextline
+\fromto{col1}{col5}{\textsf{}}
+\fromto{col5}{colend}{\textsf{min\_max\_ints\_2(Xs, X, Min, X, Max).}}
+\nextline
+\nextline
+\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{pred} min\_max\_ints\_2(list(int)::in, int::in, int::out, int::in, int::out) \textbf{is} \textbf{semidet}.}}
+\nextline
+\nextline
+\fromto{col1}{colend}{\textsf{min\_max\_ints\_2(\char`\[{}\char`\]{}, Min, Min, Max, Max).}}
+\nextline
+\fromto{col1}{colend}{\textsf{min\_max\_ints\_2(\char`\[{}X $|$ Xs\char`\]{}, Min$_{0}$, Min, Max$_{0}$, Max) :{\ensuremath{-}}}}
+\nextline
+\fromto{col1}{col5}{\textsf{}}
+\fromto{col5}{colend}{\textsf{Min$_{1}$ {\ensuremath{=}} int.min(X, Min$_{0}$),}}
+\nextline
+\fromto{col1}{col5}{\textsf{}}
+\fromto{col5}{colend}{\textsf{Max$_{1}$ {\ensuremath{=}} int.max(X, Max$_{0}$),}}
+\nextline
+\fromto{col1}{col5}{\textsf{}}
+\fromto{col5}{colend}{\textsf{min\_max\_ints\_2(Xs, Min$_{1}$, Min, Max$_{1}$, Max).}}
+\nextline
+\end{ptabular}
 
-\section{Higher-order modes}
+\end{small}
+We can't use a function for \textsf{min\_max\_ints\_2} because it has two outputs for
+a given input, whereas functions only have one output.
+Since there are two
+outputs, it also has two accumulators, \textsf{Min$_{0}$} and \textsf{Max$_{0}$}, to track the
+smallest and largest values seen so far.
+The first clause, dealing with the
+empty list input case, may look a little strange.
+This is a standard
+Mercury idiom exactly equivalent to writing
+\begin{small}
 
-\XXX{Fill this out.}
+\begin{ptabular}
+\column{col1}{@{\ }l@{}}
+\column{col5}{@{\ }l@{}}
+\column{colend}{@{\ }l@{}}
+\fromto{col1}{colend}{\textsf{min\_max\_ints\_2(\char`\[{}\char`\]{}, Min, MinOutput, Max, MaxOutput) :{\ensuremath{-}}}}
+\nextline
+\fromto{col1}{col5}{\hspace*{1.2em}}
+\fromto{col5}{colend}{\textsf{MinOutput {\ensuremath{=}} Min,}}
+\nextline
+\fromto{col1}{col5}{\textsf{}}
+\fromto{col5}{colend}{\textsf{MaxOutput {\ensuremath{=}} Max.}}
+\nextline
+\end{ptabular}
 
-\section{Committed-choice nondeterminism}
+\end{small}
+although this is more verbose and less readable.
 
-\XXX{Fill this out.}
 
-The \textsf{\textbf{cc\_nondet}} and \textsf{\textbf{cc\_multi}} modes.  There may be multiple solutions to a
-cc predicate, but you will only get one of them.
 
-The compiler will report an error if a program can backtrack into a
-committed-choice goal: all goals following a committed-choice goal must be
-\emph{guaranteed} to succeed.  Programming under this restriction is quite
-burdensome.
+\section{The List Data Type}
 
-If all solutions to a committed-choice predicate are equivalent, in the
-sense that, no matter which solution you get, the observable behaviour of
-your program will be the same, then you can use the built-in function
-\textsf{promise\_only\_solution} to escape from the committed-choice context.
+Apart from having special syntactic sugar, lists are not actually built into
+Mercury: they are defined in the \textsf{list} standard Mercury library module the
+same way any other type would be.
+Here is the definition as it appears in
+the \textsf{list} module:
+\begin{small}
 
+\begin{ptabular}
+\column{col1}{@{\ }l@{}}
+\column{colend}{@{\ }l@{}}
+\fromto{col1}{colend}{\textsf{:{\ensuremath{-}} \textbf{type} list(T) {\ensuremath{-}}{\ensuremath{-}}{\ensuremath{-}}{\ensuremath{>}} \char`\[{}\char`\]{} ; \char`\[{}T $|$ list(T)\char`\]{}.}}
+\nextline
+\end{ptabular}
+
+\end{small}
+
+XXX HERE 
+
+A list cell \textsf{\char`\[{}X $|$ Xs\char`\]{}} is represented in memory as a pair of pointers,
+the first pointing to \textsf{X}, the second pointing to \textsf{Xs} (\ie Mercury
+lists are singly linked lists).
+
+
+
+
+% \setcounter{chapter}{2}
+% %include 02-the-mercury-type-system.polytex
+% \setcounter{chapter}{3}
+% %include 03-the-mercury-mode-system.polytex
 
 \end{document}

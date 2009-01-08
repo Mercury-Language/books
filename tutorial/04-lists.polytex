@@ -1,0 +1,271 @@
+% vim: ft=tex ff=unix ts=4 sw=4 et tw=76
+
+\chapter{Lists, IO, and Arithmetic}
+
+%include 01-mercury-by-example.polytex.date
+
+This chapter covers the basics of three fundamental modules from the
+standard library: #list# for the list data structure, #io# for input/output,
+and #int# for integer arithmetic.
+
+Lists are one of the most frequently used data structures.
+The Mercury list data type has two data constructors: #[]# for the
+empty list and #[X | Xs]# for the non-empty list whose head (first item) is
+#X# and whose tail (remainder) is the list #Xs#.
+Mercury provides some syntactic sugar to make working with lists more
+convenient: #[1, 2, 3]# is shorthand for #[1 | [2 | [3 | []]]]# and
+#[1, 2 | Xs]# is shorthand for #[1 | [2 | Xs]]#.
+
+
+
+\section{Reading and summing a list of ints}
+
+We begin with a simple example: reading in some numbers and computing
+their sum.
+Start by putting the the usual header boilerplate in a file
+#listdemo.m#:
+%startcode
+:- module listdemo.
+:- interface.
+:- import_module io.
+
+:- pred main(io::di, io::uo) is det.
+
+:- implementation.
+:- import_module list, int, string.
+%endcode
+Now we want to define the #main# predicate to read in a line of input,
+convert it to a list of integers, and do something with them (in this case,
+print out their sum).
+%startcode
+main(!IO) :-
+    io.write_string("Type in a few integers separated by spaces:\n", !IO),
+    io.read_line_as_string(Result, !IO),
+    (
+        Result = eof
+    ;
+        Result = error(ErrorCode),
+        io.format("%s\n", [s(io.error_message(ErrorCode))], !IO)
+    ;
+        Result = ok(String),
+        ( if string_to_ints(String, Ints) then
+            process_ints(Ints, !IO)
+          else
+            io.write_string("I think you've made a mistake.  Try again.\n", !IO),
+            main(!IO)
+        )
+    ).
+%endcode
+This all looks straightforward.
+Next we have to define the #string_to_ints#
+and #process_ints# predicates.
+%startcode
+:- pred string_to_ints(string::in, list(int)::out) is semidet.
+
+string_to_ints(String, Ints) :-
+    IntStrings = string.words(String),
+    strings_to_ints(IntStrings, Ints).
+
+:- pred strings_to_ints(list(string)::in, list(int)::out) is semidet.
+
+strings_to_ints([], []).
+
+strings_to_ints([IntString | IntStrings], [Int | Ints]) :-
+    string.to_int(IntString, Int),
+    strings_to_ints(IntStrings, Ints).
+%endcode
+The #string_to_ints# is predicate is #semidet# because it calls
+#strings_to_ints#, which can fail; #strings_to_ints# is #semidet# because it
+calls #string.to_int# which can fail.
+
+Observe the argument types used here: #list(string)# and #list(int)#,
+meaning ``list of strings'' and ``list of ints'' respectively.
+In Mercury,
+each list can only hold members of a single type --- for
+example, you can't mix ints and strings in the same list.
+
+The #string.words# function splits one string into a list of strings, taking
+whitespace (spaces, tabs, etc.) to be the ``word'' separator.
+For example, #string.words(" 1 2 3 ") = ["1", "2", "3"]#.
+
+The first clause of #strings_to_ints# converts the empty list of strings
+into the empty list of integers.
+The second clause converts the non-empty
+list of strings #[IntString | IntStrings]# into the list of ints
+#[Int | Ints]# using #string.to_int# to convert #IntString# to #Int# and
+calling itself recursively to convert #IntStrings# to #Ints#.
+
+Despite how it looks, the output #[Int | Ints]# in the second clause
+of #strings_to_ints# is actually constructed \emph{after} the body of the
+clause has run, to ensure that #Int# and #Ints# have been given values.
+That is, the Mercury compiler converts the definition given above into
+something like this:
+%startcode
+strings_to_ints(Input, Output) :-
+    % Switch on Input.
+    (
+        Input = [],                         % Deconstruction (i.e., pattern matching).
+        Output = []                         % Construction.
+    ;
+        Input = [IntString | IntStrings],   % Deconstruction.
+        string.to_int(IntString, Int),
+        strings_to_ints(IntStrings, Ints),
+        Output = [Int | Ints]               % Construction.
+    ).
+%endcode
+
+Finally, we need to define the #process_ints# predicate.
+%startcode
+:- pred process_ints(list(int)::in, io::di, io::uo) is det.
+
+process_ints(Ints, !IO) :-
+    io.format("Sum: %d\n", [i(sum_ints(Ints))], !IO).
+
+:- func sum_ints(list(int)) = int.
+
+sum_ints([]) = 0.
+sum_ints([X | Xs]) = X + sum_ints(Xs).
+%endcode
+The #sum_ints# function defines the sum of the empty list to be zero (why?)
+and the sum of the non-empty list #[X | Xs]# to be #X# plus the sum of the
+list #Xs#.
+
+Let's see it in action:
+%startcode
+$ mmc --make listdemo
+...
+$ ./listdemo
+Type in a few integers separated by spaces:
+| two four one three
+I think you've made a mistake.  Try again.
+Type in a few integers separated by spaces:
+| 2 4 1 3
+Sum: 10
+%endcode
+
+
+
+\section{The minium and maximum of a list of ints}
+
+Now we extend our program to find the minimum and maximum of the input:
+%startcode
+process_ints(Ints, !IO) :-
+    io.format("Sum: %d\n", [i(sum_ints(Ints))], !IO),
+    ( if
+        min_ints(Ints, Min),
+        max_ints(Ints, Max)
+      then
+        io.format("Min: %d\n", [i(Min)], !IO),
+        io.format("Max: %d\n", [i(Max)], !IO)
+      else
+        true
+    ).
+%endcode
+Note: #true# is the Mercury built-in predicate that always succeeds and is used
+where we need to ``do nothing''; there is a corresponding #false# predicate
+that always fails.
+%startcode
+:- pred min_ints(list(int)::in, int::out) is semidet.
+
+min_ints([X | Xs], Min) :-
+    Min = min_ints_2(Xs, X).
+
+:- func min_ints_2(list(int), int) = int.
+
+min_ints_2([], Min) = Min.
+min_ints_2([X | Xs], Min) = min_ints_2(Xs, int.min(X, Min)).
+
+[...and similarly for max_ints...]
+%endcode
+#min_ints# is #semidet# because it will fail if the input is the empty list
+--- unlike #sum_ints#, there is no sensible value for the minimum of the
+empty list, hence we don't supply a clause matching this case.
+If we really wanted to we could add the following:
+%startcode
+min_ints([], _) :-
+    false.
+%endcode
+where #_# stands for ``don't care''.
+In practice we simply omit clauses like this.
+
+#min_ints_2# is #det# (it's a function): it uses an ``accumulator'',
+#Min#, to track the smallest value seen so far and is defined for both empty
+and non-empty lists.
+The #int.min# function, from the #int# module in the
+standard Mercury library, simply returns the smaller of its two arguments.
+
+Here's our updated program in action:
+%startcode
+$ mmc --make listdemo
+...
+$ ./listdemo
+Type in a few integers separated by spaces:
+| 2 4 1 3
+Sum: 10
+Min: 1
+Max: 4
+%endcode
+
+We can make our program slightly more efficient by computing the minimum and
+maximum values in a single pass of the input list:
+%startcode
+process_ints(Ints, !IO) :-
+    io.format("Sum: %d\n", [i(sum_ints(Ints))], !IO),
+    ( if min_max_ints(Ints, Min, Max) then
+        io.format("Min: %d\n", [i(Min)], !IO),
+        io.format("Max: %d\n", [i(Max)], !IO)
+      else
+        true
+    ).
+
+:- pred min_max_ints(list(int)::in, int::out, int::out) is semidet.
+
+min_max_ints([X | Xs], Min, Max) :-
+    min_max_ints_2(Xs, X, Min, X, Max).
+
+:- pred min_max_ints_2(list(int)::in, int::in, int::out, int::in, int::out) is semidet.
+
+min_max_ints_2([], Min, Min, Max, Max).
+min_max_ints_2([X | Xs], Min0, Min, Max0, Max) :-
+    Min1 = int.min(X, Min0),
+    Max1 = int.max(X, Max0),
+    min_max_ints_2(Xs, Min1, Min, Max1, Max).
+%endcode
+We can't use a function for #min_max_ints_2# because it has two outputs for
+a given input, whereas functions only have one output.
+Since there are two
+outputs, it also has two accumulators, #Min0# and #Max0#, to track the
+smallest and largest values seen so far.
+The first clause, dealing with the
+empty list input case, may look a little strange.
+This is a standard
+Mercury idiom exactly equivalent to writing
+%startcode
+min_max_ints_2([], Min, MinOutput, Max, MaxOutput) :-
+    MinOutput = Min,
+    MaxOutput = Max.
+%endcode
+although this is more verbose and less readable.
+
+
+
+\section{The List Data Type}
+
+Apart from having special syntactic sugar, lists are not actually built into
+Mercury: they are defined in the #list# standard Mercury library module the
+same way any other type would be.
+Here is the definition as it appears in
+the #list# module:
+%startcode
+:- type list(T) ---> [] ; [T | list(T)].
+%endcode
+
+XXX HERE 
+
+A list cell #[X | Xs]# is represented in memory as a pair of pointers,
+the first pointing to #X#, the second pointing to #Xs# (\ie Mercury
+lists are singly linked lists).
+
+
+
+
