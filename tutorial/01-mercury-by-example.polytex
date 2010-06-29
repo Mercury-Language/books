@@ -96,7 +96,7 @@ Making hello
 $ ./hello
 Hello, World!
 %endcode
-Et voila!  (By default, #mmc --make# will construct a local #Mercury#
+Et voil\`a!  (By default, #mmc --make# will construct a local #Mercury#
 directory, if necessary, to hold intermediate files generated during
 compilation.)
 
