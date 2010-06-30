@@ -25,8 +25,7 @@
 # ...
 # %endcode
 # 	Delimit a code block.
-# 	Any aligned text preceeded by two spaces will be aligned in the
-# 	output.
+#       The text is put in a verbatim environment.
 #
 # %include filename
 # 	Process the contents of the given file as though they were
@@ -34,6 +33,8 @@
 #
 # #...#
 # 	A code snippet that can appear anywhere outside a code block.
+#       The code snippet will be surrounded by `\verb?' and `?'.  This
+#       means that you may not use `?' in inline code snippets.
 
 
 BEGIN {
@@ -90,71 +91,26 @@ function process_line() {
 		}
 
 	} else if($1 == "%startcode") {
-
-		delete columns
-		n_lines = 0
+                print "\\begin{verbatim}"
 		in_code = 1
 
 	} else if(in_code && $1 == "%endcode") {
-
-		if(before_start != "") {
-			print before_start
-		}
-		print "\\begin{ptabular}"
-		for(i in columns) {
-			print "\\column{"i"}{@{\\ }l@{}}"
-		}
-		for(i = 0; i < n_lines; i++) {
-			print lines[i]
-		}
-		print "\\end{ptabular}"
-		if(after_end != "") {
-			print after_end
-		}
+                print "\\end{verbatim}"
 		in_code = 0
 
 	} else if(in_code) {
-
-		last_col = 1
-		from = column_name(last_col)
-
-		while(match($0, /  [^ ]/)) {
-
-			next_col = last_col + RSTART + 1
-			text     = substr($0, 1, RSTART - 1)
-			$0       = substr($0, RSTART + 2)
-			to       = column_name(next_col)
-
-			if(new_column && last_col == 1 && text ~ /^  *$/) {
-				text = "\\hspace*{"0.3*(RSTART + 1)"em}"
-			} else {
-				text = apply_substs(text)
-			}
-
-			lines[n_lines++] = "\\fromto{"from"}{"to"}{"text"}"
-			last_col         = next_col
-			from             = to
-		}
-
-		if(NF) {
-			to               = column_name("end")
-			text             = apply_substs($0)
-			lines[n_lines++] = "\\fromto{"from"}{"to"}{"text"}"
-		}
-
-		lines[n_lines++] = "\\nextline"
+                print $0
 
 	} else {
 
 		# Otherwise we're outside a code block, but anything
-		# appearing between #...# should get the substitution
-		# treatment.
+		# appearing between #...# should be put in a \verb environment.
 		#
 		while(match($0, /#[^#]*#/)) {
 			pre  = substr($0, 1, RSTART - 1)
 			post = substr($0, RSTART + RLENGTH)
-			text = apply_substs(substr($0, RSTART+1, RLENGTH-2))
-			$0   = pre text post
+			text = substr($0, RSTART+1, RLENGTH-2)
+			$0   = pre "\\verb?" text "?" post
 		}
 
 		print $0

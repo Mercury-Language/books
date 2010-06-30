@@ -51,7 +51,8 @@ main(!IO) :-
         ( if string_to_ints(String, Ints) then
             process_ints(Ints, !IO)
           else
-            io.write_string("I think you've made a mistake.  Try again.\n", !IO),
+            io.write_string("I think you've made a mistake.  Try again.\n",
+                !IO),
             main(!IO)
         )
     ).
@@ -223,7 +224,8 @@ process_ints(Ints, !IO) :-
 min_max_ints([X | Xs], Min, Max) :-
     min_max_ints_2(Xs, X, Min, X, Max).
 
-:- pred min_max_ints_2(list(int)::in, int::in, int::out, int::in, int::out) is semidet.
+:- pred min_max_ints_2(list(int)::in, int::in, int::out, int::in, int::out)
+    is semidet.
 
 min_max_ints_2([], Min, Min, Max, Max).
 min_max_ints_2([X | Xs], Min0, Min, Max0, Max) :-

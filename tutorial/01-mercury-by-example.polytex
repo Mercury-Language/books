@@ -533,13 +533,13 @@ generally preferable to #if-then-else#s.
 
 
 
-\section{#rot13#}
+\section{rot13}
 
 Let's move on to a different example.  This time we are going to implement
-the #rot13# ``encryption'' algorithm, which works by rotating the Roman
+the rot13 ``encryption'' algorithm, which works by rotating the Roman
 alphabet by 13 places --- in other words, #abcdefghijklmnopqrstuvwxyz# in
 the input becomes #nopqrstuvwxyzabcdefghijklm# in the output.  Decryption is
-simple: just use #rot13# a second time!  While #rot13# has the cryptographic
+simple: just use rot13 a second time!  While rot13 has the cryptographic
 strength of damp tissue paper, it is sometimes useful for obscuring
 information in an e-mail that the recipient may not yet wish to know,
 such as who won the Grand Final.
@@ -595,7 +595,7 @@ Cbeg Nqrynvqr orng gur Oevfonar Yvbaf 113 gb 73 va gur Tenaq Svany.
 Port Adelaide beat the Brisbane Lions 113 to 73 in the Grand Final.
 %endcode
 it's hardly going to win prizes for elegance or efficiency.  A more
-experienced Mercury programmer might code #rot13# like this:
+experienced Mercury programmer might code rot13 like this:
 %startcode
 :- func rot13(char) = char.
 
@@ -643,13 +643,13 @@ body is a disjunction.  Hence our code is transformed by the compiler
 into this:
 %startcode
 rot13_2(V1, V2) :-  (  V1 = 'a',  V2 = 'n'
-                   ;  V1 = 'b',  V2 = 'o'
-                      ...
-                   ;  V1 = 'z',  V2 = 'm'
-                   ;  V1 = 'A',  V2 = 'N'
-                   ;  V1 = 'B',  V2 = 'O'
-                      ...
-                   ;  V1 = 'Z',  V2 = 'M' ).
+                    ;  V1 = 'b',  V2 = 'o'
+                       ...
+                    ;  V1 = 'z',  V2 = 'm'
+                    ;  V1 = 'A',  V2 = 'N'
+                    ;  V1 = 'B',  V2 = 'O'
+                       ...
+                    ;  V1 = 'Z',  V2 = 'M' ).
 %endcode
 The astute reader will immediately identify this as a switch on #V1# because
 each disjunct tests the input #V1# for a different possible value.  One of
@@ -671,7 +671,7 @@ we use #if-then-else# chains.  Try it and see what happens.)
 
 Note that if we felt so inclined, we could make #rot13_2# deterministic by
 including the translation of every possible character!  Of course, there are
-many ways of coding #rot13# and while our implementation may not be the most
+many ways of coding rot13 and while our implementation may not be the most
 concise, it is quite efficient and very easy to understand.  Either way, our
 aim here was to look more closely at the concept of semideterminism and
 introduce the technique of making code more readable by using multiple
@@ -732,11 +732,11 @@ main(!IO) :-
     ( if
         Ds0 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],  C0 = 0,
         pick(Ds0, G, Ds1),
-        pick(Ds1, T, Ds2),  S1 = G+T+C0,  T = S1 mod 10,       C1 = S1/10,
+        pick(Ds1, T, Ds2),  S1 = G+T+C0,  T = S1 mod 10,  C1 = S1/10,
         pick(Ds2, O, Ds3),
-        pick(Ds3, N, Ds4),  S2 = O+N+C1,  A = S2 mod 10,       C2 = S2/10,  A \= 0,
+        pick(Ds3, N, Ds4),  S2 = O+N+C1,  A = S2 mod 10,  C2 = S2/10,  A \= 0,
         pick(Ds4, D, Ds5),
-        pick(Ds5, A, Ds6),  S3 = D+A+C2,  C = S3 mod 10,       C3 = S3/10,  C \= 0,
+        pick(Ds5, A, Ds6),  S3 = D+A+C2,  C = S3 mod 10,  C3 = S3/10,  C \= 0,
         pick(Ds6, C, _),
         C3 = 0
       then
