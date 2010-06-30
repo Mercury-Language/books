@@ -262,8 +262,6 @@ the #list# module:
 :- type list(T) ---> [] ; [T | list(T)].
 %endcode
 
-XXX HERE 
-
 A list cell #[X | Xs]# is represented in memory as a pair of pointers,
 the first pointing to #X#, the second pointing to #Xs# (\ie Mercury
 lists are singly linked lists).

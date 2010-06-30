@@ -3,7 +3,7 @@
 all: book.dvi book.ps book.pdf
 
 book.dvi: *.polytex
-	for i in *.polytex; do echo "$$(ls -l $$i | gawk '{print "Last edited", $$6, $$7, $$8}')" > $$i.date; done
+	for i in *.polytex; do echo "$$(ls -l $$i | gawk '{print "Last edited", $$6, $$7}')" > $$i.date; done
 	./create-diffs-if-necessary
 	./polytex book.polytex
 
