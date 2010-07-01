@@ -161,10 +161,8 @@
 \setcounter{chapter}{-1}
 %include 00-introduction.polytex
 %include 01-mercury-by-example.polytex
-%include 04-lists.polytex
-% \setcounter{chapter}{2}
-% %include 02-the-mercury-type-system.polytex
-% \setcounter{chapter}{3}
-% %include 03-the-mercury-mode-system.polytex
+%include 02-the-mercury-type-system.polytex
+%include 03-the-mercury-mode-system.polytex
+% %include 04-lists.polytex
 
 \end{document}

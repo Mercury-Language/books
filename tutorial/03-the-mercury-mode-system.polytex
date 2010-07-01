@@ -505,7 +505,7 @@ succeed because whatever value #Xs# has matches the pattern #[_ | _]#.
 \Note A value with a #bound(...)# #inst# can always be used in a context
 where a #ground# value is expected, but not the other way around.
 
-\XXX{Mention the alternative #inst# definition syntax.}
+\XXX{Mention the alternative \texttt{inst} definition syntax.}
 
 \subsection*{Recursively defined insts}
 

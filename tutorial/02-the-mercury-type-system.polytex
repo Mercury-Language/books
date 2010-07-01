@@ -39,7 +39,7 @@ are not directly available to the Mercury programmer.
 
 
 
-\section{The primitive types: #int#, #float#, #string#, and #char#}
+\section{The primitive types: \texttt{int}, \texttt{float}, \texttt{string}, and \texttt{char}}
 
 \Note The underlying representation of the primitive types
 depends upon the compiler target (C, Java, .Net etc.)  For the C targets
@@ -47,7 +47,7 @@ depends upon the compiler target (C, Java, .Net etc.)  For the C targets
 and #string# to #char *#; number ranges, representations, arithmetic
 overflow handling and so forth are dictated by the target machine.
 
-\subsection*{#int#}
+\subsection*{\texttt{int}}
 
 Fixed precision integers are represented by the #int# type.  Syntactically,
 an #int# is a sequence of digits, optionally preceded by a minus sign (there
@@ -65,7 +65,7 @@ respectively.
 The #int# standard library module must be imported to use any of the
 primitive #int# operations.
 
-\subsection*{#float#}
+\subsection*{\texttt{float}}
 
 Floating point numbers are represented by the #float# type, which
 corresponds to the C #double# type.  Syntactically, a #float# is a decimal
@@ -80,7 +80,7 @@ primitive #float# operations.  Constants such as #pi# and #e# and more
 complex floating point operations, such as the trigonometric functions, are
 defined in the #math# standard library module.
 
-\subsection*{#string#}
+\subsection*{\texttt{string}}
 
 A string constant is a sequence of characters enclosed in double
 quotes.
@@ -121,7 +121,7 @@ The #string# standard library module must be imported to use any of the
 primitive #string# operations.  In particular it defines #++#, the string
 concatenatation function --- for example, #"foo" ++ "bar" = "foobar"#.
 
-\subsection*{#char#}
+\subsection*{\texttt{char}}
 
 Character constants are represented using the #char# type and,
 syntactically, are single characters (or character escapes or character
@@ -552,7 +552,7 @@ The two declarations could be combined thus
 However, having separate #pred# and #mode# declarations 
 highlights that the \emph{type} of #filter#'s higher order argument
 is written #pred(T)#.  (Separate #mode# declarations are examined in more
-detail in Chapter \XXX{}.)  \XXX{Do I need to explain the parameterised #in#
+detail in Chapter \XXX{}.)  \XXX{Do I need to explain the parameterised \texttt{in}
 mode?}
 
 In general, higher order programming with predicates is more complicated
@@ -561,7 +561,7 @@ higher order arguments.
 
 
 
-\section{#univ#, the universal type}
+\section{\texttt{univ}, the universal type}
 
 The #univ# type provides support for dynamically typed programming.
 Mercury's type system is so expressive that #univ# is hardly ever necessary.
