@@ -605,11 +605,11 @@ main(!IO) :-
 :- pred print_univ(univ::in, io::di, io::uo) is det.
 
 print_univ(U, !IO) :-
-    ( if       univ_to_type(U, C)  then io.format("a char, %c\n",          [  c(C)  ], !IO)
-      else if  univ_to_type(U, S)  then io.format("a string, \``%s\''\n",  [  s(S)  ], !IO)
-      else if  univ_to_type(U, I)  then io.format("an int, %d\n",          [  i(I)  ], !IO)
-      else if  univ_to_type(U, F)  then io.format("a float, %f\n",         [  f(F)  ], !IO)
-      else     io.format("no idea...\n", [], !IO)
+    ( if      univ_to_type(U, C)  then io.format("a char, %c\n",         [c(C)], !IO)
+      else if univ_to_type(U, S)  then io.format("a string, \``%s\''\n", [s(S)], !IO)
+      else if univ_to_type(U, I)  then io.format("an int, %d\n",         [i(I)], !IO)
+      else if univ_to_type(U, F)  then io.format("a float, %f\n",        [f(F)], !IO)
+      else    io.format("no idea...\n", [], !IO)
     ).
 %endcode
 Compiling and running this program, we get

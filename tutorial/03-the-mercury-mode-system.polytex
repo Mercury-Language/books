@@ -223,7 +223,7 @@ For example, the goal #phone("Zoltan", ZoltansNumber)# is compiled as a call
 to the #(in, out) is det# procedure of #phone#.  The goal
 #phone(Person, 66540)# is compiled as a call to the #(out, in) is nondet#
 procedure of #phone#.  The goal #phone("Ralph", 66532)# requires an implied
-mode and may be compiled either as #phone("Ralph", Tmp), Tmp = 66532# or
+mode and may be compiled either as #phone("Ralph", Tmp), Tmp = 66532# or \\
 #phone(Tmp, 66532), Tmp = "Ralph"#, both of which are #semidet#.
 
 \subsection*{Conjunction}
