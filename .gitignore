@@ -1,0 +1,8 @@
+tutorial/*.aux
+tutorial/*.date
+tutorial/*.dvi
+tutorial/*.log
+tutorial/book.pdf
+tutorial/book.ps
+tutorial/book.tex
+tutorial/diffs-*
