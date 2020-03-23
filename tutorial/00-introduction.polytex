@@ -8,7 +8,9 @@
 
 \textbf{Disclaimer.}
 \\
-This is a work in progress.
+This was a work in progress.
+The author has ceased active involvement with Mercury
+and there are (currently) no plans to continue work on it.
 
 \textbf{What is this book for?}
 \\
@@ -52,11 +54,11 @@ I plan to write the introduction last.  It will include a brief description
 of ``what Mercury is all about'' and an explanation of what the book is
 trying to do.
 
-\textbf{Where should I send comments?}
-\\
-Please subscribe to the Mercury users' mailing list by sending an e-mail
-containing the word ``subscribe'' in the body (as opposed to the subject
-line) to #mercury-users-request@cs.mu.oz.au# (this is a very low bandwidth
-mailing list).  Then you can send comments to #mercury-users@cs.mu.oz.au#.
-All feedback is very gratefully received, particularly with reference to
-missing topics.
+%\textbf{Where should I send comments?}
+%\\
+%Please subscribe to the Mercury users' mailing list by sending an e-mail
+%containing the word ``subscribe'' in the body (as opposed to the subject
+%line) to #mercury-users-request@cs.mu.oz.au# (this is a very low bandwidth
+%mailing list).  Then you can send comments to #mercury-users@cs.mu.oz.au#.
+%All feedback is very gratefully received, particularly with reference to
+%missing topics.

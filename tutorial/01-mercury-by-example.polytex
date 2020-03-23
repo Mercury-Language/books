@@ -684,7 +684,7 @@ clauses to define a predicate or function.
 quotes.  Some characters which the Mercury parser would normally expect to
 see used as infix function symbols, such as #+# and #*#, also need to be
 enclosed in parentheses: #('+')# and #('*')#.  Full details of how special
-characters should be written can be found in the the Mercury Reference
+characters should be written can be found in the Mercury Reference
 Manual.
 \item The #semidet# determinism category means that a predicate can have
 at most one \emph{solution} for a given set of inputs (it fails if it has no

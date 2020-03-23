@@ -22,7 +22,7 @@ convenient: #[1, 2, 3]# is shorthand for #[1 | [2 | [3 | []]]]# and
 
 We begin with a simple example: reading in some numbers and computing
 their sum.
-Start by putting the the usual header boilerplate in a file
+Start by putting the usual header boilerplate in a file
 #listdemo.m#:
 %startcode
 :- module listdemo.
@@ -146,7 +146,7 @@ Sum: 10
 
 
 
-\section{The minium and maximum of a list of ints}
+\section{The minimum and maximum of a list of ints}
 
 Now we extend our program to find the minimum and maximum of the input:
 %startcode

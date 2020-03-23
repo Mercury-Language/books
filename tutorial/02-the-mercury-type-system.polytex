@@ -42,10 +42,12 @@ are not directly available to the Mercury programmer.
 \section{The primitive types: \texttt{int}, \texttt{float}, \texttt{string}, and \texttt{char}}
 
 \Note The underlying representation of the primitive types
-depends upon the compiler target (C, Java, .Net etc.)  For the C targets
-#int# corresponds to #int#, #float# to #double#, #char# to #char#
-and #string# to #char *#; number ranges, representations, arithmetic
-overflow handling and so forth are dictated by the target machine.
+depends upon the compiler target (C, Java, .Net etc.)
+% XXX most of the next bit was wrong even when Ralph wrote it.
+%For the C targets
+%#int# corresponds to #int#, #float# to #double#, #char# to #char#
+%and #string# to #char *#; number ranges, representations, arithmetic
+%overflow handling and so forth are dictated by the target machine.
 
 \subsection*{\texttt{int}}
 
@@ -403,9 +405,9 @@ more than one purpose provided there is no ambiguity.
 
 After calling #ordering#, #search# switches on #O# to decide what to do
 next: if the value at the current #branch#, #X#, is less than the value we
-are searching for, #Y#, then search should procede down the right subtree,
+are searching for, #Y#, then search should proceed down the right subtree,
 #R#.  If #X = Y# then the search terminates successfully.  Otherwise, #X# is
-greater than #Y# and the search should procede down the left subtree, #L#.
+greater than #Y# and the search should proceed down the left subtree, #L#.
 The absence of a clause for #leaf# values means that any search that reaches
 a #leaf# will fail.
 
@@ -534,7 +536,7 @@ filter(P, [X | Xs], Ys, Zs) :-
 %endcode
 the goal #filter(P, As, Bs, Cs)# unifies #Bs# with the list of members of
 #As# that satisfy #P# and unifies #Cs# with the list of members of #As#
-that don't.  The first clause says that filtering the empty list yeilds two
+that don't.  The first clause says that filtering the empty list yields two
 empty lists.  The second clause says that filtering #[X | Xs]# through the
 predicate #P# is the result of filtering #Xs# through #P# and adding #X# to
 the first result if #P(X)# (\ie if #P# succeeds given #X#), or adding #X# to
@@ -566,7 +568,7 @@ higher order arguments.
 The #univ# type provides support for dynamically typed programming.
 Mercury's type system is so expressive that #univ# is hardly ever necessary.
 However, should you require it, here is (a slightly abridged version of) the
-interface to #univ# as defined in the #std_util# standard library module:
+interface to #univ# as defined in the #univ# standard library module:
 %startcode
 :- type  univ.
 :- func  univ(T) = univ.
@@ -593,7 +595,7 @@ To illustrate the use of #univ_to_type#, here is a program to print out
 :- pred main(io::di, io::uo) is det.
 
 :- implementation.
-:- import_module list, std_util, string.
+:- import_module list, string, univ.
 
 main(!IO) :-
     print_univ(univ(1),          !IO),
@@ -644,13 +646,12 @@ relevant parts of the Mercury Reference Manual.
 
 The Mercury standard library defines many useful types, the most common of
 which are examined in more detail in Chapter \XXX{}.  These include #bool#
-for boolean values, #graph# for graph processing, #list# for stacks and
+for Boolean values, #digraph# for directed graph processing, #list# for stacks and
 sequences, #map# for dictionaries, #queue# for first-in first-out (FIFO)
 queues, #pqueue# for priority queues, #random# for random numbers, and #set#
-for sets.  The #std_util# module defines miscellaneous utility types such as
-#univ#, #maybe#, #unit# (the ``dummy'' type), and #pair#.  Many more types
-are defined in the standard library, but the above suffice for the majority
-of data structures.
+for sets.
+Many more types are defined in the standard library, but the above suffice
+for the majority of data structures.
 
 
 

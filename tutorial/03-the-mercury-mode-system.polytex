@@ -114,7 +114,7 @@ Determinism category    & Number of solutions \\
 #failure#               & $0$ \\
 \end{tabular}
 
-There are three other determinsm categories that are only occasionally
+There are three other determinism categories that are only occasionally
 needed: #erroneous#, which is used for predicates that only terminate by
 throwing an exception (exceptions are described in Chapter \XXX{}), and
 #cc_multi# and #cc_nondet# which are used for committed-choice
@@ -432,7 +432,7 @@ So far we have only talked about variables going from being uninstantiated
 to being instantiated.  It turns out to be useful to also keep track of the
 possible values a variable can have when it is instantiated.  Mercury uses
 #inst#s for this purpose.  An #inst# represents the possible
-instantiantiation states of a variable at a particular point in a program.
+instantiation states of a variable at a particular point in a program.
 
 The most basic #inst#s are #free#, meaning a variable is uninstantiated, and
 #ground#, meaning a variable is instantiated with some unknown value of the

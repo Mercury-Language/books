@@ -14,5 +14,6 @@ book.ps.gz: book.ps
 	gzip -c book.ps > book.ps.gz
 
 book.pdf: book.dvi
-	dvipdf book
-
+	pdflatex book
+	pdflatex book
+	pdflatex book

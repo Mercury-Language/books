@@ -53,7 +53,7 @@
     % -- or can use \settowidth{argument}{text}
 
 \title{The Art of Mercury}
-\author{Ralph Becket \\ \texttt{\small rafe@cs.mu.oz.au}}
+\author{Ralph Becket}
 \date{15 October 2001}
 
 % \maketitle
@@ -64,7 +64,7 @@
 %
 % \end{abstract}
 
-%\tableofcontents
+\tableofcontents
 
 %- Body -----------------------------------------------------------------------%
 
