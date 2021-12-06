@@ -240,9 +240,10 @@ Next the declaration
 %startcode
 :- pred fib(int::in, int::out) is det.
 %endcode
-says that we are going to define a predicate #fib# taking two #int#
-arguments, an input and an output, which always succeeds and always
-computes the same output given the same input.
+says that we are going to define a predicate #fib# taking two #int# arguments,
+an input and an output having the modes #in# and #out# (we introduce modes in a
+later chapter), which always succeeds and always computes the same output given
+the same input.
 %startcode
 fib(N, X) :-
     (  if    N =< 2

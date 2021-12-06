@@ -552,8 +552,7 @@ The two declarations could be combined thus
 However, having separate #pred# and #mode# declarations 
 highlights that the \emph{type} of #filter#'s higher order argument
 is written #pred(T)#.  (Separate #mode# declarations are examined in more
-detail in Chapter \XXX{}.)  \XXX{Do I need to explain the parameterised \texttt{in}
-mode?}
+detail in Chapter \XXX{}.)
 
 In general, higher order programming with predicates is more complicated
 than with functions because of the need to also specify the modes for the
