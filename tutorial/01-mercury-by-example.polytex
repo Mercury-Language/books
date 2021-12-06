@@ -31,6 +31,7 @@ typed into a file called #hello.m#:
 :- pred main(io::di, io::uo) is det.
 :- implementation.
 main(IOState_in, IOState_out) :-
+    % Greet the user
     io.write_string("Hello, World!\n", IOState_in, IOState_out).
 %endcode
 Let's go through this line by line.
@@ -77,10 +78,11 @@ Finally, we have a \emph{clause} defining #main#.  A clause comprises a
 \emph{head} and \emph{body} separated by a #:-# symbol.  The \emph{head} of
 this clause tells us that this is a definition for #main# and names its two
 arguments #IOState_in# and #IOState_out#.  The body of the clause, which is executed
-when #main# is called, consists of a single \emph{goal} calling
-#io.write_string# (\ie the #write_string# predicate defined in the #io#
-module) with a message (Mercury interprets the #\n# sequence in the string
-argument as a literal newline character) and the two #IOState# arguments.
+when #main# is called, consists of a comment (the #%# sign introduces a comment
+which extends to the end of the line) followed by a single \emph{goal} calling
+#io.write_string# (\ie the #write_string# predicate defined in the #io# module)
+with a message (Mercury interprets the #\n# sequence in the string argument as
+a literal newline character) and the two #IOState# arguments.
 
 Program variables in Mercury always start with a capital letter or
 underscore, while names of predicates, types, modules and so forth do not.
