@@ -82,12 +82,16 @@ primitive #float# operations.  Constants such as #pi# and #e# and more
 complex floating point operations, such as the trigonometric functions, are
 defined in the #math# standard library module.
 
-\subsection*{\texttt{string}}
+\subsection*{\texttt{char}}
 
-A string constant is a sequence of characters enclosed in double
-quotes.
+Character constants are Unicode code points encoded using either the UTF-8 or
+UTF-16 encoding (implementation dependent).  These are represented using the
+#char# type and, syntactically, are single characters (or character escapes or
+character codes as described below) enclosed in single quotes.  Characters that
+could be interpreted as infix operators, such as #+# and #*#, should be further
+enclosed in parentheses.
 
-Examples: #" "#, #"Hello, World!\n"#, #"\``Lawks!\'' I declared."#.
+Examples: #'A'#, #'\x41\'#, #'\101\'#, #'\''#, #'\n'#, #('+')#, #('*')#.
 
 Certain characters have special syntax referred known as \emph{character
 escapes}:
@@ -105,11 +109,19 @@ escapes}:
 #\v# & vertical tab
 \end{tabular}
 
+Characters can also be specified by character codes, which are their Unicode
+code point using the sequence #\xhh\#, where #hh# is a hexadecimal number, or
+#\ooo\#, where #ooo# is an octal number.  The ASCII character #A#, for example,
+can also be written as #\x41\# or #\101\#.
 
-Characters can also be specified by character code using the sequence
-#\xhh\#, where #hh# is a hexadecimal number, or #\ooo\#, where #ooo# is an
-octal number.  the ASCII character #A#, for example, can also be written
-as #\x41\# or #\101\#.
+The #char# standard library module must be imported to use any of the
+primitive operations on #char#s.
+
+\subsection*{\texttt{string}}
+
+A string constant is a sequence of characters enclosed in double quotes.
+
+Examples: #" "#, #"Hello, World!\n"#, #"\``Lawks!\'' I declared."#.
 
 \Note For arcane reasons, it is a Very Bad Idea to include the #NUL#
 character, #\x00\#, in strings.
@@ -122,21 +134,6 @@ newlines may appear in a string constant:
 The #string# standard library module must be imported to use any of the
 primitive #string# operations.  In particular it defines #++#, the string
 concatenatation function --- for example, #"foo" ++ "bar" = "foobar"#.
-
-\subsection*{\texttt{char}}
-
-Character constants are represented using the #char# type and,
-syntactically, are single characters (or character escapes or character
-codes as described above) enclosed in single quotes.  Characters that could
-be interpreted as infix operators, such as #+# and #*#, should be further
-enclosed in parentheses.
-
-Examples: #'A'#, #'\x41\'#, #'\101\'#, #'\''#, #'\n'#, #('+')#, #('*')#.
-
-\XXX{Are we ASCII specific?}
-
-The #char# standard library module must be imported to use any of the
-primitive operations on #char#s.
 
 
 
