@@ -306,8 +306,7 @@ p(X, Y) :-  ( X = one, Y = 1 ; X = two, Y = 2 ; X = three ).
 \subsection*{Negation}
 
 A goal #(not G)# is called the \emph{negation} of #G#.  The negation fails
-if #G# succeeds, and vice versa.  The negation succeeds if #G# fails and
-fails if #G# succeeds.
+if #G# succeeds, and vice versa, the negation succeeds if #G# fails.
 
 \Note #G# is said to occur inside a \emph{negated context} and is
 not allowed to instantiate variables that also occur outside the negation.
