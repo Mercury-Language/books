@@ -738,7 +738,7 @@ main(!IO) :-
         pick(Ds1, T, Ds2),  S1 = G+T+C0,  T = S1 mod 10,  C1 = S1/10,
         pick(Ds2, O, Ds3),
         pick(Ds3, N, Ds4),  S2 = O+N+C1,  A = S2 mod 10,  C2 = S2/10,  A \= 0,
-        pick(Ds4, D, Ds5),
+        pick(Ds4, D, Ds5),  D \= 0,
         pick(Ds5, A, Ds6),  S3 = D+A+C2,  C = S3 mod 10,  C3 = S3/10,  C \= 0,
         pick(Ds6, C, _),
         C3 = 0
@@ -786,9 +786,9 @@ The goal
 #S1 = G + T + C0, T = S1 mod 10# provides the constraint for the units
 column.  We do the same thing for the tens and hundreds columns.
 
-The goals #A \= 0# and #D \= 0# ensure that we don't have any zeroes in the
-hundreds column (`#\=#' means ``not equal to''), while #C3 = 0# ensures that
-there is no carry left over from the hundreds column.
+The goals #A \= 0#, #C \= 0#, and #D \= 0# ensure that we don't have any zeroes
+in the hundreds column (`#\=#' means ``not equal to''), while #C3 = 0# ensures
+that there is no carry left over from the hundreds column.
 
 Eventually either a set of solutions to the #pick# goals will be found that
 is consistent with the other constraints or, if no such set exists, 
