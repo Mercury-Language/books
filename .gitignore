@@ -1,7 +1,8 @@
-tutorial/*.aux
-tutorial/*.date
-tutorial/*.dvi
-tutorial/*.log
+*.aux
+*.date
+*.dvi
+*.log
+*.toc
 tutorial/book.pdf
 tutorial/book.ps
 tutorial/book.tex
