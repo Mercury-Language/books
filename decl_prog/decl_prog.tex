@@ -1,0 +1,65 @@
+\documentclass[a4paper,11pt]{book}
+
+%\usepackage[left=72pt,right=72pt]{geometry}
+\usepackage{stix}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{fnpct}
+\usepackage[hidelinks]{hyperref}
+\usepackage{IEEEtrantools}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{definition}{Definition}
+
+\newcommand{\sym}[1]{\text{\textit{#1}}}
+\newcommand{\ssym}[1]{\,\text{\textit{#1}}}
+
+\begin{document}
+
+\frontmatter
+
+\begin{titlepage}
+\raggedleft
+\rule{1pt}{\textheight}
+\hspace{0.05\textwidth}
+\parbox[b]{0.8\textwidth}{
+{\Huge\bfseries Declarative programming \\[0.5\baselineskip] in Mercury}
+\\[2\baselineskip]
+{\large\textit{A guide to Mercury's declarative and operational semantics}}
+\\[4\baselineskip]
+{\Large\textsc{mark brown}} % use lowercase for small caps
+
+\vspace{0.5\textheight} % adjust to allow for more authors/versions
+
+{Version 0.4, March 2023}
+}
+\end{titlepage}
+
+\vspace*{\fill}
+
+\noindent
+Copyright~\copyright~2022--2023, YesLogic~Pty.~Ltd.\\[0.5\baselineskip]
+This work is distributed under the Creative Commons
+Attribution-ShareAlike 4.0 International (CC BY-SA 4.0) license.
+To view a copy of the license, visit:\\
+\href{https://creativecommons.org/licenses/by-sa/4.0/}{https://creativecommons.org/licenses/by-sa/4.0/}
+
+\tableofcontents
+
+\input{preface.tex}
+
+\mainmatter
+
+\input{introduction.tex}
+\input{by-example.tex}
+\input{fopc.tex}
+\input{operational.tex}
+\input{execution.tex}
+\input{extensions.tex}
+\input{nonclassical.tex}
+
+\appendix
+
+\input{glossary.tex}
+
+\end{document}

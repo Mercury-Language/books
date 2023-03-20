@@ -1,0 +1,270 @@
+\chapter{Introduction}
+\label{sec:intro}
+
+\section{Purpose}
+\label{sec:purpose}
+
+In the Formal Semantics chapter of the Mercury Language Reference Manual,
+the declarative semantics of Mercury is given in a single paragraph.
+Readers with sufficient background in logic programming
+would find the definition familiar:
+a predicate calculus theory
+with a ``language'' specified by the type declarations in the program,
+and a set of axioms derived from the ``completion'' of the program.
+To readers without that background, however,
+making sense of this can be challenging
+for a number of reasons.
+
+The case is similar with the operational semantics,
+which is defined with reference to ``SLDNF resolution''.
+The vast majority of people who know about this topic
+also already know logic programming,
+so this is not helpful for those who are learning.
+
+The challenge for readers is particularly difficult
+since existing resources on the predicate calculus
+tend to come in two forms:
+\begin{enumerate}
+\item
+Those that focus on logic as it pertains to logic programming%
+\footnote{
+For example,
+Apt, K.R., 1997. \textit{From logic programming to Prolog}.
+London: Prentice Hall.
+}.
+While these do a good job at connecting the logic
+with an operational semantics
+(that is, giving the logic a computational interpretation)
+there is often relatively little focus on the completion semantics,
+which is how Mercury is defined.
+\item
+Those that focus on classical logic in its own right%
+\footnote{
+For example,
+\href{https://plato.stanford.edu/entries/logic-classical/}
+{https://plato.stanford.edu/entries/logic-classical/}.
+}.
+While these generally offer a more complete picture of the logic
+they do not usually discuss resolution,
+which is the computational mechanism used in logic programming.
+In addition, the level of mathematical rigor, while important,
+can obscure the issues most relevant to logic programming.
+\end{enumerate}
+This guide aims to bridge the gap between theory and practice.
+It is intended for programmers who have some knowledge of Mercury
+and want a deeper understanding,
+but who are unable to derive much practical information
+from the resources currently available.
+It is not presented with the same level of rigor
+as many other articles on this topic,
+for example, proofs are not provided for our claims.
+Rather, the intent is to put programmers in a better position
+to make the most practical use of existing resources.
+
+\section{Mercury programming in a nutshell}
+\label{sec:nutshell}
+
+The main theme of this guide will be to show
+the parallels between syntax and semantics,
+of which there are many.
+By \emph{syntax} we mean
+the sequences of characters that constitute part or all of a program.
+The word \emph{semantics} means ``meaning'',
+but it also has a technical definition
+in the context of programming languages,
+which is that a program semantics
+constrains the program's behaviour
+with respect to a particular set of observables.
+
+\begin{figure}
+\setlength{\unitlength}{0.01\textwidth}
+\begin{center}
+\begin{picture}(95,45)(0,10)
+\put(10,50){\textsc{requirements}}
+\put(70,50){\textsc{outcomes}}
+\put(33,51){\vector(1,0){33}}
+\put(38,52){\textit{user expectations}}
+\put(20,48){\vector(0,-1){14}}
+\put(76,34){\vector(0,1){14}}
+\put(13,30){\textsc{formulas}}
+\put(69,30){\textsc{solutions}}
+\put(30,31){\vector(1,0){35}}
+\put(34,32){\textit{declarative semantics}}
+\put(21,28){\vector(0,-1){14}}
+\put(75,14){\vector(0,1){14}}
+\put(16,10){\textsc{goals}}
+\put(69,10){\textsc{answers}}
+\put(29,11){\vector(1,0){36}}
+\put(34,12){\textit{operational semantics}}
+\end{picture}
+\end{center}
+\caption{Mercury programming in a nutshell.\label{fig:nutshell}}
+\end{figure}
+
+Figure~\ref{fig:nutshell} gives
+a conceptual view of the programming process in Mercury.
+At a high level,
+a programmer is given requirements,
+and in some way or other they need to generate outcomes
+in accordance with user expectations.
+They formulate the requirements logically,
+and with this formulation
+they can use the declarative semantics
+to determine what solutions---%
+assignments of values to variables---%
+arise as a consequence.
+These solutions are then interpreted
+in terms of the original problem domain,
+to generate outcomes that (hopefully) satisfy the user.
+
+At a lower level,
+the programmer's mental formulation
+is expressed as goals in Mercury.
+The compiler and runtime system compute answers to the goals
+in a manner determined by the operational semantics,
+and these answers can in turn be
+understood by the programmer as solutions to the formulas.
+
+These two levels of reasoning,
+the first more abstract and the second more concrete,
+are represented by
+the two horizontal arrows in the lower part of the diagram.
+At each level there is a syntax to express the ideas
+and a semantics to reason about what they mean.
+A close correspondence exists between the two,
+in that they place the same constraints
+on a program's observed behaviour.
+
+The difference between the two levels of reasoning,
+and the reason we would want to consider
+having two distinct levels in the first place,
+comes down to how they are defined.
+The declarative semantics is defined in terms of semantic concepts
+understood by the programmer,
+and aims to characterize the programmer's mental picture
+of how a program behaves.
+On the other hand,
+the computer does not have such a mental picture---%
+it blindly manipulates symbols
+without understanding how the programmer will interpret the results---%
+so the operational semantics aims to characterize
+the program's behaviour as symbolic manipulation.
+Thus, the operational semantics is defined
+in terms of the syntax.
+
+It is the declarative and operational semantics,
+and the correspondence between them,
+that is the principal subject of this guide.
+
+
+\section{Notation}
+\label{sec:notation}
+
+With the dual syntax vs. semantics view in mind,
+we adopt a kind of parallel notation and terminology in this guide.
+When discussing program elements
+from a primarily syntactic or operational point of view,
+we will use Mercury syntax written in a monospace font,
+whereas when the discussion is from a semantic or declarative point of view
+we will use conventional mathematical notation.
+Similarly,
+the terminology used differs between the two sides,
+with terms that apply to the declarative view
+having their counterparts in the operational view.
+Some examples of notation and terminology
+are show in Figure~\ref{fig:notation}.
+
+\begin{figure}
+\begin{center}
+\begin{tabular}{l@{\hspace{4em}}l}
+\bf{Semantic/declarative} & \bf{Syntactic/operational} \\[1em]
+variables: & variables: \\
+$\quad x$ & \verb#   X# \\
+$\quad y_1, \ldots, y_n$ & \verb#   Y1, ..., YN# \\[1em]
+values: & ground data terms: \\
+$\quad 123$ & \verb#   123# \\
+$\quad f(a, g(b))$ & \verb#   f(a,g(b))# \\
+$\quad a_1, \ldots, a_n$ & \verb #   a1, ..., aN# \\[1em]
+atomic formulas: & atomic goals: \\
+$\quad y = f(x)$ & \verb#   Y = f(X)# \\
+$\quad p(t_1, \ldots, t_n)$ & \verb#   p(t1, ..., tN)# \\[1em]
+logical connectives: & operators: \\
+$\quad \land$ & \verb#   ,# \\
+$\quad \lor$ & \verb#   ;# \\
+$\quad \leftarrow$ & \verb#   :-# \\
+\end{tabular}
+\end{center}
+\caption{
+Examples of the parallel notation we will use.
+The elements themselves will be discussed in later chapters.
+\label{fig:notation}
+}
+\end{figure}
+
+Hopefully the reader's intuition will be guided by this use of notation.
+We caution against taking the distinction too seriously, however,
+as it can sometimes become blurred.
+Indeed, we will shortly introduce so-called Herbrand interpretations,
+in which elements of syntax are used directly
+as elements of the semantic domain.
+
+
+\section{Outline of the guide}
+\label{sec:outline}
+
+The outline of the remainder of this guide is as follows.
+
+In Chapter~\ref{sec:by-example} we give
+an informal picture of the declarative semantics,
+with a focus on some simple examples.
+We aim to give a basic idea of
+what is meant by declarative semantics,
+and also discuss some of the advantages that can be obtained
+by thinking about Mercury programs in this way.
+This provides our motivation for
+wanting a declarative semantics.
+
+In Chapter~\ref{sec:fopc} we define
+the syntax and semantics of first-order predicate calculus,
+and show how the declarative semantics of a Mercury program
+is expressed in a predicate calculus theory.
+We give some examples of logical reasoning
+that can tell us how our programs behave.
+
+In Chapter~\ref{sec:op-sem}
+we give abstract algorithms for unification and resolution,
+and use these as building blocks to define the operational semantics.
+We also define the negation-as-failure rule
+that is used to implement negation and if-then-else.
+Some important results in the meta-theory are given,
+which we use to show the correspondence between
+the operational and the declarative viewpoints.
+
+In Chapter~\ref{sec:exec}
+we give concrete details of how the implementation
+behaves at run-time.
+These details enable programmers to better estimate
+operational characteristics of their programs,
+such as stack and heap usage.
+
+In Chapter~\ref{sec:extensions} we extend our work
+to cover more aspects of the language.
+In particular,
+we provide semantics for some Mercury constructs
+which are not well-characterized in the classical semantics,
+such as partial functions and exceptions.
+
+In Chapter~\ref{sec:non-classical} we present
+a non-classical interpretation of Mercury programs
+that is useful for writing specifications
+and checking that they are correctly implemented.
+This interpretation demonstrates that
+classical logic is not the only logic
+that can be usefully applied to understanding Mercury programs.
+
+Finally,
+a glossary index in Appendix~\ref{sec:glossary}
+provides short definitions,
+as well as page references,
+for many of the concepts discussed in the guide.
+

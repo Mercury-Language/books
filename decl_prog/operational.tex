@@ -1,0 +1,939 @@
+\chapter{Operational semantics}
+\label{sec:op-sem}
+
+\section{Overview}
+
+In Chapter~\ref{sec:fopc}
+we presented the declarative semantics of Mercury,
+and showed how it is possible to use the semantics
+to prove theorems about the program,
+and in particular about the solutions to formulas.
+The deductive system we used to construct these proofs,
+although its rules of inference were only hinted at informally,
+was essentially the standard one
+used with the predicate calculus.
+
+The operational semantics of Mercury
+is a deductive system that,
+like the standard one,
+can be used to generate theorems.
+Unlike the standard one,
+it is based around a single rule of inference
+known as \emph{SLD resolution}.
+This rule is able to give a top-down
+computational interpretation to a program,
+by which we mean that it
+defines the sequence of steps by which computation proceeds.
+
+Generally,
+computation starts with a goal known as the \emph{query},
+and produces zero or more answers in the form of \emph{substitutions}.
+We start this chapter by describing queries, substitutions, and unification,
+which are the key building blocks of the operational semantics.
+
+We then introduce the SLD resolution inference rule,
+and show how \emph{SLD trees} are defined.
+These give the operational semantics
+of ``definite\label{gi:definite}'' logic programs,
+which are programs in which each clause body
+is a conjunction of atoms
+(that is, not using disjunction, negation, or if-then-else).
+
+Some important results in the meta-theory,
+known as soundness and completeness,
+will then be covered.
+These meta-theorems demonstrate that
+the declarative semantics and the operational semantics
+give non-conflicting views of the program behaviour.
+
+After this we extend our semantics to deal with Mercury goals in general.
+We introduce the negation-as-failure rule used in SLDNF resolution,
+which defines the behaviour of if-then-elses and negated goals.
+We provide a set of structural rules to deal with
+other Mercury goals.
+
+Finally,
+we will briefly explain the origin of the phrase ``SLD resolution'',
+which may be something that has attracted the reader's curiosity.
+
+
+\section{Queries}
+\label{sec:queries}
+
+Queries are (usually non-ground) goals that represent
+the starting point of a computation.
+Executing the query involves finding substitutions,
+which we refer to as \emph{answers\label{gi:answer}},
+for which each ground instance corresponds to
+an assignment that makes the goal valid.
+A query essentially asks,
+``What are the assignments of the free variables
+for which this goal is valid?''
+
+The initial query for the
+execution of a Mercury program is always
+a single call to \texttt{main/2}.
+It will, however,
+also be useful to consider queries that represent
+sub-computations within the program.
+For definite logic programs,
+such queries can be written in the following form:
+\begin{verbatim}
+    :- Goal1, Goal2, ..., GoalN.
+\end{verbatim}
+where each \texttt{GoalI} is an atomic goal,
+and commas are read as conjunction.
+If the conjunction of goals is in solved form,
+as defined in the next section,
+then no further computation is required:
+the corresponding substitution is the only answer.
+
+The query is interpreted as the formula:%
+\footnote{
+The origin of this notation,
+as with many other things,
+comes from theorem provers.
+The list of goals on the right-hand side of `\texttt{:-}'
+is taken as a conjunction,
+as we have done.
+The list of goals of the left-hand side
+is taken as a disjunction,
+and since in our case the list is empty,
+the disjunction is equivalent to \sym{false}.
+As usual, free variables are implicitly universally quantified.
+}
+\[
+    \forall \bar{x}.\,
+        \sym{false} \leftarrow \phi_1 \land \ldots \land \phi_n
+\]
+where $\phi_1, \ldots, \phi_n$
+are the formulas corresponding to the goals,
+and $\bar{x}$ is the set of free variables
+occurring in the goals.
+Effectively,
+the query is interpreted as the \emph{negation} of the goal,
+and the aim is to find all substitutions
+that make this negation false.
+Hence this is an attempt at proof by contradiction,
+similar to our proof from Section~\ref{sec:reasoning}.
+That is, a proof, if found, is a refutation of the query,
+which in turn implies that the substitution is an answer to the goal.
+
+Proof by contradiction
+may seem a roundabout way of doing things,
+and indeed some authors
+define the execution procedure directly to avoid this,
+but we define things this way
+because the resulting proof steps, when written out,
+have the premise on top and the conclusion underneath.
+This is the conventional way of writing proofs,
+but the choice ultimately makes no difference to the outcome.
+
+
+\section{Substitutions}
+\label{sec:substitutions}
+
+A \emph{substitution\label{gi:substitution}}
+is a partial mapping from variables to data terms,
+such that no variable that maps to a term
+occurs in any of the terms in the mapping.
+That is, variables on the left-hand side
+do not occur on the right-hand side.
+We write substitutions in the form:
+\begin{verbatim}
+    {V1 = t1, ..., VN = tN}
+\end{verbatim}
+where \texttt{V1} to \texttt{VN} are variables,
+and \texttt{t1} to \texttt{tN} are arbitrary data terms
+(possibly variables themselves)
+that the variables respectively map to.
+
+A substitution applied to an expression \texttt{t}
+yields an expression which is the same as \texttt{t},
+but with each occurrence of a variable
+that maps to a term in the substitution
+replaced with the mapped term.
+A substitution can be applied to a goal in a similar way,
+by replacing each free occurrence of a variable
+with the term it maps to, if any.
+
+Observe that a substitution without the braces
+is just a goal consisting of a conjunction of unifications.
+Indeed, substitutions can be thought of as
+goals that are in ``solved form''\label{gi:solved-form},
+in that applying them once to an expression or goal
+is straightforward
+and is sufficient to produce the entire effect
+(that is, substitutions are idempotent).
+The aim of computation is essentially to put goals into
+their solved forms.
+
+Substitutions represent the state of computation:
+they record all we know about the variables so far.
+In Mercury,
+the instantiatedness of a set of variables
+describes the possible substitutions at that point in the code,
+which tells us something about
+what form the substitution must take.
+If the \texttt{inst} of a variable is \texttt{free\label{gi:free2}}
+then the variable is not mapped to anything.
+If it is \texttt{bound\label{gi:bound2}} then the variable is mapped to
+a term whose principal functor is one of the ones listed,
+and whose arguments are described by
+the corresponding argument \texttt{inst}s.
+If it is \texttt{ground\label{gi:ground}} then the variable is mapped to
+a term that contains no variables.
+
+While substitutions bear a resemblance to the assignments
+that we defined in Section~\ref{sec:assignments},
+note that assignments map variables to elements of the universe.
+That is, assignments are semantic in nature,
+whereas substitutions map variables to data terms,
+and are thus syntactic.
+
+
+\section{Unification}
+\label{sec:unification}
+
+Given two possibly non-ground data terms,
+unification is the process of finding a substitution on variables
+such that applying it to either term yields the same result.
+A substitution that makes two terms identical in this way
+is called a \emph{unifier} of those terms.
+
+Terms do not always have a unifier,
+in which case we say that the terms do not unify.
+If they do unify, however,
+there is always a ``most general unifier''
+that does the least amount of binding possible.
+There may be more than one most general unifier,
+but they will be unique up to renaming of variables.
+The unification algorithm aims to find one such unifier.
+
+For example,
+consider the terms \texttt{f(X,g(X))} and \texttt{f(h(Y),Z)},
+and the substitution:
+\begin{verbatim}
+    {X = h(Y), Z = g(h(Y))}
+\end{verbatim}
+Applying this substitution to either of the terms
+yields the same result,
+namely \texttt{f(h(Y),g(h(Y)))},
+so this substitution is a unifier.
+It is not difficult to see that it is a most general unifier.
+
+The unification algorithm can be seen as
+a procedure for putting equations into solved form\label{gi:solved-form2},
+that is, in the form of a substitution
+that is a most general unifier.
+Taking the above example, if the query is:
+\begin{verbatim}
+    :- f(X,g(X)) = f(h(Y),Z).
+\end{verbatim}
+then in solved form this would be:
+\begin{verbatim}
+    :- X = h(Y), Z = g(h(Y)).
+\end{verbatim}
+which corresponds to the substitution we had above.
+
+In general, consider a query
+that is a set of equations as follows,
+where \texttt{s1} to \texttt{sN},
+and \texttt{t1} to \texttt{tN},
+are arbitrary data terms (possibly variables):
+\begin{verbatim}
+    :- s1 = t1, s2 = t2, ..., sN = tN.
+\end{verbatim}
+Initially, all of the goals are marked as unsolved.
+We first select a goal \texttt{G} that is not marked as solved.
+If there is no such goal then the algorithm terminates.
+We then apply one of the following rules,
+depending on the form \texttt{G} takes.
+\begin{itemize}
+\item
+If \texttt{G} is
+\texttt{X = X}
+for some variable \texttt{X},
+remove it.
+\item
+If \texttt{G} is
+\texttt{f(s1, ..., sN) = f(t1, ..., tN)}
+for data constructor \texttt{f/N},
+remove it and replace it with the set of equations
+\texttt{s1 = t1, ..., sN = tN}.
+\item
+If \texttt{G} is
+\texttt{f(s1, ..., sN) = g(t1, ..., tM)}
+for distinct data constructors \texttt{f/N} and \texttt{g/M},
+the algorithm fails.
+\item
+If \texttt{G} is
+\texttt{t = X}
+for some non-variable data term \texttt{t}
+and variable \texttt{X},
+remove it and replace it with
+\texttt{X = t}.
+\item
+If \texttt{G} is
+\texttt{X = t}
+where \texttt{t} is a data term not containing \texttt{X},
+then replace all free occurrences of \texttt{X}
+elsewhere in the query
+by \texttt{t}.
+If \texttt{X} occurred freely in the original query
+then keep \texttt{G} and mark it as solved,
+otherwise discard it.
+\item
+If \texttt{G} is
+\texttt{X = t}
+where \texttt{t} is a non-variable data term
+and \texttt{X} occurs in \texttt{t},
+the algorithm fails.
+\end{itemize}
+After applying the appropriate rule
+we go back and select another unsolved goal,
+or else terminate if there are none.
+
+If the algorithm terminates without failing
+then the query will be in solved form,
+and the corresponding substitution
+will be a most general unifier of the equations.
+If the algorithm fails then
+the equations do not have a unifier.
+Note that the order in which goals are selected does not matter,
+since the results will be equivalent irrespective of
+the selection order.
+
+A single unification can be solved
+as a special case of the above algorithm,
+by starting with the set containing just that equation.
+For our above example,
+three applications of the rules gives us
+the equation in solved form:
+\begin{center}
+\texttt{f(X,g(X)) = f(h(Y),Z)} \\
+$\Downarrow$ \\
+\texttt{X = h(Y), g(X) = Z} \\
+$\Downarrow$ \\
+\texttt{X = h(Y), Z = g(X)} \\
+$\Downarrow$ \\
+\texttt{X = h(Y), Z = g(h(Y))} \\[1.5em]
+\end{center}
+Had this query included the goal \texttt{Y = Z},
+the outcome would have been different,
+as we would eventually reach the equation \texttt{Z = g(h(Z))}
+and thus we would fail due to the last rule,
+which is the occurs check.
+
+This algorithm described here
+is originally due to Martelli and Montanari.
+We can extend the algorithm
+to also allow for function calls in the goals,
+not just data terms as we currently do,
+however we will need to handle function calls differently
+in order to implement
+semantic rather than syntactic equality.
+We will see how to do that as part of the resolution algorithm,
+in the next section.
+
+
+\section{SLD Resolution}
+\label{sec:resolution}
+
+Deductive systems often use
+inference rules that follow a pattern of
+one introduction and one elimination rule
+for each logical symbol.
+This provides an elegant understanding of how the logic works,
+but for logic programming this view is not particularly useful
+since these rules do not provide any computational interpretation---%
+they do not say how a program should be executed.
+Instead, at least for logic programs not using negation,
+there is one main inference rule.
+This rule is known as SLD resolution\label{gi:resolution}%
+\footnote{
+Historically,
+resolution was used as an inference technique
+in automated theorem provers.
+SLD resolution, which is an instance of this technique,
+was found to have a useful computational interpretation.
+It is from this that logic programming was developed.
+}.
+
+Proofs start with a query in the form:
+\begin{verbatim}
+    :- Goal1, ..., GoalN.
+\end{verbatim}
+Each of the goals is atomic\label{gi:atomic},
+meaning it is either a unification, a predicate call, or a logical constant.
+We assume for now that the program clauses are definite,
+so the body of each clause
+consists of a (possibly empty) conjunction of atomic goals.
+The more general case of Mercury clauses
+will be addressed in Section~\ref{sec:structure}.
+
+As discussed in Section~\ref{sec:queries},
+a query represents an assertion that
+the conjunction of goals is false for all variable assignments.
+The aim of SLD resolution is to derive a contradiction,
+thereby refuting the assertion.
+This occurs when the goals are in solved form,
+or there are no more goals left in the query.
+If such a contradiction is reached then
+the substitution corresponding to the solved goal is an answer.
+
+The answer represents an assignment
+(or, if free variables remain, a set of assignments)
+for which the assertion is refuted,
+and therefore for which the conjunction of goals is valid.
+We refer to a derivation that results in a contradiction,
+and the substitution that it produces,
+as a \emph{success\label{gi:success}}.
+We refer to the assignment or set of assignments
+that the answer\label{gi:answer2} represents
+as a \emph{solution\label{gi:solution3}}.
+
+Conversely,
+if at any stage the unification procedure fails
+then the derivation has reached a tautology.
+This means that we have failed to find a refutation,
+and we refer to this case as \emph{failure\label{gi:failure}}.
+
+The third possibility is that
+neither a contradiction nor a tautology is found.
+We refer to this case as \emph{nontermination},
+but note that, aside from running forever,
+this also includes cases of
+abnormal termination such as throwing an exception.
+
+The SLD resolution algorithm is
+parameterized by a selection function
+that returns a selected goal
+based on the current and previous queries.
+As before we will mark some goals as solved as we go,
+and require the selection function
+to choose a goal that is as yet unsolved.
+If the selected goal contains any function calls
+then the selection function also returns
+a selected function call from the goal.
+
+The algorithm proceeds as follows.
+If there are no unsolved goals, the derivation succeeds.
+Otherwise, select an unsolved goal \texttt{G}
+using the selection function.
+Apply one of the following rules,
+depending on the form \texttt{G} takes.
+\begin{itemize}
+\item
+If \texttt{G} is \texttt{true},
+delete it.
+\item
+If \texttt{G} is \texttt{false},
+the derivation fails.
+\item
+If \texttt{G} is
+a unification between two data terms,
+handle it according to the rules
+given in the last section
+for the unification algorithm.
+If that fails then the derivation fails.
+\item
+If \texttt{G} is an atomic goal
+that contains a function call,
+and the selected function call in that goal is
+\texttt{f(t1,...,tN)} for a function \texttt{f/N},
+then choose a clause
+whose head takes the form \texttt{f(s1,...,sN) = sR}.
+Rename variables as necessary so
+they do not conflict with
+any variables already present in the query.
+Remove the selected function call
+and replace it with \texttt{sR},
+and to the query add
+the unifications \texttt{t1 = s1, ..., tN = sN},
+followed by the clause body if present.
+\item
+If \texttt{G} is
+a predicate call \texttt{p(t1,...,tN)}
+for a predicate \texttt{p/N},
+then choose a clause
+whose head takes the form \texttt{p(s1,...,sN)}.
+Rename variables as necessary so
+they do not conflict with
+any variables already present in the query.
+Remove the selected predicate call
+and replace it with
+the unifications \texttt{t1 = s1, ..., tN = sN},
+followed by the clause body if present.
+\end{itemize}
+After applying the appropriate rule
+we go back and select another unsolved goal.
+If there are no such goals,
+the derivation succeeds.
+
+The rules we have given are nondeterministic,
+in the sense that
+the order in which goals and clauses are selected
+is not fully specified.
+For the unification rules the order does not matter
+as the procedure will always lead to the same result,
+regardless of the choices made.
+The SLD resolution rules, on the other hand,
+require a bit more attention.
+
+When it comes to selecting a goal,
+Mercury's selection function chooses a goal or function call
+whose initial \texttt{inst}s
+are satisfied by the argument terms.
+In the strict sequential semantics,
+the leftmost goal that satisfies this condition is selected.
+In the strict commutative semantics
+the selected goal need not be the leftmost one,
+but if there are any goals
+that were expanded from the body of a clause
+then one of the most recently expanded goals is selected.
+
+For predicate and function calls,
+the algorithm also requires us to choose a clause from the program.
+In contrast to goal selection,
+where a single choice is committed to
+without going back and trying alternatives,
+clause selection results in a ``choice point\label{gi:choice-point}''
+being created.
+After exploring the derivations that follow from one choice,
+if more solutions are sought then
+execution \emph{backtracks\label{gi:backtrack}}
+to the most recent choice point
+and makes a different choice.
+If no such choice point exists,
+that is, if all choices have previously been explored,
+then execution of the query fails\label{gi:failure2}.
+
+In Mercury,
+the \texttt{nondet} determinism category
+refers to the second form of nondeterminism above,
+namely that relating to clause selection.
+Users do not need to declare the first form,
+as the compiler is responsible for making the choices in that regard.
+
+The collection of possible derivations arising from a query
+can be arranged into a tree,
+where derivations branch off at each choice point
+in accordance with execution of the query.
+A tree of this form is known as an SLD tree\label{gi:sld-tree}.
+
+To illustrate the algorithm,
+consider the call \texttt{append([a,b],[c],Xs)}.
+For convenience we repeat the clauses for \texttt{append/3} here:
+\begin{verbatim}
+    append([], Bs, Bs).
+    append([V | As], Bs, [V | Cs]) :-
+        append(As, Bs, Cs).
+\end{verbatim}
+The initial query is as follows:
+\begin{verbatim}
+    :- append([a,b], [c], Xs).
+\end{verbatim}
+If the first clause were chosen
+we would get the unification \texttt{[a,b] = []},
+among others,
+but this unification would fail.
+We therefore need to choose the second clause.
+
+We rename this clause's variables by adding a numerical suffix,
+and replace the call with argument unifications
+and the renamed clause body.
+This results in the following query:
+\begin{verbatim}
+    :- [a,b] = [V1 | As1], [c] = Bs1, Xs = [V1 | Cs1],
+       append(As1, Bs1, Cs1).
+\end{verbatim}
+After selecting each of the unifications
+and applying the unification rules,
+we get:
+\begin{verbatim}
+    :- Xs = [a | Cs1], append([b], [c], Cs1).
+\end{verbatim}
+If the first clause were chosen
+we would get the unification \texttt{[b] = []},
+which would fail,
+so again we choose the second clause.
+We rename the clause variables with a different suffix
+and replace the call as before,
+which results in:
+\begin{verbatim}
+    :- Xs = [a | Cs1], [b] = [V2 | As2], [c] = Bs2,
+       Cs1 = [V2 | Cs2], append(As2, Bs2, Cs2).
+\end{verbatim}
+Running unification rules again, we get:
+\begin{verbatim}
+    :- Xs = [a,b | Cs2], append([], [c], Cs2).
+\end{verbatim}
+This time we can choose the first clause,
+resulting in:
+\begin{verbatim}
+    :- Xs = [a,b | Cs2], [] = [], [c] = Bs3, Cs2 = Bs3.
+\end{verbatim}
+Running unification rules one last time we end up with:
+\begin{verbatim}
+    :- Xs = [a,b,c].
+\end{verbatim}
+which is the answer to the query.
+
+Substitutions do not necessarily end up ground,
+as happened in this case,
+but in typical Mercury usage
+the modes will require that they do.
+In any case,
+for each ground instance of the answer,
+the derivation proves that the query formula is valid
+under the assignment corresponding to that ground instance.
+This motivates a definition to end the section.
+
+\begin{definition}[Provability]
+Let $\phi$ be a formula.
+We say that $\phi$ is \emph{provable\label{gi:provable}},
+written $\Gamma \vdash \phi$,
+if there is some goal $G$
+with a successful derivation giving substitution $S$,
+such that $\phi$ is the formula corresponding to
+$G$ with $S$ applied to it.
+Furthermore,
+if $\Gamma \vdash \phi$
+then $\Gamma \vdash \forall x.\, \phi$
+for any variable $x$.
+\end{definition}
+
+
+\section{Soundness and completeness}
+\label{sec:meta}
+
+In the course of this chapter and the previous one
+a number of concepts have been introduced,
+some of which are essentially declarative in nature,
+others operational.
+In many cases the concepts come in pairs,
+one corresponding to the declarative view
+and the other to the operational view,
+which nonetheless reflect the same underlying concept.
+
+\begin{figure}
+\begin{center}
+\begin{tabular}{rcl}
+\bf{Declarative concept} & & \bf{Operational concept} \\[1em]
+values & $\quad\longleftrightarrow\quad$ & ground data terms \\
+equality & $\quad\longleftrightarrow\quad$ & unification \\
+assignment & $\quad\longleftrightarrow\quad$ & substitution \\
+solution & $\quad\longleftrightarrow\quad$ & answer \\
+truth & $\quad\longleftrightarrow\quad$ & success \\
+falsity & $\quad\longleftrightarrow\quad$ & failure \\
+existence of model & $\quad\longleftrightarrow\quad$ & consistency \\
+validity & $\quad\longleftrightarrow\quad$ & provability
+\end{tabular}
+\end{center}
+\caption{
+Correspondences between declarative and operational concepts.
+\label{fig:correspondence}
+}
+\end{figure}
+
+Figure~\ref{fig:correspondence} shows some of the the correspondences
+between declarative concepts and their operational counterparts.
+Of particular importance is that between validity and provability,
+as that provides the basis for many of the other equivalences.
+The relationship between them
+is expressed by the following theorems.
+
+\begin{theorem}[Soundness] \label{thm:soundness}
+Let $\phi$ be any formula.
+If\: $\Gamma \vdash \phi$ then $\Gamma \models \phi$.
+That is, provability implies validity.
+\end{theorem}
+
+\begin{theorem}[Completeness] \label{thm:completeness}
+Let $\phi$ be any formula.
+If\: $\Gamma \models \phi$ then $\Gamma \vdash \phi$.
+That is, validity implies provability.
+\end{theorem}
+
+\noindent
+Between them,
+these theorems state that there is an equivalence between
+truth as expressed in the model,
+and truth as expressed by the program execution.
+
+A deductive system like this,
+for which soundness and completeness holds,
+is sometimes referred to as a ``full logic\label{gi:full-logic}''.
+In this context the declarative view
+is referred to as model-theoretic,
+while the operational view
+is referred to as proof-theoretic.
+The equivalence between the model-theoretic and proof-theoretic,
+as established by the theorems,
+can be expressed by the somewhat cute formula
+$\models\; \equiv\;\, \vdash$.
+
+Of practical significance to programmers
+is that they can freely switch between
+thinking declaratively and thinking operationally.
+As we have seen, the former can allow for
+much simpler reasoning about programs than the latter.
+But, as we have also seen,
+this can only go as far as reasoning about partial correctness---%
+there will always be situations where
+the programmer needs to reason operationally in order to verify correctness.
+Being able to freely switch between the two means programmers
+can use the declarative semantics most of the time,
+but can temporarily switch to the operational semantics when that is required.
+
+It is, therefore,
+this correspondence between declarative and operational notions
+that justifies the use of the dual semantics of declarative programming,
+above and beyond the operational semantics
+that programming languages in general provide.
+In other words,
+we are justified in having two horizontal arrows
+in the lower part of Figure~\ref{fig:nutshell}
+on page~\pageref{fig:nutshell},
+instead of one.
+
+\label{end:op-sem}
+
+
+\section{Operational incompleteness}
+\label{sec:incompleteness}
+
+At first glance,
+the Completeness theorem appears to put us in
+a kind of programmer's utopia.
+All that is required, it seems,
+is for the programmer to specify the logical outcomes they want,
+and the deductive system will know what to do.
+
+Unfortunately, and perhaps unsurprisingly, this is not the case.
+A careful examination of the Completeness theorem shows that
+what the theorem states is that, if a formula is valid,
+there \emph{exists} some proof that can be reached
+via application of the resolution rule.
+The resolution rule, however, is not deterministic,
+and while execution nominally involves
+making all possible clause selection choices eventually,
+the compiler still has to commit to a particular clause ordering,
+as well as needing to commit to a particular goal selection at each stage.
+If the wrong choices are made,
+then a nonterminating derivation may be explored
+when there is in fact a successful or failed branch
+that would have been reached with different choices.
+
+The code in Figure~\ref{fig:incompleteness} illustrates this point.
+The predicate \texttt{p/0} has two clauses,
+the first of which immediately loops.
+If clause selection chooses this clause first for every call
+then the program loops indefinitely without succeeding.
+The second clause, however, proves that $p$ is valid.
+As required by the Completeness theorem,
+the proof of this validity does exist---%
+execution needs only to select the second clause at some stage---%
+but with the above clause selection this proof will never be reached.
+
+\begin{figure}
+\begin{center}
+\begin{minipage}[t]{9em}
+\begin{verbatim}
+p :- p.
+p.
+\end{verbatim}
+\end{minipage}
+\begin{minipage}[t]{9em}
+\begin{verbatim}
+q :- q, false.
+\end{verbatim}
+\end{minipage}
+\end{center}
+\caption{
+Two predicate definitions that illustrate issues with completeness.
+\label{fig:incompleteness}
+}
+\end{figure}
+
+Similarly,
+the predicate \texttt{q/0} has a single clause
+whose body is comprised of two conjuncts.
+The first conjunct immediately loops,
+so if goal selection chooses this goal first for every call
+then the program loops indefinitely without failing.
+The second conjunct proves that $q$ is unsatisfiable,
+and similarly to the previous example the proof would have been found
+if the second conjunct was selected at some stage.
+
+For the purposes of programming,
+this situation is effectively a form of incompleteness,
+despite the theorem that says otherwise.
+This is why the Mercury Language Reference Manual
+talks about implementations being
+``at least as complete as'' the strict commutative semantics.
+The term ``complete'' here refers to
+the form of effective completeness discussed in this section,
+rather than that discussed in Section~\ref{sec:meta}.
+
+The concept of completeness is used in many ways in mathematics.
+Indeed,
+in Section~\ref{sec:partial-correctness}
+we referred to clause completeness,
+which is another distinct usage of the word.
+It is thus helpful, in the context of logic programming,
+to explicitly refer to the effective form of completeness
+discussed in this section as \emph{operational completeness}.
+The reader should be aware, however,
+that other authors commonly use the terms unqualified,
+which may cause confusion in some cases.
+
+
+\section{Negation-as-failure}
+\label{sec:naf}
+
+So far we have been discussing definite logic programs,
+that is, programs without negation.
+This means programs without conditionals either,
+since they use a form of negation.
+In fact conditionals are more fundamental in Mercury,
+as `\texttt{not G}' is a shorthand for
+`\texttt{( if G then false else true )}'.
+
+In the operational semantics,
+the rule for implementing negation is known as negation-as-failure.
+The principle is easy to understand:
+if a goal succeeds then
+the negation of that goal should fail,
+and similarly, if a goal fails then
+the negation of that goal should succeed.
+We can implement negation-as-failure
+by adding an extra rule to the SLD rules
+from Section~\ref{sec:resolution};
+such a system is known as SLDNF resolution.
+
+Assuming that \texttt{G} is the selected goal,
+the additional rule for negation-as-failure
+is as follows:
+\begin{itemize}
+\item
+If \texttt{G} is a conditional goal of the form
+\texttt{( if GC then GT else GE )},
+then execute \texttt{GC} as a new query.
+If the query succeeds with a substitution \texttt{S},
+replace \texttt{G} with
+the result of applying \texttt{S} to \texttt{GT}.
+If the query fails without having produced a solution,
+that is, if all derivations have failed
+even after exhausting all possible choices,
+replace \texttt{G} with \texttt{GE}.
+\end{itemize}
+Note that if the condition succeeds,
+it may leave choice points behind.
+These will lead to alternative substitutions
+being applied to \texttt{GT},
+leading to different derivations.
+
+It is possible to extend the Soundness theorem\label{gi:soundness2}
+to negation-as-failure if and only if
+the condition of the if-then-else
+does not cause any non-local variables to become instantiated.
+That is, resolving the condition
+should not lead to any variables
+that occur outside of the condition or then-branch
+to appear on the left hand side of an equation in the substitution.
+From the soundness of negation-as-failure,
+combined with our original Completeness theorem,
+We can also extend the Completeness theorem\label{gi:completeness2}
+to programs with negation.
+
+The requirement to ensure no non-local variables become instantiated
+can be challenging to verify manually.
+Fortunately,
+Mercury's mode system tracks changes to variable instantiation,
+so the compiler is able to perform the check at compile time
+without manual assistance.
+
+
+\section{Structural rules}
+\label{sec:structure}
+
+We are now in a position to give rules
+that cover Mercury's other compound goals.
+Assuming that \texttt{G} is the selected goal,
+the additional rules are:
+
+\begin{itemize}
+\item
+If \texttt{G} is a disjunction,
+choose one of the disjuncts
+and replace \texttt{G} with the chosen disjunct.
+As with clause selection,
+a choice point is created so that
+execution may backtrack to the remaining disjuncts.
+\item
+If \texttt{G} is an explicit existential quantification,
+the quantified variables are renamed apart in the goal
+so that they do not conflict with any variables already in the query.
+The existentially quantified goal is then removed
+and replaced with the renamed goal.
+\item
+If \texttt{G} is defined as an abbreviation for another goal,
+it is removed and replaced with that other goal.
+Note that this rule is essentially applied at compile-time,
+since the replacement occurs as part of desugaring.
+\item
+If \texttt{G} is a purity or determinism cast,
+it is treated as if the cast was not present
+and executed in the same way as other goals.
+\item
+If \texttt{G} is a trace goal,
+the trace condition is evaluated
+(at compile-time or run-time, or both).
+If it is true then \texttt{G} is replaced
+by the goal with the trace condition,
+otherwise \texttt{G} is removed.
+If an I/O state is passed to the trace goal
+then the appropriate substitutions are made.
+\item
+If \texttt{G} is an event goal,
+it is removed.
+Doing so triggers a user-defined debug event
+that may be seen in \texttt{mdb},
+the Mercury debugger.
+\end{itemize}
+
+
+\section{What does SLD stand for?}
+\label{sec:sld}
+
+The reader may be curious as to what the acronym ``SLD''
+in SLD resolution actually means.
+Here is an explanation
+based on what we have covered in this chapter.
+
+``S'' stands for Selection function.
+The resolution procedure is parameterized by
+a selection function that dictates which goal to resolve next.
+
+``L'' stands for Linear.
+For each step in SLD resolution,
+a new query is generated from the previous one only,
+without needing to refer to other computations.
+As such,
+the proof tree consists of a single branch.
+This is referred to as a linear proof.
+
+``D'' stands for definite clauses.
+SLD resolution applies to logic programs
+consisting of definite clauses.
+
+The full resolution rule is given the acronym SLDNF,
+where the ``NF'' stands for negation-as-failure.
+In the presence of negation the proofs are no longer linear,
+since they include sub-computations for negated goals.
+Also, obviously, the clauses are no longer definite.
+So perhaps SLDNF is a bit of a misnomer
+and only really makes sense in historical context,
+but nonetheless the name has stuck.

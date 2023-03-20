@@ -1,0 +1,1658 @@
+\chapter{First-order predicate calculus}
+\label{sec:fopc}
+
+\section{Overview}
+
+In this chapter we introduce first-order predicate calculus,
+also known as first-order logic, or classical logic.
+This mathematical notion
+forms the basis of Mercury's declarative semantics,
+via the translation of Mercury code
+into axioms of a predicate calculus theory.
+
+Articles on first-order predicate calculus
+typically define a syntax,
+then introduce a deductive system that allows proofs to be constructed
+from inference rules,
+then define a semantics in terms of ``interpretations'' and ``models''
+and prove some results in the meta-theory.
+We will take a similar approach,
+however we present the semantics,
+with a particular focus on how (first-order) Mercury programs
+are converted to logic formulas,
+before the deductive system is covered.
+In the next chapter we will present the deductive system,
+which gives a computational interpretation to the logic.
+
+Mercury supports higher-order code, of course,
+so a first-order description will not directly cover all of it.
+First-order logic is also untyped.
+Despite this,
+we can reduce Mercury's declarative semantics to first-order logic,
+which is conceptually much simpler than the alternatives---%
+first-order theories have relatively simple models,
+such as the Herbrand interpretations from the previous chapter---%
+so that is the approach we will take in this guide.
+We will discuss types and higher-order code,
+plus some other extensions of the basic logic,
+in Chapter~\ref{sec:extensions}.
+
+In the remainder of this chapter
+we give the syntax of predicate calculus,
+and show how basic Mercury constructs generate formulas,
+and how Mercury programs generate axioms.
+We then give a formal definition of the classical semantics
+that results from those axioms.
+Some examples of ad hoc proofs based on the semantics are provided,
+to help illustrate the concepts introduced,
+and to motivate the operational semantics
+that we define in detail in the next chapter.
+We conclude the chapter with some philosophical remarks about
+the role of classical logic in understanding computer programs.
+
+\section{Syntax}
+\label{sec:syntax}
+
+The syntax of first-order logic is given in terms of a set of symbols,
+along with rules to say how they can be put together
+to make well-formed terms and formulas.
+The symbols we use are listed in Figure~\ref{fig:symbols}.
+
+\begin{figure}
+\begin{enumerate}
+\item
+An infinite set of variables:
+$x$, $y$, $z$, \ldots{}
+\item
+Logical constants:
+\textit{true}, \textit{false}
+\item
+Logical connectives:
+$\land$, $\lor$, $\lnot$, $\leftarrow$, $\rightarrow$,
+$\leftrightarrow$, \ldots
+\item
+Quantifiers:
+$\forall$, $\exists$
+\item
+Logical relations: $=$
+\item
+Punctuation: we will use parentheses and commas in the usual way.
+\item
+For $n \geqslant 0$,
+a set of function symbols with arity $n$:
+$f\!/2$, $g/1$, \ldots
+\item
+For $n \geqslant 0$,
+a set of predicate symbols with arity $n$:
+$p/2$, $q/3$, \ldots
+\end{enumerate}
+\caption{Symbols used in predicate calculus.\label{fig:symbols}}
+\end{figure}
+
+Some sources refer to the symbols in categories 1 to 6
+as \emph{logical},
+while referring to the symbols in categories 7 and 8 as
+\emph{non-logical\label{gi:non-logical2}}.
+It is important to note that
+this term is being used in a different sense
+to that in Section~\ref{sec:purity}.
+In this context it is referring to whether symbols are
+defined as part of the logic itself,
+or defined as part of a particular theory.
+To put it in programming terms,
+``logical'' here means that
+the symbol is a fixed part of the language,
+while ``non-logical'' really just means user-defined.
+
+By convention,
+we will use the names $v$, $w$, $x$, $y$ and $z$,
+possibly with subscripts,
+to stand for arbitrary variables.
+A sequence of variables may be written with an overbar,
+as in $\bar{x}$.
+The logical constants, logical connectives and quantifiers
+have their usual meanings,
+and we will write formulas following
+the usual rules of operator precedence.
+Parentheses will be used in the conventional way
+to override this when required.
+
+The non-logical symbols are derived from declarations in the Mercury program.
+Function symbols include
+the data constructors declared in discriminated union types,
+as well as the declared functions.
+Predicate symbols are the declared predicates.
+We will use names such as $f$ and $g$ to stand for arbitrary functions,
+and names such as $p$, $q$ and $r$ to stand for arbitrary predicates.
+We will sometimes refer to function symbols with arity zero
+as \emph{constants\label{gi:constant}},
+and use names such as $a$, $b$ and $c$
+to stand for arbitrary constants.
+
+The arity of a predicate or function symbol
+is listed after a slash, for example $f\!/2$ or $p/1$.
+However,
+we will sometimes leave the arity off entirely
+when it is zero or clear from the context.
+Note that the arity is part of each symbol's identity:
+two symbols with the same name but different arities
+are considered different symbols.
+
+\begin{figure}
+\begin{center}
+\begin{tabular}{lll@{\hspace{3em}}l}
+\multicolumn{4}{l}{Terms:} \\
+$\qquad t$ & $::=$ & $x$ & variable \\
+& $\:|$ & $a$ & constant \\
+& $\:|$ & $f(t_1, \ldots, t_n)$ & compound term \\[1em]
+\multicolumn{4}{l}{Formulas:} \\
+$\qquad\phi$ & $::=$ & \textit{true} & always true \\
+& $\:|$ & \textit{false} & always false \\
+& $\:|$ & $t_1 = t_2$ & equation \\
+& $\:|$ & $p(t_1, \ldots, t_n)$ & predicate call \\
+& $\:|$ & $\phi_1 \land \ldots \land \phi_n$ & conjunction \\
+& $\:|$ & $\phi_1 \lor \ldots \lor \phi_n$ & disjunction \\
+& $\:|$ & $\lnot \phi_1$ & negation \\
+& $\:|$ & $\forall x.\, \phi_1$ & universal quantification \\
+& $\:|$ & $\exists x.\, \phi_1$ & existential quantification
+\end{tabular}
+\end{center}
+\caption{The grammar rules for terms and formulas.\label{fig:grammar}}
+\end{figure}
+
+The grammar rules for the predicate calculus
+are shown in Figure~\ref{fig:grammar}.
+Terms are constructed from variables and function symbols
+in essentially the same way that expressions are in Mercury.
+We will refer to arbitrary terms using names such as $s$ and $t$.
+Terms that are constructed using only variables and data constructors
+(that is, with no function calls)
+play an important role in our discussion;
+we will refer to these as \emph{data terms}.
+A data term that contains no variables
+we will refer to as a \emph{ground data term}.
+
+We will assume the existence of two function symbols,
+$[|]/2$ and $[]/0$,
+representing the list constructor and the empty list,
+respectively.
+We will write list terms in an analogous way to Mercury list syntax,
+for example,
+we will write
+$[1, 2, 3]$ as a shorthand for $[|](1, [|](2, [|](3, [])))$.
+
+Formulas are either atomic or compound.
+Atomic formulas are either
+logical constants, equations, or predicate calls.
+Compound formulas are constructed from atomic formulas
+using connectives and quantifiers,
+in essentially the same way that goals are in Mercury.
+We will refer to arbitrary formulas
+using names such as $\phi$ and $\psi$.
+
+Quantifiers with multiple variables stand for
+the same quantifier with each variable in turn,
+that is, $\forall x y.\phi$
+is an abbreviation for $\forall x.\forall y.\phi$.
+Also, the scope of a quantifier extends as far as possible;
+parentheses will be used if the scope needs to be limited.
+
+A variable occuring in a formula is \emph{bound\label{gi:bound}}
+if it is captured by a quantifier,
+otherwise it is \emph{free\label{gi:free}}.
+For example,
+$x$ is bound and $y$ is free
+in the formula $\forall x. f(x, y) = y$.
+(Despite the nomenclature,
+these notions are different from the notions of bound and free
+in Mercury's mode system.)
+
+A formula that has no free variables
+is said to be \emph{closed\label{gi:closed-formula}};
+some sources refer to closed formulas as ``sentences''.
+The universal closure of a formula is that formula with
+all of its free variables universally quantified.
+
+
+\section{Expressions and goals}
+\label{sec:goals}
+
+One of the building blocks
+for understanding Mercury's declarative semantics
+is to see how Mercury expressions are mapped to terms,
+and how Mercury goals are mapped to formulas.
+The relationship we want to describe here is
+the one represented by the lower left vertical arrow
+in Figure~\ref{fig:nutshell} on page~\pageref{fig:nutshell}.
+
+The mappings for expressions and goals
+are provided in full detail in the reference manual,
+but for convenience
+Figure~\ref{fig:goals} summarizes the most important bits.
+In line with our notational convention,
+$\phi$ is the formula that corresponds to goals such as \texttt{Goal}.
+A subscript may be used in cases where there are multiple goals,
+so \texttt{Goal1} maps to $\phi_1$, and so on.
+
+\begin{figure}
+\begin{center}
+\begin{tabular}{l@{\hspace{3em}}l}
+\multicolumn{2}{l}{Expressions $\Rightarrow$ Terms:} \\
+\qquad\texttt{X} & $x$ \\
+\qquad\texttt{a} & $a$ \\
+\qquad\texttt{f(t1, ..., tN)} & $f(t_1, \ldots, t_n)$ \\[1em]
+
+\multicolumn{2}{l}{Goals $\Rightarrow$ Formulas:} \\
+\qquad\texttt{true} & \textit{true} \\
+\qquad\texttt{false} & \textit{false} \\
+\qquad\texttt{t1 = t2} & $t_1 = t_2$ \\
+\qquad\texttt{p(t1, ..., tN)} & $p(t_1, \ldots, t_n)$ \\
+\qquad\texttt{Goal1, ..., GoalN} & $\phi_1 \land \ldots \land \phi_n$ \\
+\qquad\texttt{( Goal1 ; ... ; GoalN )} & $\phi_1 \lor \ldots \lor \phi_n$ \\
+\qquad\texttt{( if C then T else E )}
+    & $(\phi_c \land \phi_t) \lor (\lnot \phi_c \land \phi_e)$ \\
+\qquad\texttt{some [X] Goal} & $\exists x.\, \phi$ \\[.5em]
+\multicolumn{2}{l}{where $\phi$ is the formula corresponding to \texttt{Goal}}
+\end{tabular}
+\end{center}
+\caption{Semantics of Mercury expressions and goals.\label{fig:goals}}
+\end{figure}
+
+Negations are not listed as goals,
+since in Mercury a negated goal is
+an abbreviation for a conditional goal.
+Specifically,
+the following translation takes place at the level of Mercury syntax.
+\begin{center}
+\begin{tabular}{rcl}
+\verb#not G#
+& $\quad\Longrightarrow\quad$ &
+\verb#( if G then false else true )#
+\end{tabular}
+\end{center}
+It should be easy to see that the resulting formula
+is equivalent to negation,
+since the goal on the right maps to the formula
+\[
+	(\phi \land \ssym{false}) \lor (\lnot \phi \land \ssym{true})
+\]
+which is logically equivalent to $\lnot \phi$.
+
+Similarly,
+universal quantifications are not listed as goals.
+In this guide,
+the universal quantifications we encounter will be
+generated in ways other than from goals.
+The reference manual specifies all cases
+in which goal constructs are actually just syntactic abbreviations.
+
+The mapping we have given here is not quite the full story,
+since we will need to add implicit quantifiers to the formulas,
+and extend the mapping to program clauses.
+We will address these points in the next two sections.
+
+\section{Implicit quantification}
+\label{sec:implicit-quantification}
+
+The usual rule in mathematics
+is that free variables in a formula
+are implicitly universally quantified across the whole formula%
+\footnote{
+For example,
+in a mathematical identity such as
+$\sin^2\theta + \cos^2\theta = 1$,
+the equation is meant to be taken as true
+for \emph{all} values of $\theta$.
+}.
+This is not quite what we want for Mercury's semantics,
+since in Mercury code there are common cases
+which require existential quantification
+in order to avoid spurious errors.
+It is convenient for the programmer,
+and produces a natural result,
+if these existential quantifications are added implicitly
+before applying the usual mathematical rule.
+
+In first-order code,
+the most important case is that of variables in a conditional goal
+that are used in the condition and possibly also in the then-branch,
+but not anywhere else that bindings from the condition
+could reach during execution.
+For a conditional that maps to the formula
+$(\phi_c \land \phi_t) \lor (\lnot \phi_c \land \phi_e)$,
+if $\bar{x}$ is the set of variables in question
+then the formula is implicitly quantified as follows.
+\[
+    (\exists \bar{x}.\, \phi_c \land \phi_t) \lor
+    (\lnot (\exists \bar{x}.\, \phi_c) \land \phi_e)
+\]
+Note that the first quantifier ranges over the then-branch
+but the second quantifier does not range over the else-branch.
+This reflects the fact that variables bound in the condition
+can be used in the former but not the latter.
+
+The implicit quantification process is applied
+\emph{after} the expansion of syntactic abbreviations,
+so an analogous process effectively applies to negations
+and other goals that are abbreviations for conditional goals.
+
+
+\section{Clauses}
+\label{sec:clauses}
+
+To give a semantics to clauses,
+we can consider a mapping that just
+replaces \texttt{:-} with reverse implication.
+Figure~\ref{fig:clauses} shows the effect this has
+on the different forms of clauses---%
+the formulas that result are implications
+in which the body implies the head,
+which is the interpretation discussed in Section~\ref{sec:partial-correctness}.
+This essentially lines up with clause soundness,
+in that if one of these implications is incorrect
+it will lead to a wrong answer bug.
+
+\begin{figure}
+\begin{center}
+\begin{tabular}{l@{\hspace{3em}}l}
+\multicolumn{2}{l}{Clauses $\Rightarrow$ Formulas:} \\
+\qquad\texttt{p(t1, ..., tN) :- Body}
+    & $p(t_1, \ldots, t_n) \leftarrow \phi$ \\
+\qquad\texttt{p(t1, ..., tN)}
+    & $p(t_1, \ldots, t_n) \leftarrow$ \textit{true} \\
+\qquad\texttt{f(t1, ..., tN) = t :- Body}
+    & $f(t_1, \ldots, t_n) = t \leftarrow \phi$ \\
+\qquad\texttt{f(t1, ..., tN) = t}
+    & $f(t_1, \ldots, t_n) = t \leftarrow$ \textit{true} \\[.5em]
+\multicolumn{2}{l}
+    {where $\phi$ is the formula corresponding to \texttt{Body}, if present}
+\end{tabular}
+\end{center}
+\caption{Mercury clauses as reverse implicatios.\label{fig:clauses}}
+\end{figure}
+
+Two problems still remain with this formulation of clauses.
+First,
+the resulting formulas are not necessarily closed.
+We will see shortly that we require
+the formulas that go into our semantics to be closed.
+Second,
+while we have made the connection to clause soundness,
+we have not yet done so for clause completeness.
+That will require looking at
+all clauses that define a predicate or function,
+instead of just one at a time.
+
+Before we continue our discussion of clauses, however,
+we will first need to take a closer look at equality
+as it relates to the predicate calculus.
+While the topic is usually taken as basic in logic,
+there are slightly different approaches
+and it is worth looking closely at the choices we have made.
+
+
+\section{First-order logic with equality}
+\label{sec:sem-equality}
+
+In our syntax we included equality
+as one of the logical symbols.
+We define this as \emph{semantic} equality\label{gi:semantic-equality}:
+two terms are equal if and only if they denote the same thing.
+Thus, by definition, the relation is
+reflexive, symmetric, and transitive,
+as would be expected.
+A substitutivity principle also applies,
+in that if any argument to a function
+is replaced by another argument that is equal according to our definition,
+then the result is equal.
+Similarly, if any argument to a predicate
+is replaced by another equal argument,
+then the result is logically equivalent.
+
+Another possible definition of equality,
+which we do not adopt,
+is \emph{syntactic} equality.
+This means that two terms are considered equal
+if they are syntactically identical,
+or if they can be made so via a variable substitution.
+The two definitions are very similar,
+and produce the same results in most cases.
+There are subtle differences, however,
+and these will eventually become relevant
+when we talk about \texttt{semidet} functions
+in Section~\ref{sec:partial},
+so it important to take note of
+precisely which definition we are using.
+
+When the equality relation is defined as part of the logic,
+as we have done in this guide,
+the logic is sometimes called
+\emph{first-order logic with equality}.
+Some authors take an alternative approach where
+the equality relation is treated
+no differently to other predicate symbols.
+This alternative approach is sometimes used in order to
+define equality in terms of some other relation,
+for example by saying that
+two sets are equal if each is a subset of the other.
+In typical cases, however,
+equality is taken to be part of the logic,
+and the term ``first-order logic''
+is usually taken to mean first-order logic with equality.
+
+We have chosen to include equality as part of the logic
+since it is simpler to do so,
+and we do intend the aforementioned properties to hold.
+This does not capture our full intent, however,
+and we will need to add to our definition in the next section.
+
+
+\section{Axioms}
+\label{sec:axioms}
+
+\subsection{What are axioms?}
+\label{gi:axiom}
+
+Axioms are closed formulas that are taken to be true without proof,
+meaning they may be used as a starting point for
+proofs of other formulas.
+We will look more at proofs in the next chapter.
+A closed formula that can be proven from a set of axioms
+is called a \emph{theorem\label{gi:theorem}},
+and the collection of all such closed formulas
+is known as a \emph{theory}.
+Thus, the axioms form the basis of
+a particular predicate calculus theory.
+
+In this section we will show how to generate a set of axioms
+from the declarations and clauses in a Mercury program.
+The theory that results will ultimately determine
+the declarative semantics of the program.
+We will make this concept clearer
+once we have discussed models,
+which we will do in Section~\ref{sec:classical}.
+
+Note that in some sources on this topic
+the authors' aim is to axiomatize the logic itself---%
+that is, include axioms that define the logical symbols---%
+but we take the approach of defining the logic symbols directly
+and just using axioms to define what is specific to a program.
+This is because we want to state something \emph{using} the logic,
+rather than explore theorems \emph{about} the logic.
+Thus, when we refer to ``axioms''
+we mean those that are generated from the program,
+rather than the sort that define the logic being used.
+
+
+\subsection{Equality axioms}
+\label{sec:ax-equality}
+
+Our definition of equality thus far
+gives us some conditions that imply when two given terms are equal.
+It does not, however, say when they are not equal.
+As it stands,
+we are not even able to rule out the case where
+\emph{all} terms are equal.
+To repair this,
+we will need to add some axioms relating to equality.
+Our intent is that two ground data terms\label{gi:data-term}
+(that is, terms that do not include function calls)
+should be equal only if they are syntactically identical.
+
+Note that we are saying \emph{only if}.
+In other words,
+equality of ground data terms implies that
+they must be syntactically identical.
+This is not the same as saying
+syntactic identity of ground data terms
+implies that they must be equal,
+since the implication is in the opposite direction.
+If the implication were this way around
+we would be defining equality as syntactic,
+but, as mentioned in Section~\ref{sec:sem-equality},
+that is not the definition of equality we have adopted.
+
+The condition that ground terms are equal only if identical
+is known as the \emph{Unique Names Assumption\label{gi:una}}.
+As the name suggests, this is often left implicit,
+particularly when discussing logic programming or databases.
+In other cases, such as when dealing with ontologies,
+it can be desirable to have two distinct names denote the same thing,
+in which case the assumption is not made.
+In our case,
+there are of course terms containing function calls
+that are intended to be equal even if they are not syntactically identical.
+For example $2 + 2$ is equal to $1 + 3$
+since both sides are equal to 4,
+so we do not want this assumption to always apply.
+We do intend that this assumption holds for ground data terms, however.
+
+Another assumption we wish to make is that all terms are finite.
+For an equation such as $x = f(x)$,
+where $f$ is a data constructor,
+the solution if it exists must be the infinite term:
+\[ x = f(f(f(f(\ldots)))) \]
+This is not a term that can be written down using our syntax, however,
+so we wish to exclude it as a possible solution.
+
+To support these requirements,
+a number of axioms are generated for each type.
+Consider the type definitions in Figure~\ref{fig:decl-foobar}.
+The constants are $a$, $b$ and \textit{nil},
+and \textit{cons}$/2$ is the only other function symbol.
+Note that \textit{foo} and \textit{bar} are not included,
+as these are type constructors not data constructors
+or declared functions.
+
+\begin{figure}
+\begin{verbatim}
+    :- type foo ---> a ; b.
+    :- type bar ---> nil ; cons(foo, bar).
+\end{verbatim}
+\caption{Type definitions for the \texttt{foo} and \texttt{bar} types.
+\label{fig:decl-foobar}}
+\end{figure}
+
+The equality axioms for \texttt{foo} and \texttt{bar}
+are shown in Figure~\ref{fig:ax-foobar}.
+The two in the first row say that
+ground data terms are not equal
+unless their principal functors are equal.
+We have omitted any axioms that say
+terms of different types are not equal,
+since in general there is a large number of these,
+and in a type correct program
+such axioms will not make any real difference.
+In a non-typechecked setting,
+all $O(n^2)$ axioms would be required.
+
+\begin{figure}
+\[
+\lnot (a = b)
+\qquad\quad
+\forall x y.\, \lnot (\mathit{nil} = \mathit{cons}(x, y))
+\]
+\[
+\forall x_1 x_2 y_1 y_2.\,
+(\mathit{cons}(x_1, y_1) = \mathit{cons}(x_2, y_2))
+\rightarrow
+(x_1 = x_2 \land y_1 = y_2)
+\]
+\begin{center}
+$\forall x.\, \lnot (x = \mathit{cons}(t_1, t_2))$,
+if $x$ occurs in $t_1$ or $t_2$
+\end{center}
+\caption{Equality axioms for the \texttt{foo} and \texttt{bar} types.
+\label{fig:ax-foobar}}
+\end{figure}
+
+The third axiom says that
+ground data terms are not equal
+unless their arguments are equal.
+In other words,
+this simply states that
+\textit{cons}$/2$ denotes an injective function.
+
+The last line is an axiom schema
+(that is, an infinite family of axioms),
+where there is one axiom for each pair of data terms $t_1$ and $t_2$.
+This schema is known as the \emph{occurs check\label{gi:occurs-check}}%
+\footnote{
+Or sometimes ``occur check'', without the plural.
+},
+and it states that a variable is never equal to
+a data term that contains that variable.
+Equivalently,
+a data term never strictly contains itself as a subterm.
+This implies that all data terms are finite;
+for example the formula $x = \mathit{cons}(a, x)$,
+which would otherwise describe an infinite term,
+is always false because $x$ occurs in the term
+that it is supposedly equal to.
+
+With the axioms we have defined
+we can no longer say that
+ground data terms that are syntactically different may be equal.
+For example, the axioms allow us to infer
+\[
+\lnot (\text{\textit{cons}}(a, \text{\textit{nil}}) =
+    \text{\textit{cons}}(b, \text{\textit{nil}}))
+\]
+since if we assume that
+$\text{\textit{cons}}(a, \text{\textit{nil}})$
+and
+$\text{\textit{cons}}(b, \text{\textit{nil}})$
+are equal,
+then by the third axiom we have that $a = b$.
+This contradicts the first axiom,
+which means that our assumption must have been false.
+
+Without the equality axioms there would have been
+no way to derive this proof.
+
+
+\subsection{Clause soundness axioms}
+\label{sec:ax-clause-soundness}
+
+In Section~\ref{sec:partial-correctness}
+we gave the clause soundness condition
+for partial correctness,
+which required that each clause in the program
+must be true in the intended interpretation.
+This can be expressed as an axiom
+in a straightforward way.
+
+Recall from Section~\ref{sec:clauses}
+that a clause for a predicate $p$ with arity $n$
+can be mapped to a formula $\psi \leftarrow \phi$,
+where $\psi$ corresponds to the clause head
+and takes the form $p(t_1, \ldots, t_n)$,
+for argument terms $t_1, \ldots, t_n$,
+and $\phi$ is the formula corresponding to the clause body
+(or \sym{true} if the clause is a fact).
+Similarly for a function $f$ with arity $n$,
+except that $\psi$ takes the form $f(t_1, \ldots, t_n) = t_r$,
+where $t_r$ is the return expression.
+
+The formula can be made into an axiom
+in the same way mathematical formulas usually are,
+by taking the universal closure as follows:
+\[ \forall \bar{x}.\, \psi \leftarrow \phi \]
+where $\bar{x}$ is the set of free variables
+that occur in $\psi$ and $\phi$.
+
+The resulting formula is known as
+the \emph{clause soundness axiom}
+for the clause.
+As suggested above,
+it expresses the clause soundness condition for the clause,
+and it must be true in the intended interpretation.
+Since it is an implication,
+the only way it can be false
+is if $\psi$ is true and $\phi$ is false.
+If this is the case---%
+that is, the axiom is false in the intended interpretation---%
+then, in line with the discussion in Section~\ref{sec:partial-correctness},
+the clause is a wrong answer bug.
+
+Observe that,
+while for predicates the axiom asserts
+something about ground atoms for the predicate itself,
+for functions the axiom asserts
+something about the equality relation.
+Unlike data constructors,
+we do not generate axioms that say
+the function is injective,
+or that the function returns values
+that are different from every other function.
+The function completion adds new instances of terms being equal,
+rather than excluding such instances.
+
+The axiom also tells us a way to make inferences about the program.
+We can choose any way we like
+of assigning values to the variables $\bar{x}$,
+and if we do so in a way that $\phi$, the clause body,
+is something we have already established to be true,
+then we can infer that $\psi$, the clause head,
+will also be true.
+Equivalently,
+if we want to know whether or not an instance of $\psi$ is true,
+it is sufficient to show that $\phi$ is true
+under the same variable assignment.
+
+
+\subsection{Combined clause soundness axioms}
+\label{sec:ax-combined}
+
+In the form given in the previous section,
+the clause soundness axiom is convenient
+for reasoning about a program one clause at a time.
+It is also useful, however,
+to be able to reason about the combination of all clauses
+that make up a predicate or function definition.
+
+One way to express a combined clause soundness axiom
+is to directly conjoin all of the individual axioms,
+as follows:
+\[
+    \forall \bar{x}_1.\, \psi_1 \leftarrow \phi_1
+    \land \ldots \land
+    \forall \bar{x}_m.\, \psi_m \leftarrow \phi_m
+\]
+where $m$ is the number of clauses in the definition.
+This does not provide us with much additional insight as it stands,
+since there are still just as many implications to consider.
+If, however,
+the clause heads all have identical arguments,
+we could easily combine all the conjuncts
+into a single implication.
+
+We can make the clause heads take the required form
+by performing a simple logical transformation.
+For a predicate $p$ with arity $n$,
+let $v_1, \ldots, v_n$ be a sequence of variables
+that are distinct from any other variables in the clauses.
+We define the following formulas:
+\begin{eqnarray*}
+\psi' & \equiv & p(v_1, \ldots, v_n) \\
+\phi' & \equiv &
+    \exists \bar{x}.\, v_1 = t_1 \land \ldots \land v_n = t_n \land \phi
+\end{eqnarray*}
+where $\bar{x}$ is the set of free variables
+that occur in $\psi$ and $\phi$,
+and $t_1, \ldots, t_n$ are the original argument terms.
+In other words,
+$\psi'$ is $\psi$ with the fresh variables
+in place of the argument terms,
+and $\phi'$ is $\phi$ conjoined with
+equations between each of the fresh variables
+and the corresponding argument terms,
+and with all variables except the fresh ones existentially quantified.
+
+Analogous definitions can be given for functions,
+with the difference being that
+we also need a variable, $v_r$, for the function result,
+and an additional equation to bind it.
+In this case we obtain:
+\begin{eqnarray*}
+\psi' & \equiv & f(v_1, \ldots, v_n) = v_r \\
+\phi' & \equiv &
+    \exists \bar{x}.\, v_1 = t_1 \land \ldots \land v_n = t_n
+    \land v_r = t_r \land \phi
+\end{eqnarray*}
+where $\bar{x}$ and $t_1, \ldots, t_n$ are as before,
+and $t_r$ is the return expression for the clause.
+
+Now consider the formula $\psi' \leftarrow \phi'$.
+If we take the universal closure
+in the same way as in the previous section,
+the result is logically equivalent to
+the clause soundness axiom.
+Intuitively,
+moving argument terms into the body
+via equations with fresh variables
+does not change the meaning of a clause.
+The reason we existentially quantify
+variables in the original clause
+is because we are only interested in
+the values of head variables,
+and because when we combine the clauses,
+as we will do in a moment,
+we do not want variables from different clauses
+to clash if they happen to have the same name.
+Essentially, the existential quantification
+reflects that the scope of variables in a clause
+is just that single clause.
+
+From the collection of clauses in a definition,
+we obtain $\psi'$, which is common to all the clauses,
+and which is implied by $\phi_i'$ for the $i$th clause.
+The conjunction of the formulas is found by
+taking the disjunction of the antecedents:
+\[
+    \psi' \leftarrow \phi_1' \lor \ldots \lor \phi_m'
+\]
+Universally quantifying the free variables, $\bar{v}$,
+would give us something equivalent to
+the conjunction of all of the clause soundness axioms
+for the definition.
+
+
+\subsection{Clause completeness axioms}
+\label{sec:ax-clause-completeness}
+
+Our definition of partial correctness
+from Section~\ref{sec:partial-correctness}
+requires not just clause soundness
+but also clause completeness.
+That is,
+the set of clauses defining a predicate or function
+must, between them, cover every possible ground atom
+that is true in the intended interpretation.
+
+The \emph{clause completeness axiom},
+which expresses the clause completeness condition,
+is the counterpart to the clause soundness axioms.
+It can be obtained from
+the combined clause soundness axiom from the previous section,
+by changing the reverse implication
+into a forward implication
+prior to universally quantifying.
+
+For a predicate or function defined by $m$ clauses,
+the clause completeness axiom is therefore:
+\[
+    \forall \bar{v}.\, \psi' \rightarrow \phi_1' \lor \ldots \lor \phi_m'
+\]
+Like the clause soundness axioms,
+it must be true in the intended interpretation.
+In this case,
+the only way it can be false is if the left-hand side is true
+and the right-hand side is false.
+In line with the discussion in Section~\ref{sec:partial-correctness},
+if this happens then the definition contains a missing answer bug.
+
+Intuitively,
+putting the clauses into a disjunction
+reflects the fact that execution can choose any one of the clauses,
+and using a forward implication means that,
+while each clause says what things are true,
+these are the \emph{only} things that are true.
+That is, every ground atom that is true
+must be covered by one of the clauses,
+as we expect.
+
+We can use the clause completeness axiom
+to make inferences about the program,
+in much the same way as
+we can with the clause soundness axiom.
+The difference is that
+it gives us \emph{negative} information---%
+it allows us to infer that a particular ground atom must be false,
+rather than true.
+This in turn allows us to reason about
+whether the negation of a ground atom is true,
+or about which branch will be taken by a conditional goal.
+
+
+\subsection{Predicate and function completion}
+\label{sec:completion}
+
+In most sources,
+the clause soundness axioms and the clause compleness axiom
+are combined into a single formula.
+For a given predicate or function,
+this formula,
+which is logiclly equivalent to the conjunction of the axioms,
+is known as the \emph{completion} of the predicate or function.
+
+Since we already have the axioms in the form of implications
+in one direction or the other,
+the conjunction of them is just
+a bi-implication between the two sides.
+In other words, the formula is:
+\[
+    \forall \bar{v}.\, \psi' \leftrightarrow \phi_1' \lor \ldots \lor \phi_m'
+\]
+where $\bar{v}$ is the set of fresh variables we introduced.
+
+An example should help to illustrate,
+and for this we will turn once again to \texttt{append/3}.
+The clauses, when mapped to the $\psi \leftarrow \phi$ form,
+are as follows
+(variable names are chosen to fit with our notational convention):
+\begin{IEEEeqnarray*}{l}
+\sym{append}([], y, y) \leftarrow \sym{true} \\
+\sym{append}([w | x], y, [w| z]) \leftarrow \sym{append}(x, y, z)
+\end{IEEEeqnarray*}
+We obtain the clause soundness axioms by universally quantifying:
+\begin{IEEEeqnarray*}{l}
+\forall y.\,
+    \sym{append}([], y, y) \leftarrow \sym{true} \\
+\forall w x y z.\,
+    \sym{append}([w | x], y, [w | z]) \leftarrow \sym{append}(x, y, z)
+\end{IEEEeqnarray*}
+To get the combined formula,
+we introduce fresh variables $v_1, \ldots, v_3$
+and make the following definitions:
+\begin{eqnarray*}
+\psi' & \equiv & \sym{append}(v_1, v_2, v_3) \\
+\phi_1' & \equiv & \exists y.\, v_1 = [] \land v_2 = y \land v_3 = y \\
+\phi_2' & \equiv & \exists w x y z.\,
+    v_1 = [w | x] \land v_2 = y \land v_3 = [w | z] \land
+    \sym{append}(x, y, z)
+\end{eqnarray*}
+Note that we have omitted \sym{true} from the conjunctions,
+since they do not have any effect.
+Putting the definitions together we get the following
+clause completeness axiom:
+\begin{IEEEeqnarray*}{l}
+\forall v_1 v_2 v_3.\, \sym{append}(v_1, v_2, v_3) \rightarrow \\
+    \qquad (\exists y.\, v_1 = [] \land v_2 = y \land v_3 = y)\;\lor \\
+    \qquad (\exists w x y z.\, v_1 = [w|x] \land v_2 = y \land v_3 = [w|y]
+    \land \sym{append}(x, y, z))
+\end{IEEEeqnarray*}
+The completion of \texttt{append/3}
+is the same as the clause completeness axiom,
+except it uses a bi-implication:
+\begin{IEEEeqnarray*}{l}
+\forall v_1 v_2 v_3.\, \sym{append}(v_1, v_2, v_3) \leftrightarrow \\
+    \qquad (\exists y.\, v_1 = [] \land v_2 = y \land v_3 = y)\;\lor \\
+    \qquad (\exists w x y z.\, v_1 = [w|x] \land v_2 = y \land v_3 = [w|z]
+    \land \sym{append}(x, y, z))
+\end{IEEEeqnarray*}
+This is logically equivalent to the conjunction of
+the clause soundness and clause completeness axioms
+for \texttt{append/3}.
+
+To illustrate the procedure for function definitions,
+we will of course look at the function \texttt{length/1}.
+We start with the clauses in their $\psi \leftarrow \phi$ form,
+as before:
+\begin{IEEEeqnarray*}{l}
+\sym{length}([]) = 0 \leftarrow \sym{true} \\
+\sym{length}([x | y]) = 1 + \sym{length}(y) \leftarrow \sym{true}
+\end{IEEEeqnarray*}
+The clause soundness axioms are therefore:
+\begin{IEEEeqnarray*}{l}
+\sym{length}([]) = 0 \leftarrow \sym{true} \\
+\forall x y.\,
+    \sym{length}([x | y]) = 1 + \sym{length}(y) \leftarrow \sym{true}
+\end{IEEEeqnarray*}
+No quantifier is required on the first of these,
+since there are no free variables.
+To get the combined formula,
+we introduce fresh variables $v_1$ and $v_r$,
+and define:
+\begin{eqnarray*}
+\psi' & \equiv & \sym{length}(v_1) = v_r \\
+\phi_1' & \equiv & v_1 = [] \land v_r = 0 \\
+\phi_2' & \equiv & \exists x y.\, v_1 = [x | y] \land v_r = 1 + length(y)
+\end{eqnarray*}
+Putting these together we get the following clause completeness axiom:
+\begin{IEEEeqnarray*}{l}
+\forall v_1 v_r.\, \sym{length}(v_1) = v_r \rightarrow \\
+    \qquad (v_1 = [] \land v_r = 0)\; \lor \\
+    \qquad (\exists x y.\, v_1 = [x | y] \land v_r = 1 + length(y))
+\end{IEEEeqnarray*}
+As before,
+the function completion is the same as the clause completeness axiom
+with the implication replaced by a bi-implication.
+
+
+\subsection{Mode-determinism assertions}
+\label{sec:mode-det}
+
+Modes and determinisms play a significant role
+in helping people understand Mercury code.
+They also play a part in the declarative semantics.
+For modes that are \texttt{det} or \texttt{multi}
+we generate an axiom that says that
+for every value of each of the inputs,
+there exists a solution.
+For modes that are \texttt{det} or \texttt{semidet}
+we generate an axiom that says that
+for every value of each of the inputs,
+there is at most one solution.
+
+For example, consider the following modes for \texttt{append/3}:
+\begin{verbatim}
+:- mode append(in, out, in) is semidet.
+:- mode append(out, out, in) is multi.
+:- mode append(in, in, out) is det.
+\end{verbatim}
+These three modes will generate
+the three axioms shown in Figure~\ref{fig:mode-det}, respectively.
+Note that the third axiom, for the \texttt{det} mode,
+is the conjunction of the axioms that would apply
+for the \texttt{semidet} and \texttt{multi} modes.
+
+\begin{figure}
+\begin{IEEEeqnarray*}{l}
+\forall x y_1 y_2 z.\,
+    \sym{append}(x, y_1, z) \land \sym{append}(x, y_2, z)
+    \rightarrow y_1 = y_2
+\\
+\forall z. \exists x y.\, \sym{append}(x, y, z)
+\\
+\forall x y. (\exists z.\, \sym{append}(x, y, z))~\land \\
+    \qquad (\forall z_1 z_2.\,
+        \sym{append}(x, y, z_1) \land \sym{append}(x, y, z_2)
+        \rightarrow z_1 = z_2)
+\end{IEEEeqnarray*}
+\caption{Mode-determinism assertions for three modes of \texttt{append/3}.
+\label{fig:mode-det}}
+\end{figure}
+
+One consequence of these axioms is that
+if a predicate has a mode where all arguments are inputs
+and where the determinism says it cannot fail,
+then any call to that predicate is logically equivalent to \textit{true}.
+Unless a strict operational semantics is used,
+be aware that in most cases the compiler will optimize away such calls.
+If that happens then exceptions may not be thrown,
+trace goals may not be run, etc.
+
+Similar axioms are generated for function modes that cannot fail.
+The axiom generated for a function's default mode
+states that the function is total---%
+a vacuous statement in classical logic
+since function symbols are always interpreted as total functions.
+On the other hand,
+this presents a problem for functions
+that are \texttt{semidet} in the forward mode,
+that is, the mode with all arguments as inputs
+and the return value as an output.
+These denote \emph{partial} functions,
+which cannot be directly represented in classical logic.
+We will discuss in Section~\ref{sec:partial}
+how these function modes are handled.
+
+
+\section{Classical semantics}
+\label{sec:classical}
+
+\subsection{Universes}
+
+A \emph{universe} $U$ is a non-empty set of \emph{values\label{gi:value}}
+representing the domain of discourse%
+\footnote{
+The term ``domain'' is also sometimes used instead of universe,
+but this is not quite the same as the domains that sometimes appear
+in the denotational semantics of other languages---%
+there is no $\bot$ element, for example---%
+so we will avoid using this term.
+}.
+The idea is that terms in the syntax
+correspond to values in $U$.
+If a term $t$ corresponds to a value $u$
+in a given interpretation,
+we say that $t$ denotes $u$,
+and that $u$ is the denotation of $t$.
+For example,
+the code in Section~\ref{sec:decl-debug}
+implementing arbitrary precision integers as lists of digits
+could have the set of all integers as its universe.
+In this interpretation,
+each list of digits would denote an integer.
+
+The examples in Section~\ref{sec:first-examples}
+made use of Herbrand interpretations.
+In these the universe is the
+\emph{Herbrand universe\label{gi:herbrand-universe}},
+which is defined as the set of all ground data terms,
+and each ground data term simply denotes itself.
+For first order code
+the Herbrand universe can be considered as good as any other,
+since, given an interpretation in any other universe $U$,
+there exists a unique map
+from the Herbrand universe to $U$
+that ultimately leads to the same result.
+
+In the following discussion,
+for a universe $U$
+we will make use of the sets $U^n$ for $n \geqslant 0$,
+where $U^n$ is defined as the set of $n$-tuples of elements in $U$.
+These sets represent the possible argument values
+for predicates and functions of arity $n$.
+
+
+\subsection{Assignments}
+\label{sec:assignments}
+
+An \emph{assignment} over a universe $U$
+is a mapping from variables to values in $U$.
+In the following
+we will use $\sigma$ and $\rho$ to stand for arbitrary assignments.
+For a variable $x$,
+the value that it maps to under $\sigma$ is written as $\sigma(x)$.
+
+If $\sigma_1$ and $\sigma_2$ are assignments such that
+$\sigma_1(v) = \sigma_2(v)$
+for all variables $v$ other than $x$,
+then we say that $\sigma_1$ differs from $\sigma_2$ only at $x$.
+Note that it can be the case that
+$\sigma_1(x)$ does still equal $\sigma_2(x)$.
+We write $\sigma \{ v_1 \mapsto u_1, v_2 \mapsto u_2, \ldots \}$,
+or just $\sigma \{ v_i \mapsto u_i \}$,
+for the assignment that differs from $\sigma$ only at each of the $v_i$,
+where it maps to $u_i$.
+
+It's possible to imagine applying an assignment to formula,
+such that all of the free variables in the formula
+are replaced by the values they take in the assignment.
+If such an assignment makes the formula true,
+then the assignment is thought of as a
+\emph{solution\label{gi:solution}}.
+In the next two sections we will make this concept precise.
+
+
+\subsection{Interpretations}
+\label{sec:interpretations}
+
+We have used the term ``interpretation'' a number of times to mean,
+intuitively, the way in which we understand
+the symbols appearing in a formula.
+For example,
+we have said that the symbol `$+$' can be interpreted as integer addition.
+The general idea of an interpretation is that
+it maps from syntactic elements---the predicate and function symbols---%
+to some semantic universe.
+
+Formally, an interpretation $I$ over a universe $U$
+is a mapping defined on predicate and function symbols, such that:
+\begin{itemize}
+\item
+If $f\!/n$ is a function symbol,
+then $I(f\!/n)$ is a total function $U^n \rightarrow U$.
+In other words,
+$I(f\!/n)$ takes $n$ arguments from $U$
+and returns a value from $U$.
+For a constant $a$,
+$I(a)$ is just an element of $U$.
+\item
+If $p/n$ is a predicate symbol,
+then $I(p/n)$ is a predicate (that is, a relation) over $U^n$.
+That is,
+$I(p/n)$ takes $n$ arguments from $U$
+and returns either \textit{true} or \textit{false}.
+\end{itemize}
+Thus,
+the function $I(f\!/n)$
+is the denotation of the function symbol $\!f\!/n$,
+and the predicate $I(p/n)$
+is the denotation of the predicate symbol $p/n$.
+
+More generally,
+we will need to show how an interpretation as defined above
+can be extended to a mapping on terms and formulas.
+Since these may contain variables,
+the result will depend on how values are assigned to those variables.
+
+Given an interpretation $I$ and an assignment $\sigma$,
+we can extend $I$ to a mapping $I_\sigma$
+from terms to elements of $U$
+by applying the following rules:
+\begin{itemize}
+\item
+If $x$ is a variable, then $I_\sigma(x)$ maps to $\sigma(x)$.
+\item
+If $f\!/n$ is a function symbol and $t_1, \ldots, t_n$ are terms,
+then $I_\sigma(f(t_1, \ldots, t_n))$ maps to
+the function $I(f\!/n)$ applied to arguments
+$I_\sigma(t_1), \ldots, I_\sigma(t_n)$.
+For a constant $a$, $I_\sigma(a)$ just equals $I(a)$.
+\end{itemize}
+Similarly,
+this increasingly overloaded mapping
+can be extended to atomic formulas.
+The following rules are applied:
+\begin{itemize}
+\item
+$I_\sigma(\sym{true})$ always maps to \textit{true}.
+\item
+$I_\sigma(\sym{false})$ always maps to \textit{false}.
+\item
+If $t_1$ and $t_2$ are terms,
+then $I_\sigma(t_1 = t_2)$ maps to \textit{true}
+if $I_\sigma(t_1)$ and $I_\sigma(t_2)$ map to the same value in $U$.
+Otherwise it maps to \textit{false}.
+\item
+If $p/n$ is a predicate symbol and $t_1, \ldots, t_n$ are terms,
+then $I_\sigma(p(t_1, \ldots, t_n))$ maps to
+the predicate $I(p/n)$ applied to arguments
+$I_\sigma(t_1), \ldots, I_\sigma(t_n)$.
+\end{itemize}
+Continuing,
+the mapping can be extended to compound formulas
+by applying the following rules:
+\begin{itemize}
+\item
+If $\phi$ is a formula constructed using a logical connective,
+then $I_\sigma(\phi)$ maps to a truth value
+via the usual (classical) truth table for that connective,
+using the truth values of $I_\sigma$ for each sub-formula.
+\item
+If $\phi$ is of the form $\exists x.\, \psi$,
+then $I_\sigma(\phi)$ maps to \textit{true} if $I_\rho(\psi)$ is true
+for some assignment $\rho$ that differs from $\sigma$ only at $x$.
+Otherwise it maps to \textit{false}.
+\item
+If $\phi$ is of the form $\forall x.\, \psi$,
+then $I_\sigma(\phi)$ maps to \textit{true} if $I_\rho(\psi)$ is true
+for all assignments $\rho$ that differ from $\sigma$ only at $x$.
+Otherwise it maps to \textit{false}.
+\end{itemize}
+Finally, observe that if $\phi$ is a closed formula
+then $I_\sigma(\phi)$ is always the same
+regardless of the assignment.
+We can therefore define $I(\phi)$,
+without ambiguity,
+as being equal to $I_\sigma(\phi)$
+where $\sigma$ is an arbitrary assignment.
+
+For example,
+consider an interpretation $I$ in which
+$\sym{append}/3$ is the list append predicate
+and $\sym{length}/1$ is the list length function.
+Let $\sigma$ be an assignment such that $\sigma(z) = [1, 2, 3]$,
+and let $\phi$ be the following formula.
+\[
+\exists x y.\, \sym{append}(x, y, z) \land \sym{length}(x) = 2
+\]
+We can evaluate $I_\sigma(\phi)$ as follows.
+Let $\rho = \sigma \{ x \mapsto [1, 2], y \mapsto [3] \}$.
+That is, $\rho$ is the assignment
+that differs from $\sigma$ only at $x$ and $y$,
+where it takes the values $[1, 2]$ and $[3]$, respectively.
+We have that $I_{\rho}(x)$ maps to $[1, 2]$,
+therefore $I_{\rho}(\sym{length}(x))$
+is the length of the list $[1, 2]$, which is 2.
+Thus $I_{\rho}(\sym{length}(x) = 2)$ maps to \sym{true}.
+
+Similarly,
+$I_{\rho}(\sym{append}(x, y, z))$ maps to \sym{true},
+since the arguments map to
+$[1, 2]$, $[3]$ and $[1, 2, 3]$, respectively,
+and the last of these is the result of
+appending the first two.
+Given this result and the result from the previous paragraph,
+we can see that
+$I_{\rho}(\sym{append}(x, y, z) \land \sym{length}(x) = 2)$
+maps to \sym{true},
+via the truth table for~`$\land$'.
+
+Finally, $I_\sigma(\phi)$ maps to \sym{true} because
+$\rho$ is an assignment that differs from $\sigma$
+only at $x$ and $y$,
+which satisfies our rule for the existential quantifier.
+
+Had we used an assignment $\sigma'$ with $\sigma'(z) = [1]$,
+then the append operation would have been false
+under the assignment $\rho' = \sigma' \{ x \mapsto [1,2], y \mapsto [3] \}$,
+since $[1, 2]$ and $[3]$ do not append to form $[1]$.
+Furthermore,
+no such assignment $\rho'$ would be able to make
+the interpretation of the append operation true,
+and still have $I_{\rho'}(\sym{length}(x))$ being true.
+As such, $I_{\sigma'}(\phi)$ would have evaluated to \sym{false}.
+
+
+\subsection{Models}
+\label{sec:models}
+
+An interpretation can be thought of as
+one individual programmer's understanding of
+how a program works.
+If the programmer has an accurate picture in their head
+of the observable behaviour---the inputs and outputs---%
+then their interpretation can be said to be a
+\emph{model\label{gi:model}}.
+
+Formally,
+let $I$ be an interpretation over the universe $U$.
+We say that $I$ is a model of a set of axioms
+if each of the axioms evaluates to true
+in that interpretation
+(recall that axioms are closed formulas,
+so we do not need to specify an assignment).
+If $I$ is a model of the axioms generated by a program,
+then we say that $I$ is a model of the program.
+Customarily, the variable $M$ is used rather than $I$
+when discussing an interpretation that is a model.
+
+We are now in a position to give the following.
+
+\begin{definition}[Declarative semantics]
+\label{def:declarative-semantics}
+The declarative semantics of a Mercury program
+is the collection of models of that program.
+\end{definition}
+
+\noindent
+In other words,
+the declarative semantics is essentially
+all the possible ways of thinking about the program
+which accurately reflect how the program behaves.
+
+Considering once again
+the arbitrary precision integers example
+that we saw in Section~\ref{sec:decl-debug},
+one programmer might interpret the digit lists as integers directly.
+Another programmer might interpret them as
+lists of integers that will produce
+the actual integers oncce a particular function is applied.
+As long as their individual interpretations as a whole
+accurately reflect the program,
+then both programmers stand in equally good positions
+from which to make valid arguments about the program.
+Our definition of the declarative semantics as a set of models
+reflects this fact.
+
+If there exists any model at all,
+then there are an infinite number of possible models.
+However, we generally do not have to consider all models
+as it is possible to get the same results
+by considering only a particular set of interpretations.
+For first-order code,
+it is sufficient to only consider models
+that are Herbrand interpretations.
+
+Even so, there can be multiple Herbrand interpretations
+that are models of a program.
+For example, consider the program \texttt{p :- p.}
+The completion of this program is $p \leftrightarrow p$,
+which is a tautology.
+This means that it is true in every interpretation,
+specifically,
+$p$ could be assigned the value \sym{true} or the value \sym{false},
+but in either case the axiom would hold
+so both of these interpretations are models.
+
+More concerning is the program \texttt{p :- not p.}
+In this case the completion is $p \leftrightarrow \lnot p$,
+which is a contradiction.
+This means that it is false in every interpretation,
+which means that \emph{there are no models}.
+Effectively, the behaviour of the entire program is undefined,
+at least in the classical semantics.
+This can be regarded as a moot point, however,
+since execution of a program that calls such a predicate would not terminate.
+Nonetheless, it motivates the following definition.
+
+\begin{definition}[Consistency]
+\label{gi:consistent}
+A theory is consistent if it contains no contradictions.
+That is,
+there is no formula $\phi$ such that
+both $\phi$ and $\lnot\phi$ are contained in the theory.
+\end{definition}
+
+\noindent
+If there is at least one model of a theory
+then there cannot be any contradictions,
+so by this definition the theory must be consistent.
+
+In the remainder of this guide we will assume
+we are working with a program
+whose axioms we denote by $\Gamma$.
+We assume that there is at least one model of $\Gamma$,
+so the program is consistent,
+We will say ``model'' to mean a model of $\Gamma$.
+With that in mind we give the following definitions.
+
+\begin{definition}[Satisfaction]
+Let $\phi$ be a formula.
+If $M$ is a model and $\sigma$ is an assignment
+such that $M_\sigma(\phi)$ is true,
+we say that $M$ \emph{satisfies $\phi$ under $\sigma$},
+and that $\phi$ is true in $M$ under $\sigma$.
+If $\phi$ is closed,
+we additionally say that $M$ satisfies $\phi$,
+and that $\phi$ is true in $M$.
+If there exists any model that satisfies $\phi$ under some assignment,
+we say that $\phi$ is \emph{satisfiable\label{gi:satisfiable}}.
+\end{definition}
+
+\begin{definition}[Validity]
+Let $\phi$ be a formula and $\sigma$ an assignment.
+We say that $\phi$ is \emph{valid\label{gi:valid} under $\sigma$},
+written `$\Gamma, \sigma \models \phi$',
+if every model satisfies $\phi$ under $\sigma$.
+If this holds for every possible assignment,
+in particular if $\phi$ is closed,
+we additionally say that $\phi$ is valid,
+and that $\phi$ is a \emph{logical consequence} of\, $\Gamma$.
+This is written as $\Gamma \models \phi$.
+\end{definition}
+
+\begin{definition}[Unsatisfiability]
+Let $\phi$ be a formula and $\sigma$ an assignment.
+We say that $\phi$ is
+\emph{unsatisfiable\label{gi:unsatisfiable} under $\sigma$}
+if there is no model $M$ that satisfies $\phi$ under $\sigma$.
+If this holds for every possible assignment,
+in particular if $\phi$ is closed,
+we additionally say that $\phi$ is unsatisfiable.
+\end{definition}
+
+\noindent
+Returning to the definition of solution that we gave earlier,
+we can say that an assignment $\sigma$
+is a solution\label{gi:solution2} to a formula $\phi$
+if and only if $\Gamma, \sigma \models \phi$.
+That is,
+$\sigma$ is a solution for $\phi$
+if every model satisfies $\phi$ under $\sigma$.
+
+With the above definitions,
+no formula can be both valid and unsatisfiable.
+Furthermore, if a formula is valid
+then its negation is unsatisfiable,
+and vice-versa.
+Not all formulas are one or the other, however:
+if a formula is true in some models and false in others,
+then it is neither valid nor unsatisfiable.
+For example,
+consider again the program \mbox{\texttt{p :- p}}.
+Because there is a model in which $p$ is true
+and another model in which $p$ is false,
+the formula $p$ is satisfiable but not valid.
+A formula like this that is neither valid nor unsatisfiable
+is said to be \emph{contingent\label{gi:contingent}}.
+
+A point about the $\models$ notation is worth underlining.
+We have used this symbol to denote the validity relation between
+sets of axioms, $\Gamma$, and closed formulas, $\phi$,
+and the ``valid under'' relation between
+sets of axioms, assignments, and open formulas.
+This symbol is commonly overloaded, in other ways, too.
+Some authors use it to denote
+the satisfaction relation between \emph{models} and closed formulas,
+or between models, assignments, and open formulas.
+Other authors use it to denote
+the modelling relationship between interpretations and sets of axioms.
+That is, statements in the following forms may appear:
+\[
+M \models \phi
+\qquad\qquad
+M, \sigma \models \phi
+\qquad\qquad
+M \models \Gamma
+\]
+These mean, respectively,
+that $M$ satisfies $\phi$,
+that $M$ satisfies $\phi$ under $\sigma$,
+and that $M$ is a model of the set of axioms, $\Gamma$.
+
+We will only need to use the forms given in our definition of validity,
+but the reader should be aware that
+the other forms may be used in other sources.
+
+
+\section{Example}
+\label{sec:reasoning}
+
+Now that we have defined our semantics
+and specified what axioms generate a program's theory,
+how do we actually come up with a theorem?
+Theorems require proofs,
+so in this section we will give a couple of ad hoc arguments
+to try to prove that a formula is true.
+
+Consider the formula $\sym{append}([1], [2], [1, 2])$.
+We already know it is true
+given that \sym{append}/3 is interpreted as list concatenation,
+but assume that we only know how it is defined,
+and not its interpretation.
+Can we prove it is true using just the axioms that are generated?
+
+\begin{figure}
+\begin{IEEEeqnarray*}{l}
+\forall y.\,
+    \sym{append}([], y, y) \leftarrow \sym{true} \\
+\forall w x y z.\,
+    \sym{append}([w | x], y, [w | z]) \leftarrow \sym{append}(x, y, z)
+\end{IEEEeqnarray*}
+\caption{Clause soundness axioms for \sym{append}/3.\label{fig:ax-append}}
+\end{figure}
+
+For convenience,
+the clause soundness axioms for \sym{append}/3
+from Section~\ref{sec:completion}
+are repeated in Figure~\ref{fig:ax-append}.
+
+
+\subsection*{First attempt}
+\label{sec:reasoning1}
+
+One approach to proving our formula
+is to try to determine directly
+which ground atoms are contained in
+some arbitrary Herbrand model of the program,
+which we will call $H$.
+If the formula we are interested in
+is contained in the model,
+then it must be true.
+
+Looking at the axiom for the first clause,
+we can see that if we assign the value $[2]$ to $y$,
+then the formula becomes:
+\[
+    \sym{append}([], [2], [2]) \leftarrow \sym{true}
+\]
+From this we immediately get that
+$\sym{append}([], [2], [2]) \in H$.
+We are allowed to choose, as we did,
+any value we like for $y$,
+since $y$ is universally quantified---%
+the axiom is applicable to all possible choices.
+
+Now consider the axiom for the second clause.
+If we assign the values $[]$, $[2]$ and $[2]$
+to the variables $x$, $y$ and $z$, respectively,
+then the right hand side becomes $\sym{append}([], [2], [2])$,
+which we just established is in $H$.
+If we then assign to $w$ the value $1$,
+the formula becomes:
+\[
+    \sym{append}([1], [2], [1, 2]) \leftarrow \sym{append}([], [2], [2])
+\]
+Thus we get that $\sym{append}([1], [2], [1, 2]) \in H$,
+which completes our proof.
+
+Our attempt at proving a formula has been successful,
+but there are a lot of ways to go about building a proof,
+and the proof we have arrived at has a drawback.
+It starts by proving a small fact via the first clause,
+then builds a larger fact via the second clause.
+Such a proof is known as a ``bottom-up'' proof.
+This is an interesting way of reasoning,
+and in fact it reflects, to an extent,
+how deductive databases go about answering queries.
+but it does not reflect how Mercury programs are executed.
+
+Mercury execution starts with a high level goal,
+and reduces it down to smaller and smaller parts
+until each part can be solved directly using a fact clause.
+This style of proof is known as ``top-down'',
+in contrast to the bottom-up proof above.
+We will make a second attempt at proving our formula,
+this time using a top-down approach.
+While this will not completely describe how execution proceeds,
+it should help provide some intuition,
+and serve to motivate the operational semantics
+that will be the subject of the next chapter.
+
+
+\subsection*{Second attempt}
+\label{sec:reasoning2}
+
+For our second attempt we will try a different strategy.
+We will start by assuming that the formula we wish to prove,
+$\sym{append}([1], [2], [1, 2])$, is false.
+From that we will try derive a contradiction,
+which would show our assumption to be false,
+and thus prove that the formula is true.
+In other words,
+this will be a proof-by-contradiction.
+We refer again to the axioms in Figure~\ref{fig:ax-append}.
+
+Our approach will be to choose one of the axioms
+and try to match it to our formula
+by setting the arguments appropriately.
+Since the axioms are reverse implications
+for which we have assumed the left-hand side is false,
+we can infer that the right-hand side must also be false.
+By performing this inference a number of times in sequence
+we hope to reach a contradiction,
+that is, where the right-hand side is in fact true.
+We might fail to find such a contradiction, however.
+If we instead reach a tautology,
+it means we have failed to find the required contradiction.
+If we want to keep searching,
+we will need to go back to an earlier choice of axiom that we made,
+and choose the other axiom instead.
+
+The predicate call we are interested in
+has argument values $[1]$, $[2]$ and $[1, 2]$.
+If we choose the axiom for the first clause,
+we find that there is no way to assign a value to $y$
+such we can match the argument values,
+because the first argument will always be $[]$.
+
+We therefore choose the axiom for the second clause.
+By assigning the values
+$1$, $[]$, $[2]$ and $[2]$
+to $w$, $x$, $y$ and $z$, respectively,
+we get:
+\[
+    \sym{append}([1], [2], [1, 2]) \leftarrow \sym{append}([], [2], [2])
+\]
+We have assumed the formula on the left-side side to be false,
+so the formula on the right-hand side must also be false.
+
+Trying the first axiom on this new formula,
+we can assign the value $[2]$ to $y$ to obtain:
+\[
+    \sym{append}([], [2], [2]) \leftarrow \sym{true}
+\]
+Again,
+the left-hand side is false
+so the right-hand side must also be false,
+but this is a contradiction
+because the right-hand side is \sym{true}.
+We can therefore conclude that
+our original assumption must have been false.
+Thus $\sym{append}([1], [2], [1, 2]) \in H$,
+which completes our proof.
+
+This style of proof more closely reflects how programs are executed.
+It is still missing one important thing, however,
+which is that there were no variables in the formula we proved.
+Programs in general have output variables
+which become bound in the course of execution,
+so our proof technique would need to take account of that.
+We also want to be able to perform the inferences
+in a way that is less ad hoc.
+That, ultimately, is the aim of the operational semantics.
+
+We will cover the operational semantics in detail
+in the next chapter.
+Before that, however,
+we will make some brief philosophical remarks
+regarding classical logic.
+
+
+\section{Philosophical remarks}
+\label{sec:philosophy}
+
+The semantics we have presented is classical.
+It is possible this will leave the reader with the impression
+that Mercury is for classicists
+and Mercury programmers must therefore
+believe that classical logic is the One True Logic.
+This impression would not be accurate,
+as a lot of consideration has gone into understanding
+the benefits and drawbacks of classical logic,
+and likewise in understanding what other logics have to offer.
+
+The motivation for the focus on classical logic is straightforward:
+it provides an excellent trade-off between ease of reasoning
+and ability to observe a broad class of bugs.
+Its use does not, of course,
+preclude the addtional use of non-classical logic.
+In Chapter~\ref{sec:non-classical} we give
+a non-classical meaning to the logical connectives
+that enables more realistic reasoning about programs
+and their correctness with respect to a specification.
+As such, it demonstrates the usefulness of ``logical pluralism''
+as a philosophy for reasoning about computer programs.
+
+The underlying purpose of logic is to characterize how we think,
+not to tell us how to think.
+We humans have the innate ability to judge
+between a good argument and a bad argument,
+and the best logic in a given situation
+is the one that most accurately reflects
+the way in which we exercise this ability.

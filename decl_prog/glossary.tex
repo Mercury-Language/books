@@ -1,0 +1,336 @@
+\chapter{Glossary index}
+\label{sec:glossary}
+
+\begin{description}
+
+\item[answer]
+(pp.~\pageref{gi:answer}, \pageref{gi:answer2})
+The substitution that results from a successful computation.
+
+\item[assignment]
+(p.~\pageref{sec:assignments})
+A mapping from variables to values in the universe.
+(p.~\pageref{gi:assignment})
+A unification of the form \texttt{Y = X},
+where one of the sides has mode \texttt{in}
+and the other has mode \texttt{out}.
+
+\item[atomic goal]
+(p.~\pageref{gi:atomic})
+A unification, predicate call, or logical constant.
+
+\item[axiom]
+(p.~\pageref{gi:axiom})
+A closed formula that is taken to be true without proof.
+
+\item[backtrack]
+(p.~\pageref{gi:backtrack})
+When executing a query,
+to jump to the most recent choice point,
+if one exists,
+in order to resume execution
+with a different choice.
+
+\item[bound]
+(p.~\pageref{gi:bound})
+A variable in a formula that is captured by a quantifier
+is said to be bound.
+(p.~\pageref{gi:bound2})
+A variable that is mapped by a substitution is said to be bound.
+
+\item[choice point]
+(p.~\pageref{gi:choice-point})
+A point in a computation at which a clause or disjunct selection was made,
+and which can be backtracked to in order to execute alternative branches.
+
+\item[clause completeness]
+(p.~\pageref{gi:clause-completeness})
+Of a predicate or function definition,
+having clauses that cover every possible input that has a solution.
+
+\item[clause soundness]
+(p.~\pageref{gi:clause-soundness})
+Of a clause defining a predicate or function,
+producing solutions that are true in the intended interpretation.
+
+\item[closed formula]
+(p.~\pageref{gi:closed-formula})
+A formula in which there are no free variables.
+
+\item[closure]
+(p.~\pageref{gi:closure})
+The representation of a lambda term.
+It consists of a code pointer,
+along with values for the free variables
+in the lambda term.
+
+\item[completeness]
+(pp.~\pageref{thm:completeness},~\pageref{gi:completeness2})
+A deductive system is complete if validity implies provability.
+Completeness, in reference to a deductive system,
+is not to be confused with operational completeness or clause completeness.
+
+\item[completion]
+(p.~\pageref{sec:completion})
+Conversion of a set of clauses that define a predicate or function
+into a single closed formula.
+
+\item[consistent]
+(p.~\pageref{gi:consistent})
+A theory is consistent if it does not contain any contradictions.
+
+\item[constant]
+(p.~\pageref{gi:constant})
+A function that does not take any arguments.
+
+\item[construction]
+(p.~\pageref{gi:construction})
+A unification of the form \texttt{Y = f(X1, ..., XN)},
+where \texttt{Y} has mode \texttt{out}
+and each \texttt{Xi} has either mode \texttt{in}
+or mode \texttt{unused}.
+
+\item[contingent]
+(pp.~\pageref{gi:contingent},~\pageref{gi:contingent2})
+True in some model, and false in some other model.
+
+\item[data term]
+(p.~\pageref{gi:data-term})
+A term that does not contain any function calls.
+
+\item[declarative debugging]
+(pp.~\pageref{sec:decl-debug}--\pageref{end:decl-debug})
+A debugging algorithm based on
+comparing the declarative behaviour of the program
+with the intended interpretation.
+
+\item[declarative semantics]
+(pp.~\pageref{sec:by-example},~\pageref{def:declarative-semantics})
+The collection of models of a Mercury program.
+
+\item[deconstruction]
+(p.~\pageref{gi:deconstruction})
+A unification of the form \texttt{Y = f(X1, ..., XN)},
+where \texttt{Y} has mode \texttt{in}
+and each \texttt{Xi} has either mode \texttt{out}
+or mode \texttt{unused}.
+
+\item[definite]
+(p.~\pageref{gi:definite})
+A clause is definite if it is either a fact,
+or its body is a conjunction of atomic goals.
+
+\item[failure]
+(p.~\pageref{gi:failure})
+A derivation that terminates without producing an answer.
+(p.~\pageref{gi:failure})
+Finishing execution of a query
+after exhausting all choice points.
+
+\item[free]
+(p.~\pageref{gi:free})
+A variable in a formula that is not captured by a quantifier
+is said to be free.
+(p.~\pageref{gi:free2})
+A variable that is not mapped by a substitution is said to be free.
+
+\item[full logic]
+(p.~\pageref{gi:full-logic})
+A logic equipped with a deductive system that is both sound and complete.
+
+\item[ground]
+(p.~\pageref{gi:ground})
+A variable that is mapped by a substitution
+to a term containing no variables
+is said to be ground.
+A term that contains no variables is also said to be ground.
+
+\item[Herbrand interpretation]
+(p.~\pageref{gi:herbrand-interpretation})
+An interpretation where the universe of values
+is just the set of ground data terms.
+
+\item[Herbrand universe]
+(p.~\pageref{gi:herbrand-universe})
+The set of all ground data terms.
+
+\item[intended interpretation]
+(p.~\pageref{gi:intended-interpretation})
+The interpretation of a specification.
+
+\item[interpretation]
+(pp.~\pageref{gi:interpretation},~\pageref{sec:interpretations})
+A mapping from syntactic elements to the semantic domain.
+
+\item[logical]
+(p.~\pageref{gi:non-logical})
+Of a predicate or function,
+having a consistent declarative semantics across all calls; pure.
+(p.~\pageref{gi:non-logical2})
+Pertaining to the symbols that are a fixed part of the language,
+in contrast to the predicate and function symbols defined by the program.
+
+\item[missing answer]
+(p.~\pageref{gi:missing-answer})
+One of the two classes of bugs
+that are observable in the declarative semantics.
+An answer is missing if it is false according to the program as written,
+but true in the intended interpretation.
+Also see \emph{wrong answer}.
+
+\item[model]
+(p.~\pageref{gi:model})
+An interpretation under which a set of axioms are all true.
+
+\item[negation-as-failure]
+(p.~\pageref{sec:naf})
+An inference rule that says
+if a goal succeeds, then the negation of that goal should finitely fail,
+and vice versa.
+
+\item[negative free logic]
+(p.~\pageref{gi:nfl})
+A logic that permits non-denoting terms,
+and treats atomic formulas containing non-denoting terms as being false.
+
+\item[non-denoting term]
+(p.~\pageref{gi:non-denoting})
+A term that contains a call to a \texttt{semidet} function,
+with arguments for which the function fails.
+
+\item[non-logical]
+(p.~\pageref{gi:non-logical})
+Of a predicate or function,
+not having a consistent declarative semantics across all calls; impure.
+(p.~\pageref{gi:non-logical2})
+Pertaining to the predicate and function symbols defined by the program,
+in contrast to the symbols that are a fixed part of the language.
+
+\item[occurs check]
+(p.~\pageref{gi:occurs-check})
+A check that a variable is not bound to a term that contains that variable.
+Also know as an occur check.
+
+\item[operational completeness]
+(p.~\pageref{sec:incompleteness})
+The extent to which an operational semantics
+is able to avoid unnecessary nontermination.
+
+\item[operational semantics]
+(pp.~\pageref{sec:op-sem}--\pageref{end:op-sem})
+The computation defined by a program.
+
+\item[partial correctness]
+(p.~\pageref{gi:partial-correctness})
+Correctness according to the declarative semantics.
+It does not consider issues such as computational complexity.
+
+\item[provable]
+(p.~\pageref{gi:provable})
+A closed formula for which there exists a successful derivation
+is said to be provable.
+Can be written as $\Gamma \vdash \phi$.
+
+\item[pure]
+(p.~\pageref{gi:pure})
+Of a predicate or function,
+having a consistent declarative interpretation across all calls,
+regardless of the mode in which the call is made.
+
+\item[query]
+(p.~\pageref{sec:queries})
+The initial goal for a computation.
+
+\item[relativization]
+(p.~\pageref{gi:relativization})
+Adding explicit type checks that cause failure,
+to an otherwise untyped logic program.
+
+\item[resolution]
+(p.~\pageref{gi:resolution})
+A type of inference rule.
+Logic programming uses SLD resolution
+as its primary mechanism of computation.
+
+\item[satisfiable]
+(p.~\pageref{gi:satisfiable})
+A model satisfies a closed formula if it maps the formula to \textit{true}.
+If a model exists that satisfies a formula,
+that formula is said to be satisfiable.
+
+\item[semantic equality]
+(p.~\pageref{gi:semantic-equality})
+The relation between terms that holds
+if and only if both terms denote the same value.
+
+\item[SLD tree]
+(p.~\pageref{gi:sld-tree})
+A tree formed from SLD derivations by including choice point nodes,
+where the derivations branching off from that choice point
+are the child nodes.
+
+\item[solution]
+(pp.~\pageref{gi:solution},~\pageref{gi:solution2},~\pageref{gi:solution3})
+An assignment or set of assignments under which, in every model,
+a formula is true.
+
+\item[solved form]
+(pp.~\pageref{gi:solved-form},~\pageref{gi:solved-form2})
+A goal that takes the form of a substitution.
+
+\item[soundness]
+(pp.~\pageref{thm:soundness},~\pageref{gi:soundness2})
+A deductive system is sound if provability implies validity.
+
+\item[substitution]
+(p.~\pageref{gi:substitution})
+A partial mapping from variables to terms,
+such that no variable that maps to a term
+occurs in any of the terms in the mapping.
+
+\item[success]
+(p.~\pageref{gi:success})
+A derivation that produces an answer.
+
+\item[test]
+(p.~\pageref{gi:test})
+A unification of the form \texttt{Y = X},
+where both sides have mode \texttt{in}.
+
+\item[theorem]
+(p.~\pageref{gi:theorem})
+A closed formula that is provable from a set of axioms.
+The collection of all such closed formulas is known as a theory.
+
+\item[unification]
+(p.~\pageref{sec:unification})
+The process of finding the most general substitution
+that makes two terms identical.
+
+\item[Unique Names Assumption]
+(p.~\pageref{gi:una})
+The assumption that two ground data terms are equal
+only if they are syntactically identical.
+
+\item[unsatisfiable]
+(p.~\pageref{gi:unsatisfiable})
+False in all models.
+
+\item[valid]
+(p.~\pageref{gi:valid})
+True in all models.
+
+\item[value]
+(p.~\pageref{gi:value})
+An element of the semantic universe.
+Values are denoted by data terms.
+
+\item[wrong answer]
+(p.~\pageref{gi:wrong-answer})
+One of the two classes of bugs
+that are observable in the declarative semantics.
+An answer is wrong if it is true according to the program as written,
+but false in the intended interpretation.
+Also see \emph{missing answer}.
+
+\end{description}
