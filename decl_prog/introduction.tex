@@ -11,15 +11,15 @@ would find the definition familiar:
 a predicate calculus theory
 with a ``language'' specified by the type declarations in the program,
 and a set of axioms derived from the ``completion'' of the program.
-To readers without that background, however,
-making sense of this can be challenging
-for a number of reasons.
+Readers without that background, however,
+are likely to find this paragraph too opaque to be helpful.
 
 The case is similar with the operational semantics,
 which is defined with reference to ``SLDNF resolution''.
-The vast majority of people who know about this topic
+The vast majority of people who know what this means
 also already know logic programming,
-so this is not helpful for those who are learning.
+so this definition is not helpful
+for those for whom Mercury is their first logic programming language.
 
 The challenge for readers is particularly difficult
 since existing resources on the predicate calculus
@@ -44,7 +44,7 @@ For example,
 \href{https://plato.stanford.edu/entries/logic-classical/}
 {https://plato.stanford.edu/entries/logic-classical/}.
 }.
-While these generally offer a more complete picture of the logic
+While these generally offer a more complete picture of the logic,
 they do not usually discuss resolution,
 which is the computational mechanism used in logic programming.
 In addition, the level of mathematical rigor, while important,
@@ -127,8 +127,8 @@ understood by the programmer as solutions to the formulas.
 
 These two levels of reasoning,
 the first more abstract and the second more concrete,
-are represented by
-the two horizontal arrows in the lower part of the diagram.
+are represented by the two horizontal arrows
+in the middle and in the lower part of the diagram.
 At each level there is a syntax to express the ideas
 and a semantics to reason about what they mean.
 A close correspondence exists between the two,
@@ -164,15 +164,15 @@ With the dual syntax vs. semantics view in mind,
 we adopt a kind of parallel notation and terminology in this guide.
 When discussing program elements
 from a primarily syntactic or operational point of view,
-we will use Mercury syntax written in a monospace font,
+we will use Mercury syntax written in \verb#this# font,
 whereas when the discussion is from a semantic or declarative point of view
-we will use conventional mathematical notation.
+we will use conventional mathematical notation in $this$ font.
+% The output latex generates for "$this\ font$" looks ugly.
 Similarly,
-the terminology used differs between the two sides,
+the terminology used differs between the two views,
 with terms that apply to the declarative view
 having their counterparts in the operational view.
-Some examples of notation and terminology
-are show in Figure~\ref{fig:notation}.
+Figure~\ref{fig:notation} shows some examples of notation and terminology.
 
 \begin{figure}
 \begin{center}
@@ -201,9 +201,11 @@ The elements themselves will be discussed in later chapters.
 }
 \end{figure}
 
-Hopefully the reader's intuition will be guided by this use of notation.
-We caution against taking the distinction too seriously, however,
-as it can sometimes become blurred.
+We hope that this use of notation will help readers.
+However, while the distinction it conveys
+between the semantic/declarative view on the one hand
+and the syntactic/operational view on the other hand is often useful,
+in some cases, it is not.
 Indeed, we will shortly introduce so-called Herbrand interpretations,
 in which elements of syntax are used directly
 as elements of the semantic domain.
@@ -236,21 +238,19 @@ we give abstract algorithms for unification and resolution,
 and use these as building blocks to define the operational semantics.
 We also define the negation-as-failure rule
 that is used to implement negation and if-then-else.
-Some important results in the meta-theory are given,
+We then give some important results in the meta-theory,
 which we use to show the correspondence between
 the operational and the declarative viewpoints.
 
 In Chapter~\ref{sec:exec}
 we give concrete details of how the implementation
 behaves at run-time.
-These details enable programmers to better estimate
-operational characteristics of their programs,
-such as stack and heap usage.
+These details should enable programmers to better estimate
+how different coding choices affect
+such operational characteristics of their programs
+as stack and heap usage.
 
-In Chapter~\ref{sec:extensions} we extend our work
-to cover more aspects of the language.
-In particular,
-we provide semantics for some Mercury constructs
+In Chapter~\ref{sec:extensions} we extend our work to cover aspects of Mercury
 which are not well-characterized in the classical semantics,
 such as partial functions and exceptions.
 
@@ -263,8 +263,7 @@ classical logic is not the only logic
 that can be usefully applied to understanding Mercury programs.
 
 Finally,
-a glossary index in Appendix~\ref{sec:glossary}
+the glossary index in Appendix~\ref{sec:glossary}
 provides short definitions,
 as well as page references,
 for many of the concepts discussed in the guide.
-
