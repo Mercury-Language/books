@@ -13,9 +13,12 @@ TEXS = \
 	nonclassical.tex \
 	glossary.tex
 
+MS = \
+	code/dpm_queue.m
+
 all: decl_prog.pdf
 
-decl_prog.pdf: decl_prog.tex $(TEXS)
+decl_prog.pdf: decl_prog.tex $(TEXS) $(MS)
 	pdflatex decl_prog.tex
 	pdflatex decl_prog.tex
 

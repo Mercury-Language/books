@@ -259,8 +259,9 @@ in the remainder of this guide.
 The ADT includes abstract operations to initialize a queue,
 put elements at the back and get them from the front,
 unput elements from the back and unget then at the front,
+test two queues for equality,
 and convert the queue to an ordinary list.
-A queue can be interpreted as a sequence of elements,
+A queue can be interpreted as a finite sequence of elements,
 using the same semi-formal mathematical notation as for lists.
 
 The initialization function, \sym{init/0},
@@ -273,26 +274,34 @@ is done with the \sym{put/3} predicate,
 which takes an element,
 the queue prior to putting the element at the end,
 and the queue after this has been done:
-\[ \sym{put}(x, [t_1, \ldots, t_n], [t_1, \ldots, t_n, x]) \]
+\[ \sym{put}(z, [t_1, \ldots, t_n], [t_1, \ldots, t_n, z]) \]
 Getting an element from the front of the queue is done with
 a \sym{get/3} predicate,
-which is similar:
-\[ \sym{get}(x, [x, t_1, \ldots, t_n], [t_1, \ldots, t_n]) \]
+which is similar except that the second argument
+is the queue prior to getting the element from the front:
+\[ \sym{get}(z, [z, t_1, \ldots, t_n], [t_1, \ldots, t_n]) \]
 The inverse operations,
 \sym{unput/3} and \sym{unget/3},
 are the same as the forward operations
 except that the second and third arguments are reversed:
 \begin{IEEEeqnarray*}{c}
-    \sym{unput}(x, [t_1, \ldots, t_n, x], [t_1, \ldots, t_n]) \\
-    \sym{unget}(x, [t_1, \ldots, t_n], [x, t_1, \ldots, t_n])
+    \sym{unput}(z, [t_1, \ldots, t_n, z], [t_1, \ldots, t_n]) \\
+    \sym{unget}(z, [t_1, \ldots, t_n], [z, t_1, \ldots, t_n])
 \end{IEEEeqnarray*}
 Finally,
-the function \sym{list/1},
+both the predicate \sym{eq/2}
+that tests if two queues contain the same sequence of elements,
+and the function \sym{list/1}
 that converts a queue to an ordinary list,
-is trivial to specify:
-\[ \sym{list}([t_1, \ldots, t_n]) = [t_1, \ldots, t_n] \]
+are trivial to specify:
+\begin{IEEEeqnarray*}{c}
+    \sym{eq}([t_1, \ldots, t_n], [t_1, \ldots, t_n]) \\
+    \sym{list}([t_1, \ldots, t_n]) = [t_1, \ldots, t_n]
+\end{IEEEeqnarray*}
 That is,
-the intended interpretation of \sym{list/1}
+the intended interpretation of \sym{eq/2}
+is the identity relation,
+and the intended interpretation of \sym{list/1}
 is the identity function.
 
 When implementing queues according to this specification,
@@ -302,6 +311,11 @@ Assuming they are different,
 the implementation of \sym{list/1}
 will not be trivial like the specification,
 but will have to convert between the two representations.
+Similarly,
+if the representation is not \emph{canonical},
+meaning that the same queue may be represented in different ways,
+then the implementation of \sym{eq/2}
+will not be trivial.
 
 
 \section{Purity}
@@ -391,6 +405,117 @@ and it in turn is determined by
 the clauses that define a predicate or function.
 Since the same clauses apply to all modes,
 no discrepancy can arise.
+
+
+\subsection{Running example: \texttt{queue} declarations}
+\label{sec:queue-decl}
+
+Continuing with our \texttt{queue} example,
+we can work out from our intended interpretation of the queue operations,
+as well as from our intended way of calling them,
+what the types, modes, and determinism of each operation will be.
+For reference,
+the intended interpretations are collected together
+in Figure~\ref{fig:queue-spec}.
+
+\begin{figure}
+\begin{IEEEeqnarray*}{l}
+    \sym{init} = [] \\
+    \sym{put}(z, [t_1, \ldots, t_n], [t_1, \ldots, t_n, z]) \\
+    \sym{get}(z, [z, t_1, \ldots, t_n], [t_1, \ldots, t_n]) \\
+    \sym{unput}(z, [t_1, \ldots, t_n, z], [t_1, \ldots, t_n]) \\
+    \sym{unget}(z, [t_1, \ldots, t_n], [z, t_1, \ldots, t_n]) \\
+    \sym{eq}([t_1, \ldots, t_n], [t_1, \ldots, t_n]) \\
+    \sym{list}([t_1, \ldots, t_n]) = [t_1, \ldots, t_n]
+\end{IEEEeqnarray*}
+\caption{Intended interpretations for the \texttt{queue} operations
+\label{fig:queue-spec}}
+\end{figure}
+
+Three types are used in the queue interface:
+the type of elements, the type of queues and the type of lists.
+Since the behaviour of queues
+does not depend on the specific element values,
+we should be able to use any type of elements.
+We will require that all of the elements in a queue are the same type,
+however,
+and that the lists we produce
+(for which we will use the standard \texttt{list/1} type)
+are likewise.
+We therefore use type variable \texttt{T} for the element type,
+and define the abstract type \texttt{queue(T)}, as follows:
+\begin{verbatim}
+    :- type queue(T).
+\end{verbatim}
+Lists will be of type \texttt{list(T)}.
+
+The \sym{init/0} function has no arguments,
+and always returns the same queue every time it is called.
+So the return value has mode \texttt{out},
+and the function has determinism \texttt{det}.
+These are the defaults for functions,
+so the declaration is:
+\begin{verbatim}
+    :- func init = queue(T).
+\end{verbatim}
+
+The four main operations have three arguments,
+the first an element and the second and third queues.
+The \texttt{pred} declarations are therefore:
+\begin{verbatim}
+    :- pred put(T, queue(T), queue(T)).
+    :- pred get(T, queue(T), queue(T)).
+    :- pred unput(T, queue(T), queue(T)).
+    :- pred unget(T, queue(T), queue(T)).
+\end{verbatim}
+For some of these operations the first argument is an input,
+and for others it is an output.
+The second and third arguments
+form an `\texttt{in}, \texttt{out}' pair---%
+this is a useful pattern to follow
+since it allows for the convenient use of state variables.
+We intend the main operations to produce at most one result,
+even though there may be
+multiple representations of the same output value,
+so the determinism of each operation
+should be either \texttt{det} or \texttt{semidet},
+depending on whether or not it always produces a solution.
+
+For both the \sym{put/3} and \sym{unget/3} operations,
+the length of the output queue is one greater than
+the length of the input queue.
+There is no upper limit on the length of queues
+so these operations always have a solution,
+thus their determinism is \texttt{det}.
+For the \sym{get/3} and \sym{unput/3} operations,
+on the other hand,
+the length of the output queue is one \emph{less} than
+the length of the input queue,
+which means there are no solutions if the input queue is empty.
+These operations must therefore be \texttt{semidet},
+which leaves us with the following:
+\begin{verbatim}
+    :- mode put(in, in, out) is det.
+    :- mode get(out, in, out) is semidet.
+    :- mode unput(out, in, out) is semidet.
+    :- mode unget(in, in, out) is det.
+\end{verbatim}
+
+The \sym{eq/2} predicate takes two queues and either succeeds or fails.
+It has no outputs,
+so it cannot produce multiple solutions
+and its determinism is therefore \texttt{semidet}.
+It is declared as follows:
+\begin{verbatim}
+    :- pred eq(queue(T), queue(T)).
+    :- mode eq(in, in) is semidet.
+\end{verbatim}
+
+The \sym{list/1} function takes a queue and returns a list,
+and like \sym{init/0} it uses the default function mode:
+\begin{verbatim}
+    :- func list(queue(T)) = list(T).
+\end{verbatim}
 
 
 \subsection{Mode-dependent clauses}
@@ -680,6 +805,252 @@ or misses answers that it should have produced,
 then there is at least one clause in the program
 with an instance that is not true in the intended interpretation,
 or at least one definition that is not clause complete.
+
+
+\section{Running example: \texttt{queue} implementation}
+\label{sec:queue-impl}
+
+Armed with the notion of partial correctness,
+we are in a position to attempt
+an implementation of the queue ADT,
+and make a judgement as to
+whether the intended interpretation has been adhered to.
+
+We first need to choose an implementation for the \texttt{queue/1} type.
+One technique is to use a pair of lists
+representing the front portion and the back portion of a queue.
+The queue is split at an arbitrary point
+so the two portions can be any length, including zero,
+and the back portion is stored in reverse order.
+In this way,
+the head of each list corresponds to
+one end of the queue or the other,
+which are the positions in the queue
+that our interface allows access to.
+
+The type can be defined as follows:
+\begin{verbatim}
+    :- type queue(T)
+        --->    q(
+                    back :: list(T),
+                    front :: list(T)
+                ).
+\end{verbatim}
+We have placed the reversed back list as the first argument,
+as a reminder that it is in fact back-to-front.
+
+To formalize the above description,
+we can give the intended interpretation of the \texttt{q/2}
+data constructor.
+Although it is just a symbol
+and not a function in the computational sense,
+it still has an intended interpretation,
+and we can describe it as follows:
+\[
+    q([y_1, \ldots, y_m], [x_1, \ldots, x_n]) =
+        [x_1, \ldots, x_n, y_m, \ldots, y_1]
+\]
+This just says exectly what we said above.
+
+We can first give a definition for the \texttt{list/1} function,
+which is intended to be the identity function
+on the interpretation of its argument,
+but needs to convert between the two representations
+of a finite sequence.
+The single clause is:
+\begin{verbatim}
+    list(q(Y, X)) = append(X, reverse(Y)).
+\end{verbatim}
+Here we have made use of
+the \texttt{append/2} and \texttt{reverse/1} functions
+that are defined in the \texttt{list} module
+of the standard library.
+
+It is instructive to look at how
+the clause as a whole is interpreted.
+We can assume that \texttt{X} and \texttt{Y} are lists,
+and we have given the interpretations of the other symbols,
+so plugging things in we get the following
+for each side of the equation:
+\begin{IEEEeqnarray*}{rCl}
+\IEEEeqnarraymulticol{3}{l}{
+    \sym{list}(q([y_1, \ldots, y_m], [x_1, \ldots, x_n])
+} \\ \quad
+    & = & \sym{list}([x_1, \ldots, x_n, y_m, \ldots, y_1]) \\
+    & = & [x_1, \ldots, x_n, y_m, \ldots, y_1] \\
+\IEEEeqnarraymulticol{3}{l}{
+    \sym{append}([x_1, \ldots, x_n], \sym{reverse}([y_1, \ldots, y_m]))
+} \\ \quad
+    & = & \sym{append}([x_1, \ldots, x_n], [y_m, \ldots, y_1]) \\
+    & = & [x_1, \ldots, x_n, y_m, \ldots, y_1]
+\end{IEEEeqnarray*}
+Both sides are interpreted equally,
+so we can say that this clause is sound.
+Since this a function with the default mode,
+the clause completeness condition is checked for us,
+and thus we can conclude that
+our implementation of \texttt{list/1} is (partially) correct.
+
+A simple version of \texttt{eq/2}
+can be defined by converting both queues to lists:
+\begin{verbatim}
+    eq(Q1, Q2) :- list(Q1) = list(Q2).
+\end{verbatim}
+The clause soundness condition can easily be verified,
+since the symbols all denote identities.
+The clause completeness condition holds
+because the \texttt{list} calls cover every possible queue.
+
+Implementing \texttt{init/0} is also simple,
+as the empty queue must have both the front and back lists empty:
+\begin{verbatim}
+    init = q([], []).
+\end{verbatim}
+We can define the four main operations as follows:
+\begin{verbatim}
+    put(Z, q(Y, X), q([Z | Y], X)).
+    get(Z, q(Y, [Z | X]), q(Y, X)).
+    unput(Z, q([Z | Y], X), q(Y, X)).
+    unget(Z, q(Y, X), q(Y, [Z | X])).
+\end{verbatim}
+As before,
+by plugging in our interpretations
+we can make judgements about correctness.
+Doing so,
+then renaming some of the variables for clarity,
+we get the following:
+\begin{IEEEeqnarray*}{rCl}
+    \IEEEeqnarraymulticol{3}{l}{
+        \sym{put}(z, q([y_1, \ldots, y_m], [x_1, \ldots, x_n]),
+            q([z, y_1, \ldots, y_m], [x_1, \ldots, x_n]))
+    } \\ \quad
+    & \Leftrightarrow &
+        \sym{put}(z, [x_1, \ldots, x_n, y_m, \ldots, y_1],
+            [x_1, \ldots, x_n, y_m, \ldots, y_1, z]) \\
+    & \Leftrightarrow &
+        \sym{put}(z, [t_1, \ldots, t_{m+n}], [t_1, \ldots, t_{m+n}, z])
+\\[.5em]
+    \IEEEeqnarraymulticol{3}{l}{
+        \sym{get}(z, q([y_1, \ldots, y_m], [z, x_1, \ldots, x_n]),
+            q([y_1, \ldots, y_m], [x_1, \ldots, x_n]))
+    } \\
+    & \Leftrightarrow &
+        \sym{get}(z, [z, x_1, \ldots, x_n, y_m, \ldots, y_1],
+            [x_1, \ldots, x_n, y_m, \ldots, y_1]) \\
+    & \Leftrightarrow &
+        \sym{get}(z, [z, t_1, \ldots, t_{m+n}], [t_1, \ldots, t_{m+n}])
+\\[.5em]
+    \IEEEeqnarraymulticol{3}{l}{
+        \sym{unput}(z, q([z, y_1, \ldots, y_m], [x_1, \ldots, x_n]),
+            q([y_1, \ldots, y_m], [x_1, \ldots, x_n]))
+    } \\
+    & \Leftrightarrow &
+        \sym{unput}(z, [x_1, \ldots, x_n, y_m, \ldots, y_1, z],
+            [x_1, \ldots, x_n, y_m, \ldots, y_1]) \\
+    & \Leftrightarrow &
+        \sym{unput}(z, [t_1, \ldots, t_{m+n}, z], [t_1, \ldots, t_{m+n}])
+\\[.5em]
+    \IEEEeqnarraymulticol{3}{l}{
+        \sym{unget}(z, q([y_1, \ldots, y_m], [x_1, \ldots, x_n]),
+            q([y_1, \ldots, y_m], [z, x_1, \ldots, x_n]))
+    } \\
+    & \Leftrightarrow &
+        \sym{unget}(z, [x_1, \ldots, x_n, y_m, \ldots, y_1],
+            [z, x_1, \ldots, x_n, y_m, \ldots, y_1]) \\
+    & \Leftrightarrow &
+        \sym{unget}(z, [t_1, \ldots, t_{m+n}], [z, t_1, \ldots, t_{m+n}])
+\end{IEEEeqnarray*}
+These match our intended interpretations exactly,
+which means the clause soundness condition is satisfied.
+
+At this point we could compile the above predicates successfully.
+If we run a test program, however,
+calls to the \texttt{semidet} predicates
+will sometimes fail when there is supposed to be a solution.
+For example,
+putting an element in an empty queue
+and then trying to get it out again
+does not produce the element.
+The program has a missing answer bug!
+
+The problem is that we have only checked
+the clause soundness condition,
+and not the clause completeness condition.
+For the \texttt{det} predicates,
+the compiler checks this latter condition for us,
+but for the \texttt{semidet} predicates
+we need to make sure that
+all possible values of the second argument---%
+the input queue---%
+are handled.
+
+For \sym{get/3}, the second argument is \texttt{q(Y, [Z | X])},
+which only covers cases where the front list is not empty.
+We need to determine what should happen if the front list is empty.
+Consider the following equivalence:
+\[
+    q(y, []) = q([], \sym{reverse}(y))
+\]
+This can easily be seen to be true
+by plugging in the interpretation of the various symbols.
+
+If, for the empty list case,
+we perform this transformation prior to
+getting the element from the front of the list,
+we will avoid the problem of failing,
+except in the case that the entire queue is empty
+and failure is expected.
+The code that performs this is as follows:
+\begin{verbatim}
+    get(Z, q(Y, []), q([], X)) :- [Z | X] = reverse(Y).
+\end{verbatim}
+To check the result,
+we can once again plug in the interpretations.
+The right-hand side gives us:
+\begin{IEEEeqnarray*}{rCl}
+    \IEEEeqnarraymulticol{3}{l}{
+        [z, x_1, \ldots, x_n] = \sym{reverse}([y_1, \ldots, y_m])
+    } \\ \quad
+    & \Leftrightarrow &
+        [z, x_1, \ldots, x_n] = [y_m, \ldots, y_1] \\
+    & \Leftrightarrow &
+        z = y_m \land [x_1, \ldots, x_n] = [y_{m-1}, \ldots, y_1]
+\end{IEEEeqnarray*}
+This is saying that the body is only true
+when these last equations hold.
+On the left-hand side we get:
+\begin{IEEEeqnarray*}{rCl}
+    \IEEEeqnarraymulticol{3}{l}{
+        \sym{get}(z, q([y_1, \ldots, y_m], []), q([], [x_1, \ldots, x_n]))
+    } \\ \quad
+    & \Leftrightarrow &
+        \sym{get}(z, [y_m, \ldots, y_1], [x_1, \ldots, x_n])
+\end{IEEEeqnarray*}
+If we use the equations derived from the right-hand side
+to substitute variables in the above,
+and then rename some variables,
+we end up with:
+\begin{IEEEeqnarray*}{rCl}
+    \quad & \Leftrightarrow &
+        \sym{get}(z, [z, x_1, \ldots, x_n], [x_1, \ldots, x_n])
+        \hspace{1.4em} \\
+    & \Leftrightarrow &
+        \sym{get}(z, [z, t_1, \ldots, t_n], [t_1, \ldots, t_n])
+\end{IEEEeqnarray*}
+This matches the intended interpretation, as required,
+and as the clauses now cover all possible solutions
+we can conclude that the implementation is correct.
+
+An extra clause for \sym{unput/3} can be derived in a similar way
+to the extra clause for \sym{get/3},
+except that the front list is reversed and put at the back.
+We get the following:
+\begin{verbatim}
+    unput(Z, q([], X), q(Y, [])) :- [Z | Y] = reverse(X).
+\end{verbatim}
+Verifying the correctness of \texttt{unput/3}
+is left as an exercise.
+
 
 \section{Declarative debugging}
 \label{sec:decl-debug}

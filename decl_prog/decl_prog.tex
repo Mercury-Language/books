@@ -7,6 +7,7 @@
 \usepackage{fnpct}
 \usepackage[hidelinks]{hyperref}
 \usepackage{IEEEtrantools}
+\usepackage{fancyvrb}
 
 \newtheorem{theorem}{Theorem}
 \newtheorem{definition}{Definition}
@@ -61,5 +62,13 @@ To view a copy of the license, visit:\\
 \appendix
 
 \input{glossary.tex}
+
+\chapter{Source code listings}
+\label{sec:listings}
+
+\section{Running example: \texttt{queue} ADT}
+\label{sec:listing-queue}
+
+\VerbatimInput{code/dpm_queue.m}
 
 \end{document}
