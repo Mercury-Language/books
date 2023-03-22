@@ -179,12 +179,10 @@ of \textit{len/1} and \textit{app/1} as follows:
 \text{for } n \geqslant 0, \ssym{len}([t_1, \ldots, t_n]) = n
 \]
 \[
-\text{for } n \geqslant 0 \text{ and } 0 \leqslant m \leqslant n,
+\text{for } 0 \leqslant m \leqslant n,
 \ssym{app}([t_1, \ldots, t_m], [t_{m+1}, \ldots, t_n], [t_1, \ldots, t_n])
 \]
-% XXX Why include "n >= 0"? It is implied by "0 =< m =< n".
 From these formulas,
-% XXX Although we have used pseudo-code,
 it should be clear whether a particular ground atom
 is true or false in these interpretations,
 even though the interpretations are infinite in size.
@@ -264,7 +262,9 @@ The list append function can be specified as:
     \sym{append}([s_1, \ldots, s_m], [t_1, \ldots, t_n]) =
         [s_1, \ldots, s_m, t_1, \ldots, t_n]
 \]
-+% XXX Mark: why the switch from app as predicate to app as function?
+% XXX Don't specify the function version of append here.
+% We currently use it in a bit, but if we want to do that
+% it should be defined where it's needed. Maybe not use it at all?
 Similarly, the list reverse function can be specified as:
 \[
     \sym{reverse}([t_1, \ldots, t_n]) = [t_n, \ldots, t_1]
@@ -635,34 +635,27 @@ and involved the \texttt{string.append/3} predicate.
 
 In early versions of the Mercury,
 strings were defined as NUL terminated sequences of ASCII characters.
-With such an arrangement,
-strings could be regarded as equivalent to lists of characters,
-and a \texttt{string.append/3} predicate could be defined
-that was analogous to the append operation on lists.
-In particular,
-the predicate had a ``forward'' mode that appended strings,
+% XXX should this be saying ISO-8859-1?
+As with lists,
+the \texttt{string.append/3} predicate had
+a ``forward'' mode that appended strings,
 as well as a ``reverse'' mode that split them apart.
+A consistent declarative semantics applied to both of these modes,
+since appending and splitting of these strings
+are inverse operations.
 
-At some point the switch to Unicode was made,
-which means that strings could no longer
-be considered sequences of characters.
-% XXX Yes, they could. The characters could be invalid,
-% just as an "ASCII" char could be invalid by having the top bit set.
-% XXX The "all NUL-terminated bytes sequences are valid" property
-% IS true for the ISO-8859-1 char encoding.
-Rather, strings are defined as sequences of code units,
-which in Unicode are not the same thing as code points (characters).
-While a sequence of code points, in general,
-consists of a well-formed sequence of one or more code units,
-the sequence of code units that constitutes a string
-is not necessarily well-formed.
-% XXX This issue is specific to UTF-8;
-% it doesn't arise for UTF-32, for example.
+When the switch to Unicode was made,
+a new situation arose.
+Unicode strings consist of a sequence of fixed-size code units,
+which are grouped together into code points
+that may be of varying size.
+It is possible for sequences of code units to be ill-formed,
+in particular if strings can be split between arbitrary code units.
 
 In the forward (in, in, out) mode
 of the Unicode version of \texttt{string.append/3},
 the behaviour is to append the sequences of code units representing
-the (possibly ill-formed) strings.
+the (possibly ill-formed) input strings.
 Consider two strings $s_1$ and $s_2$,
 neither of which is well-formed,
 but which, when appended together, result in a string,
@@ -682,7 +675,7 @@ when given as input $s_3$ in the third argument position.
 This means that the reverse mode of \texttt{string.append/3}
 must split its input string
 at all positions between \emph{code units},
-even if this is in the \emph{middle} of a code point,
+including those in the \emph{middle} of a code point,
 even though most callers of the predicate in this mode
 would expect that it would split the string only between \emph{code points},
 at least if the input string is well formed.
@@ -711,7 +704,7 @@ that calls that predicate in that mode.
 \end{itemize}
 
 We chose the third approach as the best one available.
-We deleted the (out,out,in) mode of \texttt{string.append/3},
+We deleted the reverse (out,out,in) mode of \texttt{string.append/3},
 and created \texttt{string.nondet\_append/3}, a new predicate,
 to replace it.
 This new predicate has only one mode, the (out,out,in) mode,
@@ -721,13 +714,6 @@ This does break backward compatibility, but it does so visibly:
 any old code that calls \texttt{string.append}
 in its now-deleted mode it would get a compiler error,
 until the call site is updated to call \texttt{string.nondet\_append} instead.
-
-% A reverse mode of \texttt{string.append/3} in Unicode
-% would therefore be fundamentally different from
-% the equivalent in ASCII,
-% in which a well-formed string
-% (that is, not containing any NUL characters)
-% could never be split into strings that are ill-formed.
 
 
 \section{Partial correctness}
@@ -1122,42 +1108,45 @@ The process of debugging, broadly speaking,
 can be broken down into the following three phases.
 \begin{enumerate}
 \item
-Observing a bug symptom.
-The symptoms to which declarative debugging is applicable
+Observe a bug symptom.
+In the classical semantics,
+the two types of symptoms that the programmer can observe
 are wrong answers and missing answers.
-% XXX Do we talk about inadmissible calls somewhere?
-% If yes, then we should qualify the above.
 \item
-Bug localization.
-Declarative debugging can narrow the immediate source of a bug
+Localize the bug.
+The programmer narrows the problem down to a part of the source,
+preferably small,
+that is able to explain at least some of the incorrect behaviour.
+\item
+Fix the bug.
+The programmer reasons about the code,
+in order to try to determine how to make it correct.
+\end{enumerate}
+Declarative debugging applies to the second phase.
+The technique is an algorithm,
+which may be followed manually by the programmer
+or may be automated by a debugging tool,
+that is able to narrow the immediate source of a bug
 down to a single predicate or function.
 Theorem~\ref{thm:partial-correctness} implies that this is possible.
-\item
-Bug fixing.
-This is beyond the scope of what is usually called declarative debugging,
-but understanding the code in terms of the intended interpretation
-can still help with actually fixing the bug.
-\end{enumerate}
-% It is in the second phase, bug localization,
-% that declarative debugging is particularly effective.
-% XXX That is its only job.
 
-% XXX "digits" would a better name for this type
 \begin{figure}[htb]
 \begin{verbatim}
-    :- type integer == list(int).
+    :- type digits == list(int).
 
     :- func to_string(integer) = string.
     to_string([]) = "0".
     to_string(As @ [_ | _]) =
         append_list(map(string, reverse(As))).
 
-    :- func add(integer, integer) = integer.
+    :- func add(digits, digits) = digits.
     add([], Bs) = Bs.
     add(As @ [_ | _], []) = As.
     add([A | As], [B | Bs]) = [A + B | add(As, Bs)].
 \end{verbatim}
-\caption{A buggy implementation of arbitrary precision integers.
+\caption{
+A buggy implementation of \texttt{digits},
+which represent arbitrary precision integers.
 \label{fig:buggy-ints}}
 \end{figure}
 
@@ -1170,15 +1159,19 @@ It provides a function
 to convert an integer to a string,
 and a function to add two integers.
 
+% XXX the following three paragraphs should be merged, and formulas
+% taken out-of-line somehow to avoid overfull hboxes.
 If we call \texttt{to\_string(add([2],[5,1]))}
 the answer \texttt{"17"} is returned,
-which is the answer that we intended. (2 + 15 = 17.)
+which is the answer that we intended (since 2 + 15 = 17).
+
 If we call \texttt{to\_string(add([6],[7]))}
 it returns \texttt{"13"},
-which is also the answer that we intended---%
-in this case there were incorrect intermediate values,
+which is also the answer that we intended (since 6 + 7 = 13).
+In this case there were incorrect intermediate values,
 but we did not observe this in the result
 so we are not in a position to commence debugging.
+
 If we call \texttt{to\_string(add([2,6,1],[3,7]))}
 then we intend it to return \texttt{"235"} (since 162 + 73 = 235),
 but instead it returns \texttt{"1135"},
@@ -1277,10 +1270,9 @@ the third phase of debugging,
 might start with defining a function \texttt{add\_with\_carry/3},
 where the intended interpretation is:
 \[
-    \text{for }a, b \in \mathbb{Z},\ c \in \{0, 1\},
+    \text{for }a, b \in [0..9],\ c \in \{0, 1\},
         \ssym{add\_with\_carry}(a, b, c) = a + b + c
 \]
-% XXX Why Z? Why not [0..9]?
 Then \texttt{add/2} could be implemented as:
 \begin{verbatim}
     add(As, Bs) = add_with_carry(As, Bs, 0).
@@ -1311,9 +1303,8 @@ One interpretation in particular
 is called the intended interpretation.
 This acts as a specification
 that reflects what the programmer intends to implement.
-With it, we can determine the partial correctness of a program,
-which allows us to rule out certain classes of bugs.
-% XXX "rule out" in what sense?
+With it, we can determine the partial correctness of a program
+with respect to wrong answer and missing answer bugs.
 
 In particular,
 it is expressive enough to allow us to determine
@@ -1323,7 +1314,7 @@ Thus, it can assist with bug localization and fixing,
 as well as help with avoiding bugs in the first place.
 We have given some simple examples to illustrate this,
 as well as introducing a queue ADT
-which we will use as a running example.
+which we use as a running example.
 
 In the remainder of this guide
 we take a more formal look at
