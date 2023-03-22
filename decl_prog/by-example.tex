@@ -5,21 +5,16 @@
 \label{sec:first-examples}
 
 Consider the code in Figure~\ref{fig:len-app}
-that defines specialized versions of length and append.
-A picture of the declarative semantics of \texttt{len/1}
-is given in Figure~\ref{fig:len-interp}.
-It consists of a table of ground instances
-(that is, not containing any variables)
-of the head of the \texttt{len/1} function,
-where the result value is the correct length for the given argument.
-The table is infinite,
-but like the multiplication table---which is also infinite---%
-it is relatively easy to get a picture of what is going on
-by looking at (or thinking about) only a finite part of it.
+that defines versions of length and append
+that are specialized to operate on lists
+whose elements belong to a very simple type
+that has only two values: \verb#a# and \verb#b#.
 
-\begin{figure}
+\begin{figure}[htb]
 \begin{verbatim}
-:- type e ---> a ; b.
+:- type e
+    --->    a
+    ;       b.
 
 :- func len(list(e)) = int.
 
@@ -36,7 +31,30 @@ app([A | As], Bs, [C | Cs]) :-
 \caption{Specialized versions of length and append.\label{fig:len-app}}
 \end{figure}
 
-\begin{figure}
+Figure~\ref{fig:len-interp} gives a picture
+of the declarative semantics of \texttt{len/1}.
+This semantics consists of a table of \emph{atoms},
+which in this case is short for \emph{atomic propositions}.
+(This is one of several uses of the word ``atom'' in logic programming;
+there are others as well.)
+For a function of arity $N$, each atom in the table
+consists of the function name applied to $N + 1$ terms,
+where the last, distinguished term is the function result.
+(For a predicate of arity $N$, each atom in the table
+consists of the predicate name applied to $N$ terms,
+none of the terms being distinguished.)
+% each of which is an \emph{instance}
+% of the head of one (or more) of the clauses of the function,
+% mapping each possible argument value of the \texttt{len/1} function
+% to the corresponding result.
+These atoms must be \emph{ground},
+which means that they may not contain any variables.
+The table is infinite,
+but like the multiplication table---which is also infinite---%
+it is relatively easy to get a picture of what is going on
+by looking at (or thinking about) only a finite part of it.
+
+\begin{figure}[htb]
 \begin{minipage}{0.5\textwidth}
 \begin{verbatim}
 len([]) = 0
@@ -63,18 +81,18 @@ len([b, a, b]) = 3
 \label{fig:len-interp}}
 \end{figure}
 
-Similarly,
-a picture of the declarative semantics of \texttt{app/3}
-is given in Figure~\ref{fig:app-interp}.
-It again consists of a table of ground instances
+Similarly, Figure~\ref{fig:app-interp} gives a picture
+of the declarative semantics of \texttt{app/3}.
+It again also consists of a table of ground instances
 of the head of the \texttt{app/3} predicate,
 although in this case,
-since it is a predicate,
-there is no return value.
-Instead the arguments must satisfy the relation that holds
-between two lists and the result of appending them.
+since \texttt{app/3} is a predicate,
+no argument is distinguished as the return value.
+Instead, the arguments must satisfy the relation that holds
+between the two input lists
+and the output list that results from appending them.
 
-\begin{figure}
+\begin{figure}[htb]
 \begin{minipage}{0.5\textwidth}
 \begin{verbatim}
 app([], [], [])
@@ -104,17 +122,19 @@ app([], [b, b], [b, b])
 \end{figure}
 
 Tables like these are known as
-\emph{Herbrand interpretations\label{gi:herbrand-interpretation}}.
+\emph{Herbrand interpretations\label{gi:herbrand-interpretation}}
+(named after Jacques Herbrand,
+a French mathematician of the early 20th century).
 They assign a meaning to each predicate or function
-by way of a mapping from ground atoms to truth values:
-a ground atom is true if it is in the table,
-otherwise it is false.
+using a mapping from ground atoms to truth values:
+if a ground atom is in the table, then it is true;
+if it is not in the table, then it is false.
 For example,
-if the function symbol `\verb#+#' is interpreted as integer addition
+if we interpret the function symbol `\verb#+#' as integer addition,
 then the table will contain entries such as
 \verb#1 + 1 = 2#.
 On the other hand,
-if it is interpreted as string concatenation
+if we interpret it as string concatenation,
 then the table will contain entries such as
 \verb#"1" + "1" = "11"#.
 
@@ -126,16 +146,16 @@ it only knows it as a symbol.
 These interpretations also reveal an important fact:
 the declarative semantics of a program
 can be understood in its entirety
-by considering only the truth values taken by the ground atoms
+by considering only the truth values taken by ground atoms.
 That is, there is no need to consider terms that include
 variables from the program.
 
 Furthermore,
-this way of thinking scales in the sense that,
-while we have given examples of two common building blocks,
-the same applies to much larger pieces of code
+this way of thinking works not just for tiny predicates
+like \texttt{len} and \texttt{app},
+but also for much larger pieces of code,
 with far more complexity in their intended interpretations.
-This ability to scale is crucial for
+This ability to \emph{scale} is crucial for
 extending our methodology to real-world programs.
 
 
@@ -162,9 +182,12 @@ of \textit{len/1} and \textit{app/1} as follows:
 \text{for } n \geqslant 0 \text{ and } 0 \leqslant m \leqslant n,
 \ssym{app}([t_1, \ldots, t_m], [t_{m+1}, \ldots, t_n], [t_1, \ldots, t_n])
 \]
-Although we have used pseudo-code,
-it should be reasonably clear whether a particular ground atom
-is true or false in these interpretations.
+% XXX Why include "n >= 0"? It is implied by "0 =< m =< n".
+From these formulas,
+% XXX Although we have used pseudo-code,
+it should be clear whether a particular ground atom
+is true or false in these interpretations,
+even though the interpretations are infinite in size.
 The truth value of goals more generally
 can be determined by combining the truth values of atomic goals
 according to the truth tables of classical logic.
@@ -175,7 +198,7 @@ to describe the intended interpretation
 in comments immediately preceding
 a \texttt{pred} or \texttt{func} declaration.
 For example,
-in the Mercury standard library
+in the Mercury standard library,
 the declarations for the \texttt{list.length/1} function
 and the \texttt{list.length/2} predicate
 appear as follows:
@@ -189,6 +212,8 @@ appear as follows:
     :- func length(list(T)) = int.
     :- pred length(list(_T), int).
 \end{verbatim}
+(The word ``iff'' is the usual abbreviation used in mathematics
+for ``if and only if''.)
 Similarly, \texttt{list.append/3} is described as follows:
 \begin{verbatim}
         % Standard append predicate:
@@ -200,9 +225,9 @@ Similarly, \texttt{list.append/3} is described as follows:
 It should be easy to see that
 these are equivalent to the intended interpretations we gave above.
 
-It is a good idea to
-provide the intended interpretation
-for any functions or predicates
+It is a good idea to provide comments
+that describe the intended interpretation
+of any function or predicate
 declared in the interface of a module.
 Doing this enables users of the module
 to understand whether or not they are
@@ -215,7 +240,7 @@ but it is worth noting that
 the former is meant to represent a piece of Mercury syntax,
 while the latter is meant to be the kind of notation
 that might be seen in a semi-formal mathematical proof.
-Thus it is reasonable to use ellipses and subscripts,
+In this semi-formal notation, it is reasonable to use ellipses and subscripts,
 or other ad hoc notation,
 to describe the list structures.
 
@@ -239,26 +264,26 @@ The list append function can be specified as:
     \sym{append}([s_1, \ldots, s_m], [t_1, \ldots, t_n]) =
         [s_1, \ldots, s_m, t_1, \ldots, t_n]
 \]
++% XXX Mark: why the switch from app as predicate to app as function?
 Similarly, the list reverse function can be specified as:
 \[
     \sym{reverse}([t_1, \ldots, t_n]) = [t_n, \ldots, t_1]
 \]
-We will use these interpretations later
-when we implement the queue ADT
-that is specified in the next section.
+We will use these interpretations next
+when we implement the queue ADT.
 
 
 \section{Running example: \texttt{queue} ADT}
 \label{sec:queue-spec}
 
 In this section we give the intended interpretation for
-a (double-ended) queue ADT.
+a (double-ended) queue abstract data type (\emph{ADT}).
 We will use this as a running example
 in the remainder of this guide.
 
 The ADT includes abstract operations to initialize a queue,
 put elements at the back and get them from the front,
-unput elements from the back and unget then at the front,
+unput elements from the back and unget them at the front,
 test two queues for equality,
 and convert the queue to an ordinary list.
 A queue can be interpreted as a finite sequence of elements,
@@ -271,7 +296,7 @@ the empty queue:
 \[ \sym{init} = [] \]
 Putting an element at the end of the queue
 is done with the \sym{put/3} predicate,
-which takes an element,
+which takes as arguments an element,
 the queue prior to putting the element at the end,
 and the queue after this has been done:
 \[ \sym{put}(z, [t_1, \ldots, t_n], [t_1, \ldots, t_n, z]) \]
@@ -307,9 +332,9 @@ is the identity function.
 When implementing queues according to this specification,
 the queue type may be defined differently to the list type,
 though they are both interpreted as sequences of elements.
-Assuming they are different,
+If indeed they are different,
 the implementation of \sym{list/1}
-will not be trivial like the specification,
+will not be trivial like the above specification,
 but will have to convert between the two representations.
 Similarly,
 if the representation is not \emph{canonical},
@@ -326,7 +351,7 @@ will not be trivial.
 
 The code we have seen so far is considered \emph{pure}.
 Code that is written using
-all but a small number of Mercury constructs
+all but a few Mercury constructs
 is automatically pure---%
 most Mercury code is pure
 without the programmer needing to think about it.
@@ -341,7 +366,7 @@ that consistently applies in all circumstances.
 
 \noindent
 In other words,
-if for a given function or predicate
+if for a given function or predicate,
 we can picture in our minds a Herbrand interpretation
 that characterizes the outcome of all possible calls,
 then that predicate or function is pure.
@@ -369,8 +394,11 @@ The role of the \texttt{pred} declaration,
 which supplies the argument types,
 should be clear as regards the interpretations we have seen so far:
 a ground atom that is true in the interpretation
-will have arguments that are correctly typed,
-for some values of the type variables.
+will have arguments that are correctly typed.
+(If the types of the arguments include one or more type variables,
+then the arguments in the interpretation
+will have arguments that are correctly typed
+for some assignment of values -concrete types- to the type variables.)
 The compiler is able to check that this is the case.
 
 The role of the \texttt{mode} declarations
@@ -537,9 +565,10 @@ which is commented out in the standard library.
 \end{verbatim}
 The explanation for why it is commented out says that the mode
 ``is \texttt{semidet} in the sense that it does not
-succeed more than once---but it does create a choice-point, which means
-both that it is inefficient, and that the compiler can't deduce that
-it is semidet. Use \texttt{remove\_suffix} instead.''
+succeed more than once---but operationally, it does create a choice-point,
+which means both that it is inefficient,
+and that the compiler can't deduce that it is semidet.
+Use \texttt{remove\_suffix} instead.''
 
 If such a mode is nonetheless required for a predicate,
 and the inefficiency would otherwise be unacceptable,
@@ -594,14 +623,15 @@ according to our definition,
 since there does not exist a declarative interpretation
 that applies to all modes.
 
-In the next section we give an example,
-which arose in the course of developing the standard library,
-of using the declarative semantics to resolve a problem related to
-the multiple modes of the \texttt{string.append/3} predicate.
-
 
 \subsection{Case study: \texttt{string.append/3}}
 \label{sec:purity-example}
+
+In this section we give an example
+of using the declarative semantics to resolve a problem
+related to the modes of a predicate.
+The problem arose in the course of developing the Mercury standard library,
+and involved the \texttt{string.append/3} predicate.
 
 In early versions of the Mercury,
 strings were defined as NUL terminated sequences of ASCII characters.
@@ -616,65 +646,88 @@ as well as a ``reverse'' mode that split them apart.
 At some point the switch to Unicode was made,
 which means that strings could no longer
 be considered sequences of characters.
+% XXX Yes, they could. The characters could be invalid,
+% just as an "ASCII" char could be invalid by having the top bit set.
+% XXX The "all NUL-terminated bytes sequences are valid" property
+% IS true for the ISO-8859-1 char encoding.
 Rather, strings are defined as sequences of code units,
 which in Unicode are not the same thing as code points (characters).
 While a sequence of code points, in general,
 consists of a well-formed sequence of one or more code units,
 the sequence of code units that constitutes a string
 is not necessarily well-formed.
+% XXX This issue is specific to UTF-8;
+% it doesn't arise for UTF-32, for example.
 
-In the forward mode of the Unicode version of \texttt{string.append/3},
+In the forward (in, in, out) mode
+of the Unicode version of \texttt{string.append/3},
 the behaviour is to append the sequences of code units representing
 the (possibly ill-formed) strings.
-For backwards compatibility it is desirable to provide
-the reverse mode that was previously available,
-but what should such an implementation do, precisely?
-At what places should the string be split---%
-between code points where possible, as would make most sense,
-or between all code units even if in the middle of a code point?
+Consider two strings $s_1$ and $s_2$,
+neither of which is well-formed,
+but which, when appended together, result in a string,
+call it $s_3$, which \emph{is} well-formed.
 
-We can use the declarative semantics to help answer these questions.
-Consider a well-formed string $s_3$
-that has been split into two strings, $s_1$ and $s_2$,
-at a point that is in the middle of
-a sequence of code units representing one of the code points.
-Thus, neither $s_1$ nor $s_2$ is well-formed,
-despite the fact that $s_3$ is.
+Given that the forward (in, in, out) mode of \texttt{string.append/3},
+when given $s_1$ and $s_2$ as the first two arguments,
+will return $s_3$ as the third argument,
+the intended interpretation of append
+must include ground atoms such as $\sym{append}(s_1, s_2, s_3)$.
 
-We would expect the forward mode to append $s_1$ and $s_2$ to form $s_3$.
-Thus it should be clear that the interpretation of append
-must include ground atoms such as $\sym{append}(s_1, s_2, s_3)$,
-in which the first two arguments are not well-formed,
-while the third is.
+If we want the reverse (out, out, in) mode of \texttt{string.append/3}
+to have the same semantics as the forward mode, and we do,
+then the reverse (out, out, in) mode of the predicate
+\emph{must} return the pair $s_1$ and $s_2$ as one the solutions
+when given as input $s_3$ in the third argument position.
+This means that the reverse mode of \texttt{string.append/3}
+must split its input string
+at all positions between \emph{code units},
+even if this is in the \emph{middle} of a code point,
+even though most callers of the predicate in this mode
+would expect that it would split the string only between \emph{code points},
+at least if the input string is well formed.
 
-This forces our hand on the reverse mode, however.
-Since these ground atoms are true in the declarative semantics,
-the reverse mode must include them in its solutions.
-In other words,
-the reverse mode, if it is to be included,
-cannot just split between code points,
-it must also split between
-code units that comprise a single code point.
-This is true even if the string being split is well-formed.
+This means that we had to choose one of the following courses of action.
+\begin{itemize}
+\item
+We can make the (out,out,in) mode of \texttt{string.append/3}
+break strings between code points,
+which conforms to programmer expectations,
+but gives the reverse mode a different interpretation,
+i.e.\ a different semantics, than the forward mode.
+\item
+We can make the (out,out,in) mode of \texttt{string.append/3}
+break strings between code unit,
+which keeps the semantics the same between modes
+but breaks programmer expectations,
+and does so in a way that is likely to create bugs
+(by creating two ill-formed strings out of a well-formed input string).
+\item
+We can delete the (out,out,in) mode of \texttt{string.append/3}.
+This does not break either the declarative semantics
+or programmer expectations,
+but it does have the downside of breaking existing code
+that calls that predicate in that mode.
+\end{itemize}
 
-A reverse mode of \texttt{string.append/3} in Unicode
-would therefore be fundamentally different from
-the equivalent in ASCII,
-in which a well-formed string
-(that is, not containing any NUL characters)
-could never be split into strings that are ill-formed.
+We chose the third approach as the best one available.
+We deleted the (out,out,in) mode of \texttt{string.append/3},
+and created \texttt{string.nondet\_append/3}, a new predicate,
+to replace it.
+This new predicate has only one mode, the (out,out,in) mode,
+and it splits its input string between code points
+(provided the input string is itself well-formed).
+This does break backward compatibility, but it does so visibly:
+any old code that calls \texttt{string.append}
+in its now-deleted mode it would get a compiler error,
+until the call site is updated to call \texttt{string.nondet\_append} instead.
 
-In the end this was considered
-too different from the original intent of the predicate,
-and too likely to subtly break code that relies---%
-unwisely, given the possibility in Unicode of ill-formed strings---%
-on the reverse mode only splitting between code points.
-Thus removing the mode
-and putting that functionality into a separate predicate
-was deemed the best solution,
-despite the fact that
-it would cause the compiler to issue an error
-until affected code was updated.
+% A reverse mode of \texttt{string.append/3} in Unicode
+% would therefore be fundamentally different from
+% the equivalent in ASCII,
+% in which a well-formed string
+% (that is, not containing any NUL characters)
+% could never be split into strings that are ill-formed.
 
 
 \section{Partial correctness}
@@ -684,16 +737,16 @@ Clauses are supposed to state things that are
 true in the intended interpretation.
 For example,
 in Figure~\ref{fig:len-app}
-the first clause of \texttt{len/1} is a fact that states
-that the length of the empty list is zero.
-The second is a fact that states that,
-no matter what expressions we substitute
+the first clause of \texttt{len/1} states that
+the length of the empty list is zero.
+The second states that,
+no matter what terms we substitute
 for the variables \texttt{\_} and \texttt{Xs},
 the length of \texttt{[\_~|~Xs]} will be one greater than
 the length of \texttt{Xs}---%
 in other words the length of a non-empty list
 is one greater than the length of its tail.
-In each instance the statements are true
+Both statements are true
 according to our intended interpretation.
 
 Furthermore,
@@ -711,18 +764,18 @@ which may be regarded as two sides of the same coin:
 Each of the clauses defining the function is a valid statement,
 where by valid we mean that every instance of the clause
 is true in the intended interpretation.
-This ensures that there are no ``wrong answers\label{gi:wrong-answer}'',
-which are ground atoms that are true according to the program as written,
-but are not intended to be true.
+This ensures that there are no ``wrong answers\label{gi:wrong-answer}'':
+ground atoms that are intended to be false,
+but are true according to the program as written.
 We refer to this condition as
 \emph{clause soundness\label{gi:clause-soundness}}.
 \item
 Between them,
 the clauses cover every possible ground atom
 that is true in the intended interpretation.
-This ensures that there are no ``missing answers\label{gi:missing-answer}'',
-which are ground atoms that are false according to the program as written,
-but are not intended to be false.
+This ensures that there are no ``missing answers\label{gi:missing-answer}'':
+ground atoms that are intended to be true,
+but are false according to the program as written.
 We refer to this condition as
 \emph{clause completeness\label{gi:clause-completeness}}.
 \end{itemize}
@@ -739,9 +792,12 @@ if the determinism indicates that calls cannot fail
 \texttt{det}, \texttt{multi}, or \texttt{cc\_multi}),
 then all possible values of the type must be covered
 for any argument with mode \texttt{in}.
-In this case the \texttt{len/1} function is \texttt{det}
-and the argument is an input,
-because the default function mode is being used.
+In this case of the \texttt{len/1} function,
+the one argument is an input
+because this is the default mode for functions,
+and this mode of the function is det
+because this is the default determinism
+for functions in their default mode.
 Had we not covered every possible list,
 the compiler would have issued a determinism error,
 so we can safely assume that
@@ -750,25 +806,25 @@ The same also applies to any other function declared with
 the default mode.
 
 Continuing with the examples,
-the first clause of \texttt{app/3} is a fact that states that
+the first clause of \texttt{app/3} is a fact, which states that
 if you append the empty list and any other list,
 the result will be the same as the other list.
 The second clause is a rule;
 these are taken as logical implications
 in which the body implies the head
 (that is, \texttt{:-} is interpreted as $\leftarrow$).
-So this is stating that, for any variable assignment,
+So this clause is stating that, for any variable assignment,
 if \texttt{Cs} is the result of appending \texttt{As} and \texttt{Bs},
-then \texttt{[X|Cs]} is the result of
-appending \texttt{[X|As]} and \texttt{Bs}.
+then \texttt{[X | Cs]} is the result of
+appending \texttt{[X | As]} and \texttt{Bs}.
 Again, both clauses are valid according to the intended interpretation,
 and the definition is clause complete.
 In this case clause completeness means that,
 for every atom that is intended to be true,
-there is either a fact that covers it
+there is either a fact that covers it,
 or a rule whose head covers it and
-(under the same variable assignment)
-whose body is intended to be true.
+whose body is intended to be true
+(under the same variable assignment).
 
 Since both conditions are satisfied,
 we can conclude in a similar way to \texttt{len/1}
@@ -779,14 +835,15 @@ but this is only as far as the arguments
 (and return values, if present)
 are concerned,
 which is to say that there are neither wrong nor missing answers.
-Other kinds of bugs are not observable in the declarative semantics,
+Other kinds of bugs,
 such as \mbox{unintended} exceptions or nontermination,
 poor computational complexity,
-or unbounded stack usage.
+or unbounded stack usage,
+are not observable in the declarative semantics.
 We therefore refer to correctness in the above sense
 as \emph{partial correctness\label{gi:partial-correctness}}.
-Notionally this is akin to type correctness,
-in the sense that it rules out a certain class of bugs
+This is akin to type correctness,
+in the sense that it rules out a certain class of bugs,
 but cannot rule out all bugs.
 
 The results of this section can be summarized with a theorem.
@@ -802,7 +859,7 @@ then the program is partially correct.
 A corollary of this is that if a program is not partially correct,
 that is, if it produces wrong answers
 or misses answers that it should have produced,
-then there is at least one clause in the program
+then there is at either least one clause in the program
 with an instance that is not true in the intended interpretation,
 or at least one definition that is not clause complete.
 
@@ -1055,18 +1112,25 @@ is left as an exercise.
 \section{Declarative debugging}
 \label{sec:decl-debug}
 
+Declarative debugging is a debugging technique
+in which the debugger compares the actual solutions of calls
+(obtained by running the program)
+with their intended solutions in the declarative semantics
+(obtained by asking the programmer).
+
 The process of debugging, broadly speaking,
 can be broken down into the following three phases.
 \begin{enumerate}
 \item
 Observing a bug symptom.
-For declarative debugging,
-the symptoms of interest are wrong answers and missing answers.
+The symptoms to which declarative debugging is applicable
+are wrong answers and missing answers.
+% XXX Do we talk about inadmissible calls somewhere?
+% If yes, then we should qualify the above.
 \item
 Bug localization.
-For declarative debugging,
-we can narrow the immediate source of a bug
-down to a single clause or definition.
+Declarative debugging can narrow the immediate source of a bug
+down to a single predicate or function.
 Theorem~\ref{thm:partial-correctness} implies that this is possible.
 \item
 Bug fixing.
@@ -1074,10 +1138,12 @@ This is beyond the scope of what is usually called declarative debugging,
 but understanding the code in terms of the intended interpretation
 can still help with actually fixing the bug.
 \end{enumerate}
-It is in the second phase, bug localization,
-that declarative debugging is particularly effective.
+% It is in the second phase, bug localization,
+% that declarative debugging is particularly effective.
+% XXX That is its only job.
 
-\begin{figure}
+% XXX "digits" would a better name for this type
+\begin{figure}[htb]
 \begin{verbatim}
     :- type integer == list(int).
 
@@ -1099,13 +1165,14 @@ Consider the snippet of (buggy) code in Figure~\ref{fig:buggy-ints},
 that represents arbitrary precision integers
 as lists of decimal digits
 starting from the least significant.
-It provides functions
-to convert an integer to a string
-and to add integers.
+(This means that e.g.\ the list \texttt{[5,1]} represents the integer 15.)
+It provides a function
+to convert an integer to a string,
+and a function to add two integers.
 
 If we call \texttt{to\_string(add([2],[5,1]))}
 the answer \texttt{"17"} is returned,
-which is the answer that we intended.
+which is the answer that we intended. (2 + 15 = 17.)
 If we call \texttt{to\_string(add([6],[7]))}
 it returns \texttt{"13"},
 which is also the answer that we intended---%
@@ -1113,7 +1180,7 @@ in this case there were incorrect intermediate values,
 but we did not observe this in the result
 so we are not in a position to commence debugging.
 If we call \texttt{to\_string(add([2,6,1],[3,7]))}
-then we intend it to return \texttt{"235"}
+then we intend it to return \texttt{"235"} (since 162 + 73 = 235),
 but instead it returns \texttt{"1135"},
 which is a wrong answer.
 Thus we have observed a bug symptom.
@@ -1121,22 +1188,23 @@ Thus we have observed a bug symptom.
 To localize this bug we start at the bug symptom,
 which for us is the atom that was incorrect:
 \begin{verbatim}
-    to_string(add([2,6,1],[3,7])) = "1135"
+    to_string(add([2,6,1], [3,7])) = "1135"
 \end{verbatim}
 We can first check the call to \texttt{add/2}.
 In this case the following atom appears:
 \begin{verbatim}
-    add([2,6,1],[3,7]) = [5,13,1]
+    add([2,6,1], [3,7]) = [5,13,1]
 \end{verbatim}
 This is false in the intended interpretation,
-because integers are supposed to consist of decimal digits
-in the range 0 to 9.
+because integers are supposed to be represented
+by a list whose elements are all in the range 0 to 9,
+and 13 is outside that range.
 Since this is a wrong answer, we proceed to debug the atom.
 It matches the third clause of \texttt{add/2},
 the instance of which contains the following calls:
 \begin{verbatim}
     2 + 3 = 5
-    add([6,1],[7]) = [13,1]
+    add([6,1], [7]) = [13,1]
 \end{verbatim}
 The first is obviously true,
 but the second is false because $16 + 7 = 23$,
@@ -1144,26 +1212,26 @@ so we intended the result to be \texttt{[3,2]}.
 Again, the third clause is matched and the calls made are:
 \begin{verbatim}
     6 + 7 = 13
-    add([1],[]) = [1]
+    add([1], []) = [1]
 \end{verbatim}
 In this case \emph{both} atoms are true in the intended interpretation.
-Since in the third clause of \texttt{add/2} the result is wrong,
-and since none of the calls it made showed any symptoms,
-we can conclude that the third clause contains a bug.
+Since this instance of the third clause of \texttt{add/2}
+takes the results of these calls, all of which are correct,
+and constructs an incorrect result from them,
+we can conclude that the third clause contains a bug,
 And indeed it does,
 since it does not allow for a carry bit
-to flow over to the next element.
+to flow over to the next digit.
 
-The transcript of an \texttt{mdb} session,
-in which the declarative debugger is used
-to algorithmically debug the same problem as above,
-is shown in Figure~\ref{fig:dd-session}.
+Figure~\ref{fig:dd-session} shows
+the transcript of an \texttt{mdb} session,
+that uses the declarative debugger to find this problem.
 The process looks a bit different to how we just described it,
 but that is because the debugger assumes
-it does not need to ask about the correctness of \texttt{+},
-for example.
+that builtin functions such as \texttt{+} are correct,
+which means that it does not ask questions about their correctness.
 
-\begin{figure}
+\begin{figure}[hb]
 \begin{verbatim}
     Melbourne Mercury Debugger, mdb version DEV.
     Copyright 1998-2012 The University of Melbourne.
@@ -1194,6 +1262,14 @@ An \texttt{mdb} declarative debugging session.
 \label{fig:dd-session}}
 \end{figure}
 
+Note mdb uses ``contour'' to mean
+``a path execution takes through the body of a clause''.
+In cases like this where the clause is a simple conjunction,
+this means all the goals in the clause,
+but in clauses containing if-then-else or disjunctions,
+it would mean just the goals along the path execution took
+inside those constructs to compute the wrong answer being debugged.
+
 \label{end:decl-debug}
 
 Bug fixing,
@@ -1204,11 +1280,13 @@ where the intended interpretation is:
     \text{for }a, b \in \mathbb{Z},\ c \in \{0, 1\},
         \ssym{add\_with\_carry}(a, b, c) = a + b + c
 \]
+% XXX Why Z? Why not [0..9]?
 Then \texttt{add/2} could be implemented as:
 \begin{verbatim}
     add(As, Bs) = add_with_carry(As, Bs, 0).
 \end{verbatim}
-Implementing the function \texttt{add\_with\_carry/3} is left as an exercise.
+Implementing \texttt{add\_with\_carry/3}
+is left as an exercise for the reader.
 
 \section{Summary}
 
@@ -1224,10 +1302,10 @@ with regard to its inputs and outputs.
 
 The interpretation of multi-moded predicates
 greatly helps in clarifying how different modes should behave.
-This is particularly important when
-considering the use of mode-dependent clauses,
-such as with the standard library implementation of \texttt{string.append/3},
-for which the compiler cannot completely verify logical consistency.
+This is particularly important when considering
+predicates and functions that use mode-dependent clauses
+(such as the predicate \texttt{string.append/3} in the standard library)
+whose consistency the compiler cannot verify in the general case.
 
 One interpretation in particular
 is called the intended interpretation.
@@ -1235,6 +1313,7 @@ This acts as a specification
 that reflects what the programmer intends to implement.
 With it, we can determine the partial correctness of a program,
 which allows us to rule out certain classes of bugs.
+% XXX "rule out" in what sense?
 
 In particular,
 it is expressive enough to allow us to determine
