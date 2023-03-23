@@ -461,35 +461,60 @@ in Figure~\ref{fig:queue-spec}.
 \end{figure}
 
 Three types are used in the queue interface:
-the type of elements, the type of queues and the type of lists.
+the type of elements, the type of queues, and the type of lists.
 Since the behaviour of queues
 does not depend on the specific element values,
-we should be able to use any type of elements.
-We will require that all of the elements in a queue are the same type,
-however,
-and that the lists we produce
-(for which we will use the standard \texttt{list/1} type)
-are likewise.
-We therefore use type variable \texttt{T} for the element type,
-and define the abstract type \texttt{queue(T)}, as follows:
+we should be able to use elements of any type.
+Since we intend to treat all elements in the queue the same way,
+we require that all of the elements in a queue are the same type,
+and the same is true for the lists we produce
+(for which we will use the standard \texttt{list/1} type).
+
+We represent the type of elements with a \emph{type variable}
+in the predicate/function declarations of the queue operations.
+Any actual calls to these predicates and functions
+will operate on elements of a specific concrete type,
+such as \texttt{int} or \texttt{string}.
+You can think of this as 
+having the value of the type variable
+bound to the actual concrete type of the elements,
+for the duration of each call,
+just as e.g. the variable representing the first input argument
+is bound to the value being passed in that argument position in the call
+for the same duration.
+
+Most Mercury code uses \texttt{T}, the initial letter of \emph{type},
+as the default name of type variables
+in type, predicate and function declarations
+that include only one type variable,
+and it is reasonably obvious what entity's type the variable stands for.
+(When a type, predicate or function declaration
+includes more than one type variable,
+or the role of the type variabl is not expected to be immediately clear,
+Mercury programmers tend to give the type variable(s) more meaningful names.)
+
+Therefore the abstract type definition for \texttt{queue(T)}
+will look like this:
 \begin{verbatim}
     :- type queue(T).
 \end{verbatim}
-Lists will be of type \texttt{list(T)}.
+% The lists will be of type \texttt{list(T)}.
+% XXX But the list/1 type constructor does not need to be declared by users.
 
 The \sym{init/0} function has no arguments,
 and always returns the same queue every time it is called.
 So the return value has mode \texttt{out},
 and the function has determinism \texttt{det}.
-These are the defaults for functions,
+These are the default mode and default determinism for functions,
 so the declaration is:
 \begin{verbatim}
     :- func init = queue(T).
 \end{verbatim}
 
 The four main operations have three arguments,
-the first an element and the second and third queues.
-The \texttt{pred} declarations are therefore:
+the first being an element and the second and third being queues,
+with the elements in all three arguments being of the same type.
+Their \texttt{pred} declarations are therefore
 \begin{verbatim}
     :- pred put(T, queue(T), queue(T)).
     :- pred get(T, queue(T), queue(T)).
@@ -521,7 +546,7 @@ the length of the output queue is one \emph{less} than
 the length of the input queue,
 which means there are no solutions if the input queue is empty.
 These operations must therefore be \texttt{semidet},
-which leaves us with the following:
+which leaves us with the following mode declarations:
 \begin{verbatim}
     :- mode put(in, in, out) is det.
     :- mode get(out, in, out) is semidet.
@@ -539,12 +564,52 @@ It is declared as follows:
     :- mode eq(in, in) is semidet.
 \end{verbatim}
 
-The \sym{list/1} function takes a queue and returns a list,
+Normally, programmers put the mode declaration(s) for a predicate or function
+immediately after the predicate or function declaration itself,
+as in this case.
+We separated the predicate declarations of
+\texttt{put}, \texttt{get}, \texttt{unput} and \texttt{unget} above
+from their mode declarations
+only to improve the flow of their explanations.
+
+It is not an issue for these operations,
+but for predicates and functions with many arguments,
+programmers may find it hard to visually match up
+the mode of each argument with its type.
+This is why,
+in the usual case that a predicate or function has only one mode declaration,
+programmers tend to combine that mode declaration
+with the predicate or function declaration:
+
+\begin{verbatim}
+    :- pred eq(queue(T)::in, queue(T)::in) is semidet.
+\end{verbatim}
+
+We call this combination a \emph{predmode} declaration,
+because in most cases, it is applied to predicates.
+For functions, there is usually no need for this combination,
+because most functions have
+the default argument modes and the default determinism,
+which do not need to be explicitly declared at all.
+
+The last queue operation, the \sym{list/1} function,
+takes a queue and returns a list,
 and like \sym{init/0} it uses the default function mode:
 \begin{verbatim}
     :- func list(queue(T)) = list(T).
 \end{verbatim}
 
+The overall set of declarations for the queue operations is therefore
+
+\begin{verbatim}
+    :- func init = queue(T).
+    :- pred put(T::in, queue(T)::in, queue(T)::out) is det.
+    :- pred get(T::out, queue(T)::in, queue(T)::out) is semidet.
+    :- pred unput(T::out, queue(T)::in, queue(T)::out) is semidet.
+    :- pred unget(T::in, queue(T)::in, queue(T)::out) is det.
+    :- pred eq(queue(T)::in, queue(T)::in) is semidet.
+    :- func list(queue(T)) = list(T).
+\end{verbatim}
 
 \subsection{Mode-dependent clauses}
 \label{sec:mode-dependent}
@@ -641,14 +706,15 @@ the \texttt{string.append/3} predicate had
 a ``forward'' mode that appended strings,
 as well as a ``reverse'' mode that split them apart.
 A consistent declarative semantics applied to both of these modes,
-since appending and splitting of these strings
-are inverse operations.
+since appending and splitting these strings
+were inverse operations.
 
-When the switch to Unicode was made,
+When we switched to Unicode,
+using the UTF-8 representation when generating C code,
 a new situation arose.
-Unicode strings consist of a sequence of fixed-size code units,
+UTF-8 strings consist of a sequence of fixed-size code units,
 which are grouped together into code points
-that may be of varying size.
+that each contain a varying number of code units.
 It is possible for sequences of code units to be ill-formed,
 in particular if strings can be split between arbitrary code units.
 
@@ -857,7 +923,7 @@ Armed with the notion of partial correctness,
 we are in a position to attempt
 an implementation of the queue ADT,
 and make a judgement as to
-whether the intended interpretation has been adhered to.
+whether it implements the intended interpretation.
 
 We first need to choose an implementation for the \texttt{queue/1} type.
 One technique is to use a pair of lists
@@ -875,12 +941,16 @@ The type can be defined as follows:
 \begin{verbatim}
     :- type queue(T)
         --->    q(
-                    back :: list(T),
+                    back  :: list(T),
                     front :: list(T)
                 ).
 \end{verbatim}
 We have placed the reversed back list as the first argument,
 as a reminder that it is in fact back-to-front.
+% XXX I wouldn't consider that to be a useful reminder.
+% XXX I would consider naming it "rev_back" to be a useful reminder.
+
+% XXX I would prefer naming the data constructor "queue".
 
 To formalize the above description,
 we can give the intended interpretation of the \texttt{q/2}
@@ -894,6 +964,8 @@ and we can describe it as follows:
         [x_1, \ldots, x_n, y_m, \ldots, y_1]
 \]
 This just says exectly what we said above.
+% XXX This shows that putting "rev_back" before "front" is counter-intuitive.
+% XXX Using b and f (for back and front) would be better than x and y.
 
 We can first give a definition for the \texttt{list/1} function,
 which is intended to be the identity function
@@ -904,16 +976,18 @@ The single clause is:
 \begin{verbatim}
     list(q(Y, X)) = append(X, reverse(Y)).
 \end{verbatim}
-Here we have made use of
+% XXX We should use Front and Back.
+% XXX In general, we should encourage the use of one-character variable names.
+This code uses
 the \texttt{append/2} and \texttt{reverse/1} functions
 that are defined in the \texttt{list} module
 of the standard library.
 
 It is instructive to look at how
 the clause as a whole is interpreted.
-We can assume that \texttt{X} and \texttt{Y} are lists,
+Since \texttt{X} and \texttt{Y} are lists,
 and we have given the interpretations of the other symbols,
-so plugging things in we get the following
+plugging things in results in the following
 for each side of the equation:
 \begin{IEEEeqnarray*}{rCl}
 \IEEEeqnarraymulticol{3}{l}{
@@ -932,7 +1006,7 @@ so we can say that this clause is sound.
 Since this a function with the default mode,
 the clause completeness condition is checked for us,
 and thus we can conclude that
-our implementation of \texttt{list/1} is (partially) correct.
+our implementation of \texttt{list/1} is partially correct.
 
 A simple version of \texttt{eq/2}
 can be defined by converting both queues to lists:
@@ -942,7 +1016,7 @@ can be defined by converting both queues to lists:
 The clause soundness condition can easily be verified,
 since the symbols all denote identities.
 The clause completeness condition holds
-because the \texttt{list} calls cover every possible queue.
+because the calls to \texttt{list} cover every possible queue.
 
 Implementing \texttt{init/0} is also simple,
 as the empty queue must have both the front and back lists empty:
@@ -956,12 +1030,22 @@ We can define the four main operations as follows:
     unput(Z, q([Z | Y], X), q(Y, X)).
     unget(Z, q(Y, X), q(Y, [Z | X])).
 \end{verbatim}
+% XXX Again, using B and F (for back and front) would be better than X and Y.
 As before,
 by plugging in our interpretations
 we can make judgements about correctness.
 Doing so,
-then renaming some of the variables for clarity,
-we get the following:
+and then renaming lists of mixed $x$s and $y$s to lists of $t$s for clarity,
+we get Figure~\ref{fig:queue-ops},
+which shows that our clauses match their intended interpretations exactly,
+which means the clause soundness condition is satisfied.
+% XXX We should put each clause just before its equation,
+% to prevent the need for page flipping,
+% but I don't see how this can be done within a single IEEEeqnarray.
+\begin{figure}[htb]
+\begin{verbatim}
+    put(Z, q(Y, X), q([Z | Y], X)).
+\end{verbatim}
 \begin{IEEEeqnarray*}{rCl}
     \IEEEeqnarraymulticol{3}{l}{
         \sym{put}(z, q([y_1, \ldots, y_m], [x_1, \ldots, x_n]),
@@ -972,7 +1056,11 @@ we get the following:
             [x_1, \ldots, x_n, y_m, \ldots, y_1, z]) \\
     & \Leftrightarrow &
         \sym{put}(z, [t_1, \ldots, t_{m+n}], [t_1, \ldots, t_{m+n}, z])
-\\[.5em]
+\end{IEEEeqnarray*}
+\begin{verbatim}
+    get(Z, q(Y, [Z | X]), q(Y, X)).
+\end{verbatim}
+\begin{IEEEeqnarray*}{rCl}
     \IEEEeqnarraymulticol{3}{l}{
         \sym{get}(z, q([y_1, \ldots, y_m], [z, x_1, \ldots, x_n]),
             q([y_1, \ldots, y_m], [x_1, \ldots, x_n]))
@@ -982,7 +1070,11 @@ we get the following:
             [x_1, \ldots, x_n, y_m, \ldots, y_1]) \\
     & \Leftrightarrow &
         \sym{get}(z, [z, t_1, \ldots, t_{m+n}], [t_1, \ldots, t_{m+n}])
-\\[.5em]
+\end{IEEEeqnarray*}
+\begin{verbatim}
+    unput(Z, q([Z | Y], X), q(Y, X)).
+\end{verbatim}
+\begin{IEEEeqnarray*}{rCl}
     \IEEEeqnarraymulticol{3}{l}{
         \sym{unput}(z, q([z, y_1, \ldots, y_m], [x_1, \ldots, x_n]),
             q([y_1, \ldots, y_m], [x_1, \ldots, x_n]))
@@ -992,7 +1084,11 @@ we get the following:
             [x_1, \ldots, x_n, y_m, \ldots, y_1]) \\
     & \Leftrightarrow &
         \sym{unput}(z, [t_1, \ldots, t_{m+n}, z], [t_1, \ldots, t_{m+n}])
-\\[.5em]
+\end{IEEEeqnarray*}
+\begin{verbatim}
+    unget(Z, q(Y, X), q(Y, [Z | X])).
+\end{verbatim}
+\begin{IEEEeqnarray*}{rCl}
     \IEEEeqnarraymulticol{3}{l}{
         \sym{unget}(z, q([y_1, \ldots, y_m], [x_1, \ldots, x_n]),
             q([y_1, \ldots, y_m], [z, x_1, \ldots, x_n]))
@@ -1003,8 +1099,9 @@ we get the following:
     & \Leftrightarrow &
         \sym{unget}(z, [t_1, \ldots, t_{m+n}], [z, t_1, \ldots, t_{m+n}])
 \end{IEEEeqnarray*}
-These match our intended interpretations exactly,
-which means the clause soundness condition is satisfied.
+\caption{Code and semantics of initial versions of \texttt{queue} operations
+\label{fig:queue-ops}}
+\end{figure}
 
 At this point we could compile the above predicates successfully.
 If we run a test program, however,
@@ -1019,37 +1116,40 @@ The program has a missing answer bug!
 The problem is that we have only checked
 the clause soundness condition,
 and not the clause completeness condition.
-For the \texttt{det} predicates,
+For the \texttt{det} predicates \texttt{put} and \texttt{unget},
 the compiler checks this latter condition for us,
-but for the \texttt{semidet} predicates
+but for the \texttt{semidet} predicates \texttt{get} and \texttt{unput},
 we need to make sure that
 all possible values of the second argument---%
-the input queue---%
+which is the input argument of both predicates---%
 are handled.
 
-For \sym{get/3}, the second argument is \texttt{q(Y, [Z | X])},
+The second argument in the above clause for \texttt{get/3}
+is \texttt{q(Y, [Z | X])},
 which only covers cases where the front list is not empty.
+% XXX The "front" list is the second argument, which again is contra-intuitive.
 We need to determine what should happen if the front list is empty.
+
 Consider the following equivalence:
 \[
     q(y, []) = q([], \sym{reverse}(y))
 \]
 This can easily be seen to be true
 by plugging in the interpretation of the various symbols.
-
 If, for the empty list case,
-we perform this transformation prior to
-getting the element from the front of the list,
-we will avoid the problem of failing,
-except in the case that the entire queue is empty
-and failure is expected.
+we replace the left hand side of this equation with the right hand side
+\emph{before} getting the element from the front of the list,
+the call won't fail,
+unless the entire queue is empty,
+in which case failure is the expected result.
 The code that performs this is as follows:
 \begin{verbatim}
-    get(Z, q(Y, []), q([], X)) :- [Z | X] = reverse(Y).
+    get(Z, q(Y, []), q([], X)) :-
+        [Z | X] = reverse(Y).
 \end{verbatim}
 To check the result,
 we can once again plug in the interpretations.
-The right-hand side gives us:
+The clause body gives us:
 \begin{IEEEeqnarray*}{rCl}
     \IEEEeqnarraymulticol{3}{l}{
         [z, x_1, \ldots, x_n] = \sym{reverse}([y_1, \ldots, y_m])
@@ -1061,7 +1161,7 @@ The right-hand side gives us:
 \end{IEEEeqnarray*}
 This is saying that the body is only true
 when these last equations hold.
-On the left-hand side we get:
+For the clause head we get:
 \begin{IEEEeqnarray*}{rCl}
     \IEEEeqnarraymulticol{3}{l}{
         \sym{get}(z, q([y_1, \ldots, y_m], []), q([], [x_1, \ldots, x_n]))
@@ -1069,7 +1169,7 @@ On the left-hand side we get:
     & \Leftrightarrow &
         \sym{get}(z, [y_m, \ldots, y_1], [x_1, \ldots, x_n])
 \end{IEEEeqnarray*}
-If we use the equations derived from the right-hand side
+If we use the equations derived from the clause body
 to substitute variables in the above,
 and then rename some variables,
 we end up with:
@@ -1081,18 +1181,18 @@ we end up with:
         \sym{get}(z, [z, t_1, \ldots, t_n], [t_1, \ldots, t_n])
 \end{IEEEeqnarray*}
 This matches the intended interpretation, as required,
-and as the clauses now cover all possible solutions
+and as the two clause together now cover all possible solutions,
 we can conclude that the implementation is correct.
 
 An extra clause for \sym{unput/3} can be derived in a similar way
 to the extra clause for \sym{get/3},
-except that the front list is reversed and put at the back.
-We get the following:
+except that here it is the front list that is reversed and put at the back:
 \begin{verbatim}
-    unput(Z, q([], X), q(Y, [])) :- [Z | Y] = reverse(X).
+    unput(Z, q([], X), q(Y, [])) :-
+        [Z | Y] = reverse(X).
 \end{verbatim}
 Verifying the correctness of \texttt{unput/3}
-is left as an exercise.
+is left as an exercise for the reader.
 
 
 \section{Declarative debugging}
