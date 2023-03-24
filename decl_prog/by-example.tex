@@ -475,7 +475,7 @@ in the predicate/function declarations of the queue operations.
 Any actual calls to these predicates and functions
 will operate on elements of a specific concrete type,
 such as \texttt{int} or \texttt{string}.
-You can think of this as 
+You can think of this as
 having the value of the type variable
 bound to the actual concrete type of the elements,
 for the duration of each call,
@@ -1181,7 +1181,7 @@ we end up with:
         \sym{get}(z, [z, t_1, \ldots, t_n], [t_1, \ldots, t_n])
 \end{IEEEeqnarray*}
 This matches the intended interpretation, as required,
-and as the two clause together now cover all possible solutions,
+and as the two clauses together now cover all possible solutions,
 we can conclude that the implementation is correct.
 
 An extra clause for \sym{unput/3} can be derived in a similar way
