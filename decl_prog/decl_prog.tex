@@ -12,8 +12,15 @@
 \newtheorem{theorem}{Theorem}
 \newtheorem{definition}{Definition}
 
-\newcommand{\sym}[1]{\text{\textit{#1}}}
-\newcommand{\ssym}[1]{\,\text{\textit{#1}}}
+% Predicate or function symbol in math mode:
+\newcommand{\ct}[1]{\operatorname{#1}}
+% Predicate or function symbol in text (usually name/arity):
+\newcommand{\sym}[1]{#1}
+% Mercury code:
+\newcommand{\co}[1]{\texttt{#1}}
+% Logical constants:
+\newcommand{\true}{\text{\textit{true}}}
+\newcommand{\false}{\text{\textit{false}}}
 
 \begin{document}
 

@@ -23,12 +23,12 @@ and how memory will be allocated and accessed.
 
 The residual steps correspond to primitive unifications
 involving at most one function symbol,
-and which take the form \texttt{Y = X}
-or \texttt{Y = f(X1, ..., XN)}.
+and which take the form \co{Y = X}
+or \co{Y = f(X1, ..., XN)}.
 These unifications are categorized further
 based on the results of mode analysis,
 which can infer either side of the equation
-as having mode \texttt{in}, mode \texttt{out}, mode \texttt{unused},
+as having mode \co{in}, mode \co{out}, mode \co{unused},
 or some other mode.
 
 Four categories of primitive unfications
@@ -38,36 +38,36 @@ The categories are as follows:
 \begin{itemize}
 \item
 Assignment unifications\label{gi:assignment}.
-These are instances of \texttt{Y = X}
-where one of the sides has mode \texttt{in}
-and the other has mode \texttt{out}.
-If \texttt{Y} is the output variable
+These are instances of \co{Y = X}
+where one of the sides has mode \co{in}
+and the other has mode \co{out}.
+If \co{Y} is the output variable
 then we indicate such unifications as
-\texttt{Y := X}.
+\co{Y := X}.
 \item
 Test unifications\label{gi:test}.
-These are instances of \texttt{Y = X}
-where both sides have mode \texttt{in},
+These are instances of \co{Y = X}
+where both sides have mode \co{in},
 and the type is a type constant
-(such as \texttt{int}, for example).
+(such as \co{int}, for example).
 We indicate such unifications as
-\texttt{Y == X}.
+\co{Y == X}.
 \item
 Construction unifications\label{gi:construction}.
-These are instances of \texttt{Y = f(X1, ..., XN)}
-where \texttt{Y} has mode \texttt{out}
-and each \texttt{Xi} has either mode \texttt{in}
-or mode \texttt{unused}.
+These are instances of \co{Y = f(X1, ..., XN)}
+where \co{Y} has mode \co{out}
+and each \co{Xi} has either mode \co{in}
+or mode \co{unused}.
 We indicate such unifications as
-\texttt{Y := f(X1, ..., XN)}.
+\co{Y := f(X1, ..., XN)}.
 \item
 Deconstruction unifications\label{gi:deconstruction}.
-These are instances of \texttt{Y = f(X1, ..., XN)}
-where \texttt{Y} has mode \texttt{in}
-and each \texttt{Xi} has either mode \texttt{out}
-or mode \texttt{unused}.
+These are instances of \co{Y = f(X1, ..., XN)}
+where \co{Y} has mode \co{in}
+and each \co{Xi} has either mode \co{out}
+or mode \co{unused}.
 We indicate such unifications as
-\texttt{Y == f(X1, ..., XN)}.
+\co{Y == f(X1, ..., XN)}.
 \end{itemize}
 Other instances of unification
 that are permitted by Mercury
@@ -85,13 +85,13 @@ using the notation above.
 
 Figure~\ref{fig:forwards-append}
 shows how this would look
-for the forwards mode of \texttt{append/3}.
-The first clause performs a test on \texttt{As},
-before assigning the value of \texttt{Bs} to \texttt{Cs}.
-The second clause deconstructs \texttt{As}
+for the forwards mode of \co{append/3}.
+The first clause performs a test on \co{As},
+before assigning the value of \co{Bs} to \co{Cs}.
+The second clause deconstructs \co{As}
 into component arguments,
 makes a recursive call,
-then constructs \texttt{Cs} from the result.
+then constructs \co{Cs} from the result.
 
 \begin{figure}
 \begin{verbatim}
@@ -104,7 +104,7 @@ then constructs \texttt{Cs} from the result.
         Cs := [X | Cs0].
 \end{verbatim}
 \caption{
-The forwards mode of \texttt{append/3},
+The forwards mode of \co{append/3},
 with unifications expanded and categorized as
 assignments, tests, constructions, and deconstructions.
 \label{fig:forwards-append}
@@ -141,32 +141,32 @@ or in the word's high-bits if it does not require a pointer.
 The primitive unifications involve the following steps:
 \begin{itemize}
 \item
-For an assignment unification \texttt{Y := X},
+For an assignment unification \co{Y := X},
 we just need to copy the word from
-the location of \texttt{X} to the location of \texttt{Y}.
+the location of \co{X} to the location of \co{Y}.
 If the word contains a pointer to a heap array,
 this array will be shared between both variables.
 \item
-For a test unification \texttt{Y == X},
+For a test unification \co{Y == X},
 we test the words for equality.
 If they are not equal,
 and if the words contain pointers to a heap array,
 we test that the tags are equal,
 and recursively test the arguments.
 \item
-For a construction unification \texttt{Y := f(X1, ..., XN)},
+For a construction unification \co{Y := f(X1, ..., XN)},
 we allocate an array on the heap to hold the arguments
 and a secondary tag if required.
 We then fill in heap slots
-for each of the \texttt{Xi} with mode \texttt{in},
+for each of the \co{Xi} with mode \co{in},
 and the secondary tag if present.
-The word representing \texttt{Y} is the heap pointer,
+The word representing \co{Y} is the heap pointer,
 with a primary tag stored in the low-bits.
 \item
-For a deconstruction unification \texttt{Y == f(X1, ..., XN)},
-we check that the tags for \texttt{f/N} are present,
+For a deconstruction unification \co{Y == f(X1, ..., XN)},
+we check that the tags for \co{f/N} are present,
 then use the pointer to dereference the heap slots
-for each \texttt{Xi} with mode \texttt{out}.
+for each \co{Xi} with mode \co{out}.
 \end{itemize}
 
 

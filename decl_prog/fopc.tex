@@ -50,6 +50,7 @@ that we define in detail in the next chapter.
 We conclude the chapter with some philosophical remarks about
 the role of classical logic in understanding computer programs.
 
+
 \section{Syntax}
 \label{sec:syntax}
 
@@ -65,7 +66,7 @@ An infinite set of variables:
 $x$, $y$, $z$, \ldots{}
 \item
 Logical constants:
-\textit{true}, \textit{false}
+\true, \false
 \item
 Logical connectives:
 $\land$, $\lor$, $\lnot$, $\leftarrow$, $\rightarrow$,
@@ -80,11 +81,11 @@ Punctuation: we will use parentheses and commas in the usual way.
 \item
 For $n \geqslant 0$,
 a set of function symbols with arity $n$:
-$f\!/2$, $g/1$, \ldots
+\sym{f/2}, \sym{g/1}, \ldots
 \item
 For $n \geqslant 0$,
 a set of predicate symbols with arity $n$:
-$p/2$, $q/3$, \ldots
+\sym{p/2}, \sym{q/3}, \ldots
 \end{enumerate}
 \caption{Symbols used in predicate calculus.\label{fig:symbols}}
 \end{figure}
@@ -105,7 +106,7 @@ the symbol is a fixed part of the language,
 while ``non-logical'' really just means user-defined.
 
 By convention,
-we will use the names $v$, $w$, $x$, $y$ and $z$,
+we will use italics such as $a$, $b$, $x$, $y$ and $z$,
 possibly with subscripts,
 to stand for arbitrary variables.
 A sequence of variables may be written with an overbar,
@@ -122,15 +123,15 @@ Function symbols include
 the data constructors declared in discriminated union types,
 as well as the declared functions.
 Predicate symbols are the declared predicates.
-We will use names such as $f$ and $g$ to stand for arbitrary functions,
-and names such as $p$, $q$ and $r$ to stand for arbitrary predicates.
+We will use names such as \sym{f} and \sym{g} to stand for arbitrary functions,
+and names such as \sym{p} and \sym{q} to stand for arbitrary predicates.
 We will sometimes refer to function symbols with arity zero
 as \emph{constants\label{gi:constant}},
-and use names such as $a$, $b$ and $c$
+and use names such as \sym{a}, \sym{b} and \sym{c}
 to stand for arbitrary constants.
 
 The arity of a predicate or function symbol
-is listed after a slash, for example $f\!/2$ or $p/1$.
+is listed after a slash, for example \sym{f/2} or \sym{p/1}.
 However,
 we will sometimes leave the arity off entirely
 when it is zero or clear from the context.
@@ -143,13 +144,13 @@ are considered different symbols.
 \begin{tabular}{lll@{\hspace{3em}}l}
 \multicolumn{4}{l}{Terms:} \\
 $\qquad t$ & $::=$ & $x$ & variable \\
-& $\:|$ & $a$ & constant \\
-& $\:|$ & $f(t_1, \ldots, t_n)$ & compound term \\[1em]
+& $\:|$ & $\ct{a}$ & constant \\
+& $\:|$ & $\ct{f}(t_1, \ldots, t_n)$ & compound term \\[1em]
 \multicolumn{4}{l}{Formulas:} \\
-$\qquad\phi$ & $::=$ & \textit{true} & always true \\
-& $\:|$ & \textit{false} & always false \\
+$\qquad\phi$ & $::=$ & \true & always true \\
+& $\:|$ & \false & always false \\
 & $\:|$ & $t_1 = t_2$ & equation \\
-& $\:|$ & $p(t_1, \ldots, t_n)$ & predicate call \\
+& $\:|$ & $\ct{p}(t_1, \ldots, t_n)$ & predicate call \\
 & $\:|$ & $\phi_1 \land \ldots \land \phi_n$ & conjunction \\
 & $\:|$ & $\phi_1 \lor \ldots \lor \phi_n$ & disjunction \\
 & $\:|$ & $\lnot \phi_1$ & negation \\
@@ -202,7 +203,7 @@ if it is captured by a quantifier,
 otherwise it is \emph{free\label{gi:free}}.
 For example,
 $x$ is bound and $y$ is free
-in the formula $\forall x. f(x, y) = y$.
+in the formula $\forall x. \ct{f}(x, y) = y$.
 (Despite the nomenclature,
 these notions are different from the notions of bound and free
 in Mercury's mode system.)
@@ -230,29 +231,29 @@ are provided in full detail in the reference manual,
 but for convenience
 Figure~\ref{fig:goals} summarizes the most important bits.
 In line with our notational convention,
-$\phi$ is the formula that corresponds to goals such as \texttt{Goal}.
+$\phi$ is the formula that corresponds to goals such as \co{Goal}.
 A subscript may be used in cases where there are multiple goals,
-so \texttt{Goal1} maps to $\phi_1$, and so on.
+so \co{Goal1} maps to $\phi_1$, and so on.
 
 \begin{figure}
 \begin{center}
 \begin{tabular}{l@{\hspace{3em}}l}
 \multicolumn{2}{l}{Expressions $\Rightarrow$ Terms:} \\
-\qquad\texttt{X} & $x$ \\
-\qquad\texttt{a} & $a$ \\
-\qquad\texttt{f(t1, ..., tN)} & $f(t_1, \ldots, t_n)$ \\[1em]
+\qquad\co{X} & $x$ \\
+\qquad\co{a} & $\ct{a}$ \\
+\qquad\co{f(t1, ..., tN)} & $\ct{f}(t_1, \ldots, t_n)$ \\[1em]
 
 \multicolumn{2}{l}{Goals $\Rightarrow$ Formulas:} \\
-\qquad\texttt{true} & \textit{true} \\
-\qquad\texttt{false} & \textit{false} \\
-\qquad\texttt{t1 = t2} & $t_1 = t_2$ \\
-\qquad\texttt{p(t1, ..., tN)} & $p(t_1, \ldots, t_n)$ \\
-\qquad\texttt{Goal1, ..., GoalN} & $\phi_1 \land \ldots \land \phi_n$ \\
-\qquad\texttt{( Goal1 ; ... ; GoalN )} & $\phi_1 \lor \ldots \lor \phi_n$ \\
-\qquad\texttt{( if C then T else E )}
+\qquad\co{true} & \true \\
+\qquad\co{false} & \false \\
+\qquad\co{t1 = t2} & $t_1 = t_2$ \\
+\qquad\co{p(t1, ..., tN)} & $\ct{p}(t_1, \ldots, t_n)$ \\
+\qquad\co{Goal1, ..., GoalN} & $\phi_1 \land \ldots \land \phi_n$ \\
+\qquad\co{( Goal1 ; ... ; GoalN )} & $\phi_1 \lor \ldots \lor \phi_n$ \\
+\qquad\co{( if C then T else E )}
     & $(\phi_c \land \phi_t) \lor (\lnot \phi_c \land \phi_e)$ \\
-\qquad\texttt{some [X] Goal} & $\exists x.\, \phi$ \\[.5em]
-\multicolumn{2}{l}{where $\phi$ is the formula corresponding to \texttt{Goal}}
+\qquad\co{some [X] Goal} & $\exists x.\, \phi$ \\[.5em]
+\multicolumn{2}{l}{where $\phi$ is the formula corresponding to \co{Goal}}
 \end{tabular}
 \end{center}
 \caption{Semantics of Mercury expressions and goals.\label{fig:goals}}
@@ -274,7 +275,7 @@ It should be easy to see that the resulting formula
 is equivalent to negation,
 since the goal on the right maps to the formula
 \[
-	(\phi \land \ssym{false}) \lor (\lnot \phi \land \ssym{true})
+    (\phi \land \false) \lor (\lnot \phi \land \true)
 \]
 which is logically equivalent to $\lnot \phi$.
 
@@ -290,6 +291,7 @@ The mapping we have given here is not quite the full story,
 since we will need to add implicit quantifiers to the formulas,
 and extend the mapping to program clauses.
 We will address these points in the next two sections.
+
 
 \section{Implicit quantification}
 \label{sec:implicit-quantification}
@@ -342,7 +344,7 @@ and other goals that are abbreviations for conditional goals.
 
 To give a semantics to clauses,
 we can consider a mapping that just
-replaces \texttt{:-} with reverse implication.
+replaces \co{:-} with reverse implication.
 Figure~\ref{fig:clauses} shows the effect this has
 on the different forms of clauses---%
 the formulas that result are implications
@@ -356,16 +358,16 @@ it will lead to a wrong answer bug.
 \begin{center}
 \begin{tabular}{l@{\hspace{3em}}l}
 \multicolumn{2}{l}{Clauses $\Rightarrow$ Formulas:} \\
-\qquad\texttt{p(t1, ..., tN) :- Body}
-    & $p(t_1, \ldots, t_n) \leftarrow \phi$ \\
-\qquad\texttt{p(t1, ..., tN)}
-    & $p(t_1, \ldots, t_n) \leftarrow$ \textit{true} \\
-\qquad\texttt{f(t1, ..., tN) = t :- Body}
-    & $f(t_1, \ldots, t_n) = t \leftarrow \phi$ \\
-\qquad\texttt{f(t1, ..., tN) = t}
-    & $f(t_1, \ldots, t_n) = t \leftarrow$ \textit{true} \\[.5em]
+\qquad\co{p(t1, ..., tN) :- Body}
+    & $\ct{p}(t_1, \ldots, t_n) \leftarrow \phi$ \\
+\qquad\co{p(t1, ..., tN)}
+    & $\ct{p}(t_1, \ldots, t_n) \leftarrow \true$ \\
+\qquad\co{f(t1, ..., tN) = t :- Body}
+    & $\ct{f}(t_1, \ldots, t_n) = t \leftarrow \phi$ \\
+\qquad\co{f(t1, ..., tN) = t}
+    & $\ct{f}(t_1, \ldots, t_n) = t \leftarrow \true$ \\[.5em]
 \multicolumn{2}{l}
-    {where $\phi$ is the formula corresponding to \texttt{Body}, if present}
+    {where $\phi$ is the formula corresponding to \co{Body}, if present}
 \end{tabular}
 \end{center}
 \caption{Mercury clauses as reverse implicatios.\label{fig:clauses}}
@@ -419,7 +421,7 @@ The two definitions are very similar,
 and produce the same results in most cases.
 There are subtle differences, however,
 and these will eventually become relevant
-when we talk about \texttt{semidet} functions
+when we talk about \co{semidet} functions
 in Section~\ref{sec:partial},
 so it important to take note of
 precisely which definition we are using.
@@ -528,19 +530,19 @@ so we do not want this assumption to always apply.
 We do intend that this assumption holds for ground data terms, however.
 
 Another assumption we wish to make is that all terms are finite.
-For an equation such as $x = f(x)$,
+For an equation such as $x = \ct{f}(x)$,
 where $f$ is a data constructor,
 the solution if it exists must be the infinite term:
-\[ x = f(f(f(f(\ldots)))) \]
+\[ x = \ct{f}(\ct{f}(\ct{f}(\ct{f}(\ldots)))) \]
 This is not a term that can be written down using our syntax, however,
 so we wish to exclude it as a possible solution.
 
 To support these requirements,
 a number of axioms are generated for each type.
 Consider the type definitions in Figure~\ref{fig:decl-foobar}.
-The constants are $a$, $b$ and \textit{nil},
-and \textit{cons}$/2$ is the only other function symbol.
-Note that \textit{foo} and \textit{bar} are not included,
+The constants are \sym{a}, \sym{b} and \sym{nil},
+and \sym{cons/2} is the only other function symbol.
+Note that \sym{foo} and \sym{bar} are not included,
 as these are type constructors not data constructors
 or declared functions.
 
@@ -549,11 +551,11 @@ or declared functions.
     :- type foo ---> a ; b.
     :- type bar ---> nil ; cons(foo, bar).
 \end{verbatim}
-\caption{Type definitions for the \texttt{foo} and \texttt{bar} types.
+\caption{Type definitions for the \sym{foo} and \sym{bar} types.
 \label{fig:decl-foobar}}
 \end{figure}
 
-The equality axioms for \texttt{foo} and \texttt{bar}
+The equality axioms for \sym{foo} and \sym{bar}
 are shown in Figure~\ref{fig:ax-foobar}.
 The two in the first row say that
 ground data terms are not equal
@@ -568,21 +570,21 @@ all $O(n^2)$ axioms would be required.
 
 \begin{figure}
 \[
-\lnot (a = b)
-\qquad\quad
-\forall x y.\, \lnot (\mathit{nil} = \mathit{cons}(x, y))
+    \lnot (\ct{a} = \ct{b})
+    \qquad\quad
+    \forall x y.\, \lnot (\ct{nil} = \ct{cons}(x, y))
 \]
 \[
-\forall x_1 x_2 y_1 y_2.\,
-(\mathit{cons}(x_1, y_1) = \mathit{cons}(x_2, y_2))
-\rightarrow
-(x_1 = x_2 \land y_1 = y_2)
+    \forall x_1 x_2 y_1 y_2.\,
+    (\ct{cons}(x_1, y_1) = \ct{cons}(x_2, y_2))
+    \rightarrow
+    (x_1 = x_2 \land y_1 = y_2)
 \]
 \begin{center}
-$\forall x.\, \lnot (x = \mathit{cons}(t_1, t_2))$,
+$\forall x.\, \lnot (x = \ct{cons}(t_1, t_2))$,
 if $x$ occurs in $t_1$ or $t_2$
 \end{center}
-\caption{Equality axioms for the \texttt{foo} and \texttt{bar} types.
+\caption{Equality axioms for the \sym{foo} and \sym{bar} types.
 \label{fig:ax-foobar}}
 \end{figure}
 
@@ -591,7 +593,7 @@ ground data terms are not equal
 unless their arguments are equal.
 In other words,
 this simply states that
-\textit{cons}$/2$ denotes an injective function.
+\sym{cons/2} denotes an injective function.
 
 The last line is an axiom schema
 (that is, an infinite family of axioms),
@@ -605,7 +607,7 @@ a data term that contains that variable.
 Equivalently,
 a data term never strictly contains itself as a subterm.
 This implies that all data terms are finite;
-for example the formula $x = \mathit{cons}(a, x)$,
+for example the formula $x = \ct{cons}(\ct{a}, x)$,
 which would otherwise describe an infinite term,
 is always false because $x$ occurs in the term
 that it is supposedly equal to.
@@ -615,15 +617,14 @@ we can no longer say that
 ground data terms that are syntactically different may be equal.
 For example, the axioms allow us to infer
 \[
-\lnot (\text{\textit{cons}}(a, \text{\textit{nil}}) =
-    \text{\textit{cons}}(b, \text{\textit{nil}}))
+    \lnot (\ct{cons}(\ct{a}, \ct{nil}) = \ct{cons}(\ct{b}, \ct{nil}))
 \]
 since if we assume that
-$\text{\textit{cons}}(a, \text{\textit{nil}})$
+$\ct{cons}(\ct{a}, \ct{nil})$
 and
-$\text{\textit{cons}}(b, \text{\textit{nil}})$
+$\ct{cons}(\ct{b}, \ct{nil})$
 are equal,
-then by the third axiom we have that $a = b$.
+then by the third axiom we have that $\ct{a} = \ct{b}$.
 This contradicts the first axiom,
 which means that our assumption must have been false.
 
@@ -643,15 +644,15 @@ This can be expressed as an axiom
 in a straightforward way.
 
 Recall from Section~\ref{sec:clauses}
-that a clause for a predicate $p$ with arity $n$
+that a clause for a predicate \sym{p/n}
 can be mapped to a formula $\psi \leftarrow \phi$,
 where $\psi$ corresponds to the clause head
-and takes the form $p(t_1, \ldots, t_n)$,
+and takes the form $\ct{p}(t_1, \ldots, t_n)$,
 for argument terms $t_1, \ldots, t_n$,
 and $\phi$ is the formula corresponding to the clause body
-(or \sym{true} if the clause is a fact).
-Similarly for a function $f$ with arity $n$,
-except that $\psi$ takes the form $f(t_1, \ldots, t_n) = t_r$,
+(or \true\ if the clause is a fact).
+Similarly for a function \sym{f/n},
+except that $\psi$ takes the form $\ct{f}(t_1, \ldots, t_n) = t_r$,
 where $t_r$ is the return expression.
 
 The formula can be made into an axiom
@@ -729,12 +730,12 @@ into a single implication.
 
 We can make the clause heads take the required form
 by performing a simple logical transformation.
-For a predicate $p$ with arity $n$,
+For a predicate \sym{p/n},
 let $v_1, \ldots, v_n$ be a sequence of variables
 that are distinct from any other variables in the clauses.
 We define the following formulas:
 \begin{eqnarray*}
-\psi' & \equiv & p(v_1, \ldots, v_n) \\
+\psi' & \equiv & \ct{p}(v_1, \ldots, v_n) \\
 \phi' & \equiv &
     \exists \bar{x}.\, v_1 = t_1 \land \ldots \land v_n = t_n \land \phi
 \end{eqnarray*}
@@ -755,7 +756,7 @@ we also need a variable, $v_r$, for the function result,
 and an additional equation to bind it.
 In this case we obtain:
 \begin{eqnarray*}
-\psi' & \equiv & f(v_1, \ldots, v_n) = v_r \\
+\psi' & \equiv & \ct{f}(v_1, \ldots, v_n) = v_r \\
 \phi' & \equiv &
     \exists \bar{x}.\, v_1 = t_1 \land \ldots \land v_n = t_n
     \land v_r = t_r \land \phi
@@ -877,67 +878,67 @@ In other words, the formula is:
 where $\bar{v}$ is the set of fresh variables we introduced.
 
 An example should help to illustrate,
-and for this we will turn once again to \texttt{append/3}.
+and for this we will turn once again to \sym{append/3}.
 The clauses, when mapped to the $\psi \leftarrow \phi$ form,
 are as follows
 (variable names are chosen to fit with our notational convention):
 \begin{IEEEeqnarray*}{l}
-\sym{append}([], y, y) \leftarrow \sym{true} \\
-\sym{append}([w | x], y, [w| z]) \leftarrow \sym{append}(x, y, z)
+\ct{append}([], y, y) \leftarrow \true \\
+\ct{append}([w | x], y, [w| z]) \leftarrow \ct{append}(x, y, z)
 \end{IEEEeqnarray*}
 We obtain the clause soundness axioms by universally quantifying:
 \begin{IEEEeqnarray*}{l}
 \forall y.\,
-    \sym{append}([], y, y) \leftarrow \sym{true} \\
+    \ct{append}([], y, y) \leftarrow \true \\
 \forall w x y z.\,
-    \sym{append}([w | x], y, [w | z]) \leftarrow \sym{append}(x, y, z)
+    \ct{append}([w | x], y, [w | z]) \leftarrow \ct{append}(x, y, z)
 \end{IEEEeqnarray*}
 To get the combined formula,
 we introduce fresh variables $v_1, \ldots, v_3$
 and make the following definitions:
 \begin{eqnarray*}
-\psi' & \equiv & \sym{append}(v_1, v_2, v_3) \\
+\psi' & \equiv & \ct{append}(v_1, v_2, v_3) \\
 \phi_1' & \equiv & \exists y.\, v_1 = [] \land v_2 = y \land v_3 = y \\
 \phi_2' & \equiv & \exists w x y z.\,
     v_1 = [w | x] \land v_2 = y \land v_3 = [w | z] \land
-    \sym{append}(x, y, z)
+    \ct{append}(x, y, z)
 \end{eqnarray*}
-Note that we have omitted \sym{true} from the conjunctions,
+Note that we have omitted \true\ from the conjunctions,
 since they do not have any effect.
 Putting the definitions together we get the following
 clause completeness axiom:
 \begin{IEEEeqnarray*}{l}
-\forall v_1 v_2 v_3.\, \sym{append}(v_1, v_2, v_3) \rightarrow \\
+\forall v_1 v_2 v_3.\, \ct{append}(v_1, v_2, v_3) \rightarrow \\
     \qquad (\exists y.\, v_1 = [] \land v_2 = y \land v_3 = y)\;\lor \\
     \qquad (\exists w x y z.\, v_1 = [w|x] \land v_2 = y \land v_3 = [w|y]
-    \land \sym{append}(x, y, z))
+    \land \ct{append}(x, y, z))
 \end{IEEEeqnarray*}
-The completion of \texttt{append/3}
+The completion of \sym{append/3}
 is the same as the clause completeness axiom,
 except it uses a bi-implication:
 \begin{IEEEeqnarray*}{l}
-\forall v_1 v_2 v_3.\, \sym{append}(v_1, v_2, v_3) \leftrightarrow \\
+\forall v_1 v_2 v_3.\, \ct{append}(v_1, v_2, v_3) \leftrightarrow \\
     \qquad (\exists y.\, v_1 = [] \land v_2 = y \land v_3 = y)\;\lor \\
     \qquad (\exists w x y z.\, v_1 = [w|x] \land v_2 = y \land v_3 = [w|z]
-    \land \sym{append}(x, y, z))
+    \land \ct{append}(x, y, z))
 \end{IEEEeqnarray*}
 This is logically equivalent to the conjunction of
 the clause soundness and clause completeness axioms
-for \texttt{append/3}.
+for \sym{append/3}.
 
 To illustrate the procedure for function definitions,
-we will of course look at the function \texttt{length/1}.
+we will of course look at the function \sym{length/1}.
 We start with the clauses in their $\psi \leftarrow \phi$ form,
 as before:
 \begin{IEEEeqnarray*}{l}
-\sym{length}([]) = 0 \leftarrow \sym{true} \\
-\sym{length}([x | y]) = 1 + \sym{length}(y) \leftarrow \sym{true}
+\ct{length}([]) = 0 \leftarrow \true \\
+\ct{length}([x | y]) = 1 + \ct{length}(y) \leftarrow \true
 \end{IEEEeqnarray*}
 The clause soundness axioms are therefore:
 \begin{IEEEeqnarray*}{l}
-\sym{length}([]) = 0 \leftarrow \sym{true} \\
+\ct{length}([]) = 0 \leftarrow \true \\
 \forall x y.\,
-    \sym{length}([x | y]) = 1 + \sym{length}(y) \leftarrow \sym{true}
+    \ct{length}([x | y]) = 1 + \ct{length}(y) \leftarrow \true
 \end{IEEEeqnarray*}
 No quantifier is required on the first of these,
 since there are no free variables.
@@ -945,15 +946,15 @@ To get the combined formula,
 we introduce fresh variables $v_1$ and $v_r$,
 and define:
 \begin{eqnarray*}
-\psi' & \equiv & \sym{length}(v_1) = v_r \\
+\psi' & \equiv & \ct{length}(v_1) = v_r \\
 \phi_1' & \equiv & v_1 = [] \land v_r = 0 \\
-\phi_2' & \equiv & \exists x y.\, v_1 = [x | y] \land v_r = 1 + length(y)
+\phi_2' & \equiv & \exists x y.\, v_1 = [x | y] \land v_r = 1 + \ct{length}(y)
 \end{eqnarray*}
 Putting these together we get the following clause completeness axiom:
 \begin{IEEEeqnarray*}{l}
-\forall v_1 v_r.\, \sym{length}(v_1) = v_r \rightarrow \\
+\forall v_1 v_r.\, \ct{length}(v_1) = v_r \rightarrow \\
     \qquad (v_1 = [] \land v_r = 0)\; \lor \\
-    \qquad (\exists x y.\, v_1 = [x | y] \land v_r = 1 + length(y))
+    \qquad (\exists x y.\, v_1 = [x | y] \land v_r = 1 + ct{length}(y))
 \end{IEEEeqnarray*}
 As before,
 the function completion is the same as the clause completeness axiom
@@ -966,16 +967,16 @@ with the implication replaced by a bi-implication.
 Modes and determinisms play a significant role
 in helping people understand Mercury code.
 They also play a part in the declarative semantics.
-For modes that are \texttt{det} or \texttt{multi}
+For modes that are \co{det} or \co{multi}
 we generate an axiom that says that
 for every value of each of the inputs,
 there exists a solution.
-For modes that are \texttt{det} or \texttt{semidet}
+For modes that are \co{det} or \co{semidet}
 we generate an axiom that says that
 for every value of each of the inputs,
 there is at most one solution.
 
-For example, consider the following modes for \texttt{append/3}:
+For example, consider the following modes for \sym{append/3}:
 \begin{verbatim}
 :- mode append(in, out, in) is semidet.
 :- mode append(out, out, in) is multi.
@@ -983,31 +984,31 @@ For example, consider the following modes for \texttt{append/3}:
 \end{verbatim}
 These three modes will generate
 the three axioms shown in Figure~\ref{fig:mode-det}, respectively.
-Note that the third axiom, for the \texttt{det} mode,
+Note that the third axiom, for the \co{det} mode,
 is the conjunction of the axioms that would apply
-for the \texttt{semidet} and \texttt{multi} modes.
+for the \co{semidet} and \co{multi} modes.
 
 \begin{figure}
 \begin{IEEEeqnarray*}{l}
 \forall x y_1 y_2 z.\,
-    \sym{append}(x, y_1, z) \land \sym{append}(x, y_2, z)
+    \ct{append}(x, y_1, z) \land \ct{append}(x, y_2, z)
     \rightarrow y_1 = y_2
 \\
-\forall z. \exists x y.\, \sym{append}(x, y, z)
+\forall z. \exists x y.\, \ct{append}(x, y, z)
 \\
-\forall x y. (\exists z.\, \sym{append}(x, y, z))~\land \\
+\forall x y. (\exists z.\, \ct{append}(x, y, z))~\land \\
     \qquad (\forall z_1 z_2.\,
-        \sym{append}(x, y, z_1) \land \sym{append}(x, y, z_2)
+        \ct{append}(x, y, z_1) \land \ct{append}(x, y, z_2)
         \rightarrow z_1 = z_2)
 \end{IEEEeqnarray*}
-\caption{Mode-determinism assertions for three modes of \texttt{append/3}.
+\caption{Mode-determinism assertions for three modes of \sym{append/3}.
 \label{fig:mode-det}}
 \end{figure}
 
 One consequence of these axioms is that
 if a predicate has a mode where all arguments are inputs
 and where the determinism says it cannot fail,
-then any call to that predicate is logically equivalent to \textit{true}.
+then any call to that predicate is logically equivalent to \true.
 Unless a strict operational semantics is used,
 be aware that in most cases the compiler will optimize away such calls.
 If that happens then exceptions may not be thrown,
@@ -1020,7 +1021,7 @@ a vacuous statement in classical logic
 since function symbols are always interpreted as total functions.
 On the other hand,
 this presents a problem for functions
-that are \texttt{semidet} in the forward mode,
+that are \co{semidet} in the forward mode,
 that is, the mode with all arguments as inputs
 and the return value as an output.
 These denote \emph{partial} functions,
@@ -1114,7 +1115,7 @@ We have used the term ``interpretation'' a number of times to mean,
 intuitively, the way in which we understand
 the symbols appearing in a formula.
 For example,
-we have said that the symbol `$+$' can be interpreted as integer addition.
+we have said that the symbol \co{+} can be interpreted as integer addition.
 The general idea of an interpretation is that
 it maps from syntactic elements---the predicate and function symbols---%
 to some semantic universe.
@@ -1123,25 +1124,25 @@ Formally, an interpretation $I$ over a universe $U$
 is a mapping defined on predicate and function symbols, such that:
 \begin{itemize}
 \item
-If $f\!/n$ is a function symbol,
-then $I(f\!/n)$ is a total function $U^n \rightarrow U$.
+If \sym{f/n} is a function symbol,
+then $I(\ct{f})$ is a total function $U^n \rightarrow U$.
 In other words,
-$I(f\!/n)$ takes $n$ arguments from $U$
+$I(\ct{f})$ takes $n$ arguments from $U$
 and returns a value from $U$.
-For a constant $a$,
-$I(a)$ is just an element of $U$.
+For a constant \sym{a},
+$I(\ct{a})$ is just an element of $U$.
 \item
-If $p/n$ is a predicate symbol,
-then $I(p/n)$ is a predicate (that is, a relation) over $U^n$.
+If \sym{p/n} is a predicate symbol,
+then $I(\ct{p})$ is a predicate (that is, a relation) over $U^n$.
 That is,
-$I(p/n)$ takes $n$ arguments from $U$
-and returns either \textit{true} or \textit{false}.
+$I(\ct{p})$ takes $n$ arguments from $U$
+and returns either \true\ or \false.
 \end{itemize}
 Thus,
-the function $I(f\!/n)$
-is the denotation of the function symbol $\!f\!/n$,
-and the predicate $I(p/n)$
-is the denotation of the predicate symbol $p/n$.
+the function $I(\ct{f})$
+is the denotation of the function symbol \sym{f/n},
+and the predicate $I(\ct{p})$
+is the denotation of the predicate symbol \sym{p/n}.
 
 More generally,
 we will need to show how an interpretation as defined above
@@ -1157,11 +1158,11 @@ by applying the following rules:
 \item
 If $x$ is a variable, then $I_\sigma(x)$ maps to $\sigma(x)$.
 \item
-If $f\!/n$ is a function symbol and $t_1, \ldots, t_n$ are terms,
-then $I_\sigma(f(t_1, \ldots, t_n))$ maps to
-the function $I(f\!/n)$ applied to arguments
+If \sym{f/n} is a function symbol and $t_1, \ldots, t_n$ are terms,
+then $I_\sigma(\ct{f}(t_1, \ldots, t_n))$ maps to
+the function $I(\ct{f})$ applied to arguments
 $I_\sigma(t_1), \ldots, I_\sigma(t_n)$.
-For a constant $a$, $I_\sigma(a)$ just equals $I(a)$.
+For a constant \sym{a}, $I_\sigma(\ct{a})$ just equals $I(\ct{a})$.
 \end{itemize}
 Similarly,
 this increasingly overloaded mapping
@@ -1169,18 +1170,18 @@ can be extended to atomic formulas.
 The following rules are applied:
 \begin{itemize}
 \item
-$I_\sigma(\sym{true})$ always maps to \textit{true}.
+$I_\sigma(\true)$ always maps to \true.
 \item
-$I_\sigma(\sym{false})$ always maps to \textit{false}.
+$I_\sigma(\false)$ always maps to \false.
 \item
 If $t_1$ and $t_2$ are terms,
-then $I_\sigma(t_1 = t_2)$ maps to \textit{true}
-if $I_\sigma(t_1)$ and $I_\sigma(t_2)$ map to the same value in $U$.
-Otherwise it maps to \textit{false}.
+then $I_\sigma(t_1 = t_2)$ maps to \true\ if
+$I_\sigma(t_1)$ and $I_\sigma(t_2)$ map to the same value in $U$.
+Otherwise it maps to \false.
 \item
-If $p/n$ is a predicate symbol and $t_1, \ldots, t_n$ are terms,
-then $I_\sigma(p(t_1, \ldots, t_n))$ maps to
-the predicate $I(p/n)$ applied to arguments
+If \sym{p/n} is a predicate symbol and $t_1, \ldots, t_n$ are terms,
+then $I_\sigma(\ct{p}(t_1, \ldots, t_n))$ maps to
+the predicate $I(\ct{p})$ applied to arguments
 $I_\sigma(t_1), \ldots, I_\sigma(t_n)$.
 \end{itemize}
 Continuing,
@@ -1194,14 +1195,14 @@ via the usual (classical) truth table for that connective,
 using the truth values of $I_\sigma$ for each sub-formula.
 \item
 If $\phi$ is of the form $\exists x.\, \psi$,
-then $I_\sigma(\phi)$ maps to \textit{true} if $I_\rho(\psi)$ is true
+then $I_\sigma(\phi)$ maps to \true\ if $I_\rho(\psi)$ is true
 for some assignment $\rho$ that differs from $\sigma$ only at $x$.
-Otherwise it maps to \textit{false}.
+Otherwise it maps to \false.
 \item
 If $\phi$ is of the form $\forall x.\, \psi$,
-then $I_\sigma(\phi)$ maps to \textit{true} if $I_\rho(\psi)$ is true
+then $I_\sigma(\phi)$ maps to \true\ if $I_\rho(\psi)$ is true
 for all assignments $\rho$ that differ from $\sigma$ only at $x$.
-Otherwise it maps to \textit{false}.
+Otherwise it maps to \false.
 \end{itemize}
 Finally, observe that if $\phi$ is a closed formula
 then $I_\sigma(\phi)$ is always the same
@@ -1213,12 +1214,12 @@ where $\sigma$ is an arbitrary assignment.
 
 For example,
 consider an interpretation $I$ in which
-$\sym{append}/3$ is the list append predicate
-and $\sym{length}/1$ is the list length function.
+\sym{append/3} is the list append predicate
+and \sym{length/1} is the list length function.
 Let $\sigma$ be an assignment such that $\sigma(z) = [1, 2, 3]$,
 and let $\phi$ be the following formula.
 \[
-\exists x y.\, \sym{append}(x, y, z) \land \sym{length}(x) = 2
+\exists x y.\, \ct{append}(x, y, z) \land \ct{length}(x) = 2
 \]
 We can evaluate $I_\sigma(\phi)$ as follows.
 Let $\rho = \sigma \{ x \mapsto [1, 2], y \mapsto [3] \}$.
@@ -1226,36 +1227,36 @@ That is, $\rho$ is the assignment
 that differs from $\sigma$ only at $x$ and $y$,
 where it takes the values $[1, 2]$ and $[3]$, respectively.
 We have that $I_{\rho}(x)$ maps to $[1, 2]$,
-therefore $I_{\rho}(\sym{length}(x))$
+therefore $I_{\rho}(\ct{length}(x))$
 is the length of the list $[1, 2]$, which is 2.
-Thus $I_{\rho}(\sym{length}(x) = 2)$ maps to \sym{true}.
+Thus $I_{\rho}(\ct{length}(x) = 2)$ maps to \true.
 
 Similarly,
-$I_{\rho}(\sym{append}(x, y, z))$ maps to \sym{true},
+$I_{\rho}(\ct{append}(x, y, z))$ maps to \true,
 since the arguments map to
 $[1, 2]$, $[3]$ and $[1, 2, 3]$, respectively,
 and the last of these is the result of
 appending the first two.
 Given this result and the result from the previous paragraph,
 we can see that
-$I_{\rho}(\sym{append}(x, y, z) \land \sym{length}(x) = 2)$
-maps to \sym{true},
+$I_{\rho}(\ct{append}(x, y, z) \land \ct{length}(x) = 2)$
+maps to \true,
 via the truth table for~`$\land$'.
 
-Finally, $I_\sigma(\phi)$ maps to \sym{true} because
+Finally, $I_\sigma(\phi)$ maps to \true\ because
 $\rho$ is an assignment that differs from $\sigma$
 only at $x$ and $y$,
 which satisfies our rule for the existential quantifier.
 
 Had we used an assignment $\sigma'$ with $\sigma'(z) = [1]$,
-then the append operation would have been false
-under the assignment $\rho' = \sigma' \{ x \mapsto [1,2], y \mapsto [3] \}$,
+then the append operation would have been false\ under
+the assignment $\rho' = \sigma' \{ x \mapsto [1,2], y \mapsto [3] \}$,
 since $[1, 2]$ and $[3]$ do not append to form $[1]$.
 Furthermore,
 no such assignment $\rho'$ would be able to make
 the interpretation of the append operation true,
-and still have $I_{\rho'}(\sym{length}(x))$ being true.
-As such, $I_{\sigma'}(\phi)$ would have evaluated to \sym{false}.
+and still have $I_{\rho'}(\ct{length}(x))$ being true.
+As such, $I_{\sigma'}(\phi)$ would have evaluated to \false.
 
 
 \subsection{Models}
@@ -1320,17 +1321,17 @@ that are Herbrand interpretations.
 
 Even so, there can be multiple Herbrand interpretations
 that are models of a program.
-For example, consider the program \texttt{p :- p.}
-The completion of this program is $p \leftrightarrow p$,
+For example, consider the program \co{p :- p.}
+The completion of this program is $\ct{p} \leftrightarrow \ct{p}$,
 which is a tautology.
 This means that it is true in every interpretation,
 specifically,
-$p$ could be assigned the value \sym{true} or the value \sym{false},
+\sym{p} could be assigned the value \true\ or the value \false,
 but in either case the axiom would hold
 so both of these interpretations are models.
 
-More concerning is the program \texttt{p :- not p.}
-In this case the completion is $p \leftrightarrow \lnot p$,
+More concerning is the program \co{p :- not p.}
+In this case the completion is $\ct{p} \leftrightarrow \lnot \ct{p}$,
 which is a contradiction.
 This means that it is false in every interpretation,
 which means that \emph{there are no models}.
@@ -1414,10 +1415,10 @@ Not all formulas are one or the other, however:
 if a formula is true in some models and false in others,
 then it is neither valid nor unsatisfiable.
 For example,
-consider again the program \mbox{\texttt{p :- p}}.
-Because there is a model in which $p$ is true
-and another model in which $p$ is false,
-the formula $p$ is satisfiable but not valid.
+consider again the program \mbox{\co{p :- p}}.
+Because there is a model in which \sym{p} is true
+and another model in which \sym{p} is false,
+the formula \sym{p} is satisfiable but not valid.
 A formula like this that is neither valid nor unsatisfiable
 is said to be \emph{contingent\label{gi:contingent}}.
 
@@ -1460,9 +1461,9 @@ Theorems require proofs,
 so in this section we will give a couple of ad hoc arguments
 to try to prove that a formula is true.
 
-Consider the formula $\sym{append}([1], [2], [1, 2])$.
+Consider the formula $\ct{append}([1], [2], [1, 2])$.
 We already know it is true
-given that \sym{append}/3 is interpreted as list concatenation,
+given that \sym{append/3} is interpreted as list concatenation,
 but assume that we only know how it is defined,
 and not its interpretation.
 Can we prove it is true using just the axioms that are generated?
@@ -1470,15 +1471,15 @@ Can we prove it is true using just the axioms that are generated?
 \begin{figure}
 \begin{IEEEeqnarray*}{l}
 \forall y.\,
-    \sym{append}([], y, y) \leftarrow \sym{true} \\
+    \ct{append}([], y, y) \leftarrow \true \\
 \forall w x y z.\,
-    \sym{append}([w | x], y, [w | z]) \leftarrow \sym{append}(x, y, z)
+    \ct{append}([w | x], y, [w | z]) \leftarrow \ct{append}(x, y, z)
 \end{IEEEeqnarray*}
-\caption{Clause soundness axioms for \sym{append}/3.\label{fig:ax-append}}
+\caption{Clause soundness axioms for \sym{append/3}.\label{fig:ax-append}}
 \end{figure}
 
 For convenience,
-the clause soundness axioms for \sym{append}/3
+the clause soundness axioms for \sym{append/3}
 from Section~\ref{sec:completion}
 are repeated in Figure~\ref{fig:ax-append}.
 
@@ -1499,10 +1500,10 @@ Looking at the axiom for the first clause,
 we can see that if we assign the value $[2]$ to $y$,
 then the formula becomes:
 \[
-    \sym{append}([], [2], [2]) \leftarrow \sym{true}
+    \ct{append}([], [2], [2]) \leftarrow \true
 \]
 From this we immediately get that
-$\sym{append}([], [2], [2]) \in H$.
+$\ct{append}([], [2], [2]) \in H$.
 We are allowed to choose, as we did,
 any value we like for $y$,
 since $y$ is universally quantified---%
@@ -1511,14 +1512,14 @@ the axiom is applicable to all possible choices.
 Now consider the axiom for the second clause.
 If we assign the values $[]$, $[2]$ and $[2]$
 to the variables $x$, $y$ and $z$, respectively,
-then the right hand side becomes $\sym{append}([], [2], [2])$,
+then the right hand side becomes $\ct{append}([], [2], [2])$,
 which we just established is in $H$.
 If we then assign to $w$ the value $1$,
 the formula becomes:
 \[
-    \sym{append}([1], [2], [1, 2]) \leftarrow \sym{append}([], [2], [2])
+    \ct{append}([1], [2], [1, 2]) \leftarrow \ct{append}([], [2], [2])
 \]
-Thus we get that $\sym{append}([1], [2], [1, 2]) \in H$,
+Thus we get that $\ct{append}([1], [2], [1, 2]) \in H$,
 which completes our proof.
 
 Our attempt at proving a formula has been successful,
@@ -1550,7 +1551,7 @@ that will be the subject of the next chapter.
 
 For our second attempt we will try a different strategy.
 We will start by assuming that the formula we wish to prove,
-$\sym{append}([1], [2], [1, 2])$, is false.
+$\ct{append}([1], [2], [1, 2])$, is false.
 From that we will try derive a contradiction,
 which would show our assumption to be false,
 and thus prove that the formula is true.
@@ -1587,7 +1588,7 @@ $1$, $[]$, $[2]$ and $[2]$
 to $w$, $x$, $y$ and $z$, respectively,
 we get:
 \[
-    \sym{append}([1], [2], [1, 2]) \leftarrow \sym{append}([], [2], [2])
+    \ct{append}([1], [2], [1, 2]) \leftarrow \ct{append}([], [2], [2])
 \]
 We have assumed the formula on the left-side side to be false,
 so the formula on the right-hand side must also be false.
@@ -1595,16 +1596,16 @@ so the formula on the right-hand side must also be false.
 Trying the first axiom on this new formula,
 we can assign the value $[2]$ to $y$ to obtain:
 \[
-    \sym{append}([], [2], [2]) \leftarrow \sym{true}
+    \ct{append}([], [2], [2]) \leftarrow \true
 \]
 Again,
 the left-hand side is false
 so the right-hand side must also be false,
 but this is a contradiction
-because the right-hand side is \sym{true}.
+because the right-hand side is \true.
 We can therefore conclude that
 our original assumption must have been false.
-Thus $\sym{append}([1], [2], [1, 2]) \in H$,
+Thus $\ct{append}([1], [2], [1, 2]) \in H$,
 which completes our proof.
 
 This style of proof more closely reflects how programs are executed.

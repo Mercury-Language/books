@@ -72,7 +72,7 @@ for which this goal is valid?''
 
 The initial query for the
 execution of a Mercury program is always
-a single call to \texttt{main/2}.
+a single call to \sym{main/2}.
 It will, however,
 also be useful to consider queries that represent
 sub-computations within the program.
@@ -81,7 +81,7 @@ such queries can be written in the following form:
 \begin{verbatim}
     :- Goal1, Goal2, ..., GoalN.
 \end{verbatim}
-where each \texttt{GoalI} is an atomic goal,
+where each \co{GoalI} is an atomic goal,
 and commas are read as conjunction.
 If the conjunction of goals is in solved form,
 as defined in the next section,
@@ -93,18 +93,18 @@ The query is interpreted as the formula:%
 The origin of this notation,
 as with many other things,
 comes from theorem provers.
-The list of goals on the right-hand side of `\texttt{:-}'
+The list of goals on the right-hand side of `\co{:-}'
 is taken as a conjunction,
 as we have done.
 The list of goals of the left-hand side
 is taken as a disjunction,
 and since in our case the list is empty,
-the disjunction is equivalent to \sym{false}.
+the disjunction is equivalent to \false.
 As usual, free variables are implicitly universally quantified.
 }
 \[
     \forall \bar{x}.\,
-        \sym{false} \leftarrow \phi_1 \land \ldots \land \phi_n
+        \false \leftarrow \phi_1 \land \ldots \land \phi_n
 \]
 where $\phi_1, \ldots, \phi_n$
 are the formulas corresponding to the goals,
@@ -120,7 +120,7 @@ That is, a proof, if found, is a refutation of the query,
 which in turn implies that the substitution is an answer to the goal.
 
 Proof by contradiction
-may seem a roundabout way of doing things,
+may seem a circuitous way of doing things,
 and indeed some authors
 define the execution procedure directly to avoid this,
 but we define things this way
@@ -143,13 +143,13 @@ We write substitutions in the form:
 \begin{verbatim}
     {V1 = t1, ..., VN = tN}
 \end{verbatim}
-where \texttt{V1} to \texttt{VN} are variables,
-and \texttt{t1} to \texttt{tN} are arbitrary data terms
+where \co{V1} to \co{VN} are variables,
+and \co{t1} to \co{tN} are arbitrary data terms
 (possibly variables themselves)
 that the variables respectively map to.
 
-A substitution applied to an expression \texttt{t}
-yields an expression which is the same as \texttt{t},
+A substitution applied to an expression \co{t}
+yields an expression which is the same as \co{t},
 but with each occurrence of a variable
 that maps to a term in the substitution
 replaced with the mapped term.
@@ -175,13 +175,13 @@ the instantiatedness of a set of variables
 describes the possible substitutions at that point in the code,
 which tells us something about
 what form the substitution must take.
-If the \texttt{inst} of a variable is \texttt{free\label{gi:free2}}
+If the \co{inst} of a variable is \co{free\label{gi:free2}}
 then the variable is not mapped to anything.
-If it is \texttt{bound\label{gi:bound2}} then the variable is mapped to
+If it is \co{bound\label{gi:bound2}} then the variable is mapped to
 a term whose principal functor is one of the ones listed,
 and whose arguments are described by
-the corresponding argument \texttt{inst}s.
-If it is \texttt{ground\label{gi:ground}} then the variable is mapped to
+the corresponding argument \co{inst}s.
+If it is \co{ground\label{gi:ground}} then the variable is mapped to
 a term that contains no variables.
 
 While substitutions bear a resemblance to the assignments
@@ -211,14 +211,14 @@ but they will be unique up to renaming of variables.
 The unification algorithm aims to find one such unifier.
 
 For example,
-consider the terms \texttt{f(X,g(X))} and \texttt{f(h(Y),Z)},
+consider the terms \co{f(X,g(X))} and \co{f(h(Y),Z)},
 and the substitution:
 \begin{verbatim}
     {X = h(Y), Z = g(h(Y))}
 \end{verbatim}
 Applying this substitution to either of the terms
 yields the same result,
-namely \texttt{f(h(Y),g(h(Y)))},
+namely \co{f(h(Y),g(h(Y)))},
 so this substitution is a unifier.
 It is not difficult to see that it is a most general unifier.
 
@@ -238,56 +238,56 @@ which corresponds to the substitution we had above.
 
 In general, consider a query
 that is a set of equations as follows,
-where \texttt{s1} to \texttt{sN},
-and \texttt{t1} to \texttt{tN},
+where \co{s1} to \co{sN},
+and \co{t1} to \co{tN},
 are arbitrary data terms (possibly variables):
 \begin{verbatim}
     :- s1 = t1, s2 = t2, ..., sN = tN.
 \end{verbatim}
 Initially, all of the goals are marked as unsolved.
-We first select a goal \texttt{G} that is not marked as solved.
+We first select a goal \co{G} that is not marked as solved.
 If there is no such goal then the algorithm terminates.
 We then apply one of the following rules,
-depending on the form \texttt{G} takes.
+depending on the form \co{G} takes.
 \begin{itemize}
 \item
-If \texttt{G} is
-\texttt{X = X}
-for some variable \texttt{X},
+If \co{G} is
+\co{X = X}
+for some variable \co{X},
 remove it.
 \item
-If \texttt{G} is
-\texttt{f(s1, ..., sN) = f(t1, ..., tN)}
-for data constructor \texttt{f/N},
+If \co{G} is
+\co{f(s1, ..., sN) = f(t1, ..., tN)}
+for data constructor \co{f/N},
 remove it and replace it with the set of equations
-\texttt{s1 = t1, ..., sN = tN}.
+\co{s1 = t1, ..., sN = tN}.
 \item
-If \texttt{G} is
-\texttt{f(s1, ..., sN) = g(t1, ..., tM)}
-for distinct data constructors \texttt{f/N} and \texttt{g/M},
+If \co{G} is
+\co{f(s1, ..., sN) = g(t1, ..., tM)}
+for distinct data constructors \co{f/N} and \co{g/M},
 the algorithm fails.
 \item
-If \texttt{G} is
-\texttt{t = X}
-for some non-variable data term \texttt{t}
-and variable \texttt{X},
+If \co{G} is
+\co{t = X}
+for some non-variable data term \co{t}
+and variable \co{X},
 remove it and replace it with
-\texttt{X = t}.
+\co{X = t}.
 \item
-If \texttt{G} is
-\texttt{X = t}
-where \texttt{t} is a data term not containing \texttt{X},
-then replace all free occurrences of \texttt{X}
+If \co{G} is
+\co{X = t}
+where \co{t} is a data term not containing \co{X},
+then replace all free occurrences of \co{X}
 elsewhere in the query
-by \texttt{t}.
-If \texttt{X} occurred freely in the original query
-then keep \texttt{G} and mark it as solved,
+by \co{t}.
+If \co{X} occurred freely in the original query
+then keep \co{G} and mark it as solved,
 otherwise discard it.
 \item
-If \texttt{G} is
-\texttt{X = t}
-where \texttt{t} is a non-variable data term
-and \texttt{X} occurs in \texttt{t},
+If \co{G} is
+\co{X = t}
+where \co{t} is a non-variable data term
+and \co{X} occurs in \co{t},
 the algorithm fails.
 \end{itemize}
 After applying the appropriate rule
@@ -311,17 +311,17 @@ For our above example,
 three applications of the rules gives us
 the equation in solved form:
 \begin{center}
-\texttt{f(X,g(X)) = f(h(Y),Z)} \\
+\co{f(X,g(X)) = f(h(Y),Z)} \\
 $\Downarrow$ \\
-\texttt{X = h(Y), g(X) = Z} \\
+\co{X = h(Y), g(X) = Z} \\
 $\Downarrow$ \\
-\texttt{X = h(Y), Z = g(X)} \\
+\co{X = h(Y), Z = g(X)} \\
 $\Downarrow$ \\
-\texttt{X = h(Y), Z = g(h(Y))} \\[1.5em]
+\co{X = h(Y), Z = g(h(Y))} \\[1.5em]
 \end{center}
-Had this query included the goal \texttt{Y = Z},
+Had this query included the goal \co{Y = Z},
 the outcome would have been different,
-as we would eventually reach the equation \texttt{Z = g(h(Z))}
+as we would eventually reach the equation \co{Z = g(h(Z))}
 and thus we would fail due to the last rule,
 which is the occurs check.
 
@@ -419,51 +419,51 @@ a selected function call from the goal.
 
 The algorithm proceeds as follows.
 If there are no unsolved goals, the derivation succeeds.
-Otherwise, select an unsolved goal \texttt{G}
+Otherwise, select an unsolved goal \co{G}
 using the selection function.
 Apply one of the following rules,
-depending on the form \texttt{G} takes.
+depending on the form \co{G} takes.
 \begin{itemize}
 \item
-If \texttt{G} is \texttt{true},
+If \co{G} is \co{true},
 delete it.
 \item
-If \texttt{G} is \texttt{false},
+If \co{G} is \co{false},
 the derivation fails.
 \item
-If \texttt{G} is
+If \co{G} is
 a unification between two data terms,
 handle it according to the rules
 given in the last section
 for the unification algorithm.
 If that fails then the derivation fails.
 \item
-If \texttt{G} is an atomic goal
+If \co{G} is an atomic goal
 that contains a function call,
 and the selected function call in that goal is
-\texttt{f(t1,...,tN)} for a function \texttt{f/N},
+\co{f(t1,...,tN)} for a function \co{f/N},
 then choose a clause
-whose head takes the form \texttt{f(s1,...,sN) = sR}.
+whose head takes the form \co{f(s1,...,sN) = sR}.
 Rename variables as necessary so
 they do not conflict with
 any variables already present in the query.
 Remove the selected function call
-and replace it with \texttt{sR},
+and replace it with \co{sR},
 and to the query add
-the unifications \texttt{t1 = s1, ..., tN = sN},
+the unifications \co{t1 = s1, ..., tN = sN},
 followed by the clause body if present.
 \item
-If \texttt{G} is
-a predicate call \texttt{p(t1,...,tN)}
-for a predicate \texttt{p/N},
+If \co{G} is
+a predicate call \co{p(t1,...,tN)}
+for a predicate \co{p/N},
 then choose a clause
-whose head takes the form \texttt{p(s1,...,sN)}.
+whose head takes the form \co{p(s1,...,sN)}.
 Rename variables as necessary so
 they do not conflict with
 any variables already present in the query.
 Remove the selected predicate call
 and replace it with
-the unifications \texttt{t1 = s1, ..., tN = sN},
+the unifications \co{t1 = s1, ..., tN = sN},
 followed by the clause body if present.
 \end{itemize}
 After applying the appropriate rule
@@ -483,7 +483,7 @@ require a bit more attention.
 
 When it comes to selecting a goal,
 Mercury's selection function chooses a goal or function call
-whose initial \texttt{inst}s
+whose initial \co{inst}s
 are satisfied by the argument terms.
 In the strict sequential semantics,
 the leftmost goal that satisfies this condition is selected.
@@ -510,7 +510,7 @@ that is, if all choices have previously been explored,
 then execution of the query fails\label{gi:failure2}.
 
 In Mercury,
-the \texttt{nondet} determinism category
+the \co{nondet} determinism category
 refers to the second form of nondeterminism above,
 namely that relating to clause selection.
 Users do not need to declare the first form,
@@ -523,8 +523,8 @@ in accordance with execution of the query.
 A tree of this form is known as an SLD tree\label{gi:sld-tree}.
 
 To illustrate the algorithm,
-consider the call \texttt{append([a,b],[c],Xs)}.
-For convenience we repeat the clauses for \texttt{append/3} here:
+consider the call \co{append([a,b],[c],Xs)}.
+For convenience we repeat the clauses for \co{append/3} here:
 \begin{verbatim}
     append([], Bs, Bs).
     append([V | As], Bs, [V | Cs]) :-
@@ -535,7 +535,7 @@ The initial query is as follows:
     :- append([a,b], [c], Xs).
 \end{verbatim}
 If the first clause were chosen
-we would get the unification \texttt{[a,b] = []},
+we would get the unification \co{[a,b] = []},
 among others,
 but this unification would fail.
 We therefore need to choose the second clause.
@@ -555,7 +555,7 @@ we get:
     :- Xs = [a | Cs1], append([b], [c], Cs1).
 \end{verbatim}
 If the first clause were chosen
-we would get the unification \texttt{[b] = []},
+we would get the unification \co{[b] = []},
 which would fail,
 so again we choose the second clause.
 We rename the clause variables with a different suffix
@@ -694,7 +694,7 @@ above and beyond the operational semantics
 that programming languages in general provide.
 In other words,
 we are justified in having two horizontal arrows
-in the lower part of Figure~\ref{fig:nutshell}
+in the middle and lower part of Figure~\ref{fig:nutshell}
 on page~\pageref{fig:nutshell},
 instead of one.
 
@@ -727,11 +727,11 @@ when there is in fact a successful or failed branch
 that would have been reached with different choices.
 
 The code in Figure~\ref{fig:incompleteness} illustrates this point.
-The predicate \texttt{p/0} has two clauses,
+The predicate \co{p/0} has two clauses,
 the first of which immediately loops.
 If clause selection chooses this clause first for every call
 then the program loops indefinitely without succeeding.
-The second clause, however, proves that $p$ is valid.
+The second clause, however, proves that \sym{p} is valid.
 As required by the Completeness theorem,
 the proof of this validity does exist---%
 execution needs only to select the second clause at some stage---%
@@ -758,12 +758,12 @@ Two predicate definitions that illustrate issues with completeness.
 \end{figure}
 
 Similarly,
-the predicate \texttt{q/0} has a single clause
+the predicate \co{q/0} has a single clause
 whose body is comprised of two conjuncts.
 The first conjunct immediately loops,
 so if goal selection chooses this goal first for every call
 then the program loops indefinitely without failing.
-The second conjunct proves that $q$ is unsatisfiable,
+The second conjunct proves that \sym{q} is unsatisfiable,
 and similarly to the previous example the proof would have been found
 if the second conjunct was selected at some stage.
 
@@ -798,8 +798,8 @@ that is, programs without negation.
 This means programs without conditionals either,
 since they use a form of negation.
 In fact conditionals are more fundamental in Mercury,
-as `\texttt{not G}' is a shorthand for
-`\texttt{( if G then false else true )}'.
+as `\co{not G}' is a shorthand for
+`\co{if G then false else true}'.
 
 In the operational semantics,
 the rule for implementing negation is known as negation-as-failure.
@@ -813,26 +813,26 @@ by adding an extra rule to the SLD rules
 from Section~\ref{sec:resolution};
 such a system is known as SLDNF resolution.
 
-Assuming that \texttt{G} is the selected goal,
+Assuming that \co{G} is the selected goal,
 the additional rule for negation-as-failure
 is as follows:
 \begin{itemize}
 \item
-If \texttt{G} is a conditional goal of the form
-\texttt{( if GC then GT else GE )},
-then execute \texttt{GC} as a new query.
-If the query succeeds with a substitution \texttt{S},
-replace \texttt{G} with
-the result of applying \texttt{S} to \texttt{GT}.
-If the query fails without having produced a solution,
+If \co{G} is a conditional goal of the form
+\co{if GC then GT else GE},
+then execute \co{GC} as a new query.
+If the query succeeds with a substitution \co{S},
+replace \co{G} with
+the result of applying \co{S} to \co{GT}.
+If the query fails without having produced an answer,
 that is, if all derivations have failed
 even after exhausting all possible choices,
-replace \texttt{G} with \texttt{GE}.
+replace \co{G} with \co{GE}.
 \end{itemize}
 Note that if the condition succeeds,
 it may leave choice points behind.
 These will lead to alternative substitutions
-being applied to \texttt{GT},
+being applied to \co{GT},
 leading to different derivations.
 
 It is possible to extend the Soundness theorem\label{gi:soundness2}
@@ -861,46 +861,46 @@ without manual assistance.
 
 We are now in a position to give rules
 that cover Mercury's other compound goals.
-Assuming that \texttt{G} is the selected goal,
+Assuming that \co{G} is the selected goal,
 the additional rules are:
 
 \begin{itemize}
 \item
-If \texttt{G} is a disjunction,
+If \co{G} is a disjunction,
 choose one of the disjuncts
-and replace \texttt{G} with the chosen disjunct.
+and replace \co{G} with the chosen disjunct.
 As with clause selection,
 a choice point is created so that
 execution may backtrack to the remaining disjuncts.
 \item
-If \texttt{G} is an explicit existential quantification,
+If \co{G} is an explicit existential quantification,
 the quantified variables are renamed apart in the goal
 so that they do not conflict with any variables already in the query.
 The existentially quantified goal is then removed
 and replaced with the renamed goal.
 \item
-If \texttt{G} is defined as an abbreviation for another goal,
+If \co{G} is defined as an abbreviation for another goal,
 it is removed and replaced with that other goal.
 Note that this rule is essentially applied at compile-time,
 since the replacement occurs as part of desugaring.
 \item
-If \texttt{G} is a purity or determinism cast,
+If \co{G} is a purity or determinism cast,
 it is treated as if the cast was not present
 and executed in the same way as other goals.
 \item
-If \texttt{G} is a trace goal,
+If \co{G} is a trace goal,
 the trace condition is evaluated
 (at compile-time or run-time, or both).
-If it is true then \texttt{G} is replaced
+If it is true then \co{G} is replaced
 by the goal with the trace condition,
-otherwise \texttt{G} is removed.
+otherwise \co{G} is removed.
 If an I/O state is passed to the trace goal
 then the appropriate substitutions are made.
 \item
-If \texttt{G} is an event goal,
+If \co{G} is an event goal,
 it is removed.
 Doing so triggers a user-defined debug event
-that may be seen in \texttt{mdb},
+that may be seen in \co{mdb},
 the Mercury debugger.
 \end{itemize}
 

@@ -32,20 +32,20 @@ app([A | As], Bs, [C | Cs]) :-
 \end{figure}
 
 Figure~\ref{fig:len-interp} gives a picture
-of the declarative semantics of \texttt{len/1}.
+of the declarative semantics of \sym{len/1}.
 This semantics consists of a table of \emph{atoms},
 which in this case is short for \emph{atomic propositions}.
 (This is one of several uses of the word ``atom'' in logic programming;
 there are others as well.)
-For a function of arity $N$, each atom in the table
-consists of the function name applied to $N + 1$ terms,
+For a function of arity $n$, each atom in the table
+consists of the function name applied to $n + 1$ terms,
 where the last, distinguished term is the function result.
-(For a predicate of arity $N$, each atom in the table
-consists of the predicate name applied to $N$ terms,
+(For a predicate of arity $n$, each atom in the table
+consists of the predicate name applied to $n$ terms,
 none of the terms being distinguished.)
 % each of which is an \emph{instance}
 % of the head of one (or more) of the clauses of the function,
-% mapping each possible argument value of the \texttt{len/1} function
+% mapping each possible argument value of the \sym{len/1} function
 % to the corresponding result.
 These atoms must be \emph{ground},
 which means that they may not contain any variables.
@@ -77,16 +77,16 @@ len([b, a, b]) = 3
 ...
 \end{verbatim}
 \end{minipage}
-\caption{Interpretation of \texttt{len/1}.
+\caption{Interpretation of \sym{len/1}.
 \label{fig:len-interp}}
 \end{figure}
 
 Similarly, Figure~\ref{fig:app-interp} gives a picture
-of the declarative semantics of \texttt{app/3}.
+of the declarative semantics of \sym{app/3}.
 It again also consists of a table of ground instances
-of the head of the \texttt{app/3} predicate,
+of the head of the \sym{app/3} predicate,
 although in this case,
-since \texttt{app/3} is a predicate,
+since \sym{app/3} is a predicate,
 no argument is distinguished as the return value.
 Instead, the arguments must satisfy the relation that holds
 between the two input lists
@@ -117,7 +117,7 @@ app([], [b, b], [b, b])
 ...
 \end{verbatim}
 \end{minipage}
-\caption{Interpretation of \texttt{app/3}.
+\caption{Interpretation of \sym{app/3}.
 \label{fig:app-interp}}
 \end{figure}
 
@@ -140,7 +140,7 @@ then the table will contain entries such as
 
 Herbrand interpretations are purely syntactic in nature.
 This reflects the compiler's view of the program:
-the compiler does not know that \texttt{len}
+the compiler does not know that \sym{len/1}
 is supposed to mean ``list length'',
 it only knows it as a symbol.
 These interpretations also reveal an important fact:
@@ -152,7 +152,7 @@ variables from the program.
 
 Furthermore,
 this way of thinking works not just for tiny predicates
-like \texttt{len} and \texttt{app},
+like \sym{len/1} and \sym{app/3},
 but also for much larger pieces of code,
 with far more complexity in their intended interpretations.
 This ability to \emph{scale} is crucial for
@@ -174,13 +174,13 @@ it is called the
 
 To a programmer, even an informal definition can be sufficient.
 For example, we could give the intended interpretations
-of \textit{len/1} and \textit{app/1} as follows:
+of \sym{len/1} and \sym{app/1} as follows:
 \[
-\text{for } n \geqslant 0, \ssym{len}([t_1, \ldots, t_n]) = n
+\text{for } n \geqslant 0, \ct{len}([x_1, \ldots, x_n]) = n
 \]
 \[
 \text{for } 0 \leqslant m \leqslant n,
-\ssym{app}([t_1, \ldots, t_m], [t_{m+1}, \ldots, t_n], [t_1, \ldots, t_n])
+\ct{app}([x_1, \ldots, x_m], [x_{m+1}, \ldots, x_n], [x_1, \ldots, x_n])
 \]
 From these formulas,
 it should be clear whether a particular ground atom
@@ -194,11 +194,11 @@ It is the usual practice in Mercury
 to describe the intended interpretation
 (along with any other pertinent information)
 in comments immediately preceding
-a \texttt{pred} or \texttt{func} declaration.
+a \co{pred} or \co{func} declaration.
 For example,
-in the Mercury standard library,
-the declarations for the \texttt{list.length/1} function
-and the \texttt{list.length/2} predicate
+in the list module of the Mercury standard library,
+the declarations for the \sym{length/1} function
+and the \sym{length/2} predicate
 appear as follows:
 \begin{verbatim}
         % length(List) = Length:
@@ -212,7 +212,7 @@ appear as follows:
 \end{verbatim}
 (The word ``iff'' is the usual abbreviation used in mathematics
 for ``if and only if''.)
-Similarly, \texttt{list.append/3} is described as follows:
+Similarly, \sym{append/3} is described as follows:
 \begin{verbatim}
         % Standard append predicate:
         % append(Start, End, List) is true iff
@@ -231,7 +231,7 @@ Doing this enables users of the module
 to understand whether or not they are
 using the interface correctly.
 
-We saw above that a list such as \texttt{[1,2,3]}
+We saw above that a list such as \co{[1,2,3]}
 can be given the intended interpretation $[1, 2, 3]$.
 This might seem trivial,
 but it is worth noting that
@@ -259,7 +259,7 @@ for the list append predicate,
 and for the list length function.
 The list append function can be specified as:
 \[
-    \sym{append}([s_1, \ldots, s_m], [t_1, \ldots, t_n]) =
+    \ct{append}([s_1, \ldots, s_m], [t_1, \ldots, t_n]) =
         [s_1, \ldots, s_m, t_1, \ldots, t_n]
 \]
 % XXX Don't specify the function version of append here.
@@ -267,13 +267,13 @@ The list append function can be specified as:
 % it should be defined where it's needed. Maybe not use it at all?
 Similarly, the list reverse function can be specified as:
 \[
-    \sym{reverse}([t_1, \ldots, t_n]) = [t_n, \ldots, t_1]
+    \ct{reverse}([t_1, \ldots, t_n]) = [t_n, \ldots, t_1]
 \]
 We will use these interpretations next
 when we implement the queue ADT.
 
 
-\section{Running example: \texttt{queue} ADT}
+\section{Running example: queue ADT}
 \label{sec:queue-spec}
 
 In this section we give the intended interpretation for
@@ -293,25 +293,25 @@ The initialization function, \sym{init/0},
 is easy to specify because it just returns
 (a representation of)
 the empty queue:
-\[ \sym{init} = [] \]
+\[ \ct{init} = [] \]
 Putting an element at the end of the queue
 is done with the \sym{put/3} predicate,
 which takes as arguments an element,
 the queue prior to putting the element at the end,
 and the queue after this has been done:
-\[ \sym{put}(z, [t_1, \ldots, t_n], [t_1, \ldots, t_n, z]) \]
+\[ \ct{put}(z, [t_1, \ldots, t_n], [t_1, \ldots, t_n, z]) \]
 Getting an element from the front of the queue is done with
 a \sym{get/3} predicate,
 which is similar except that the second argument
 is the queue prior to getting the element from the front:
-\[ \sym{get}(z, [z, t_1, \ldots, t_n], [t_1, \ldots, t_n]) \]
+\[ \ct{get}(z, [z, t_1, \ldots, t_n], [t_1, \ldots, t_n]) \]
 The inverse operations,
 \sym{unput/3} and \sym{unget/3},
 are the same as the forward operations
 except that the second and third arguments are reversed:
 \begin{IEEEeqnarray*}{c}
-    \sym{unput}(z, [t_1, \ldots, t_n, z], [t_1, \ldots, t_n]) \\
-    \sym{unget}(z, [t_1, \ldots, t_n], [z, t_1, \ldots, t_n])
+    \ct{unput}(z, [t_1, \ldots, t_n, z], [t_1, \ldots, t_n]) \\
+    \ct{unget}(z, [t_1, \ldots, t_n], [z, t_1, \ldots, t_n])
 \end{IEEEeqnarray*}
 Finally,
 both the predicate \sym{eq/2}
@@ -320,8 +320,8 @@ and the function \sym{list/1}
 that converts a queue to an ordinary list,
 are trivial to specify:
 \begin{IEEEeqnarray*}{c}
-    \sym{eq}([t_1, \ldots, t_n], [t_1, \ldots, t_n]) \\
-    \sym{list}([t_1, \ldots, t_n]) = [t_1, \ldots, t_n]
+    \ct{eq}([t_1, \ldots, t_n], [t_1, \ldots, t_n]) \\
+    \ct{list}([t_1, \ldots, t_n]) = [t_1, \ldots, t_n]
 \end{IEEEeqnarray*}
 That is,
 the intended interpretation of \sym{eq/2}
@@ -372,9 +372,9 @@ that characterizes the outcome of all possible calls,
 then that predicate or function is pure.
 
 In the last section we gave
-the \texttt{pred} declaration for \texttt{list.append/3}
-as it appears in the standard library.
-Figure~\ref{fig:append-decls} gives this \texttt{pred} declaration again,
+the \co{pred} declaration for \sym{append/3}
+as it appears in the list module of the standard library.
+Figure~\ref{fig:append-decls} gives this \co{pred} declaration again,
 along with all of the declared modes.
 
 \begin{figure}
@@ -386,11 +386,13 @@ along with all of the declared modes.
     :- mode append(in, out, in) is semidet.
     :- mode append(out, out, in) is multi.
 \end{verbatim}
-\caption{Declarations for \texttt{list.append/3} in the standard library.
+\caption{
+Declarations for \sym{append/3}
+in the list module of the standard library.
 \label{fig:append-decls}}
 \end{figure}
 
-The role of the \texttt{pred} declaration,
+The role of the \co{pred} declaration,
 which supplies the argument types,
 should be clear as regards the interpretations we have seen so far:
 a ground atom that is true in the interpretation
@@ -398,10 +400,10 @@ will have arguments that are correctly typed.
 (If the types of the arguments include one or more type variables,
 then the arguments in the interpretation
 will have arguments that are correctly typed
-for some assignment of values -concrete types- to the type variables.)
+for some assignment of values---concrete types---to the type variables.)
 The compiler is able to check that this is the case.
 
-The role of the \texttt{mode} declarations
+The role of the \co{mode} declarations
 is perhaps not so clear in the declarative semantics,
 but in conjunction with the determinism
 each one constrains the set of ground atoms that are true,
@@ -414,17 +416,17 @@ only if it has a consistent interpretation across all calls,
 regardless of the mode in which the call is made.
 
 This means, for example,
-that if a call to $\sym{append}([1],[2,3],z)$
+that if a call to $\ct{append}([1],[2,3],z)$
 yields a solution $z = [1,2,3]$,
 which it does,
-then a call to $\sym{append}(x,y,[1,2,3])$
+then a call to $\ct{append}(x,y,[1,2,3])$
 should at some stage yield the solution $x = [1], y = [2,3]$,
 which it also does.
 Both solutions derive from the fact that
-$\sym{append}([1],[2,3],[1,2,3])$ is true
+$\ct{append}([1],[2,3],[1,2,3])$ is true
 in the declarative interpretation.
 The same applies for any other pair of calls
-to different modes of \sym{append}.
+to different modes of \sym{append/3}.
 
 It should not be surprising that this is the case.
 The declarative semantics determines
@@ -435,10 +437,10 @@ Since the same clauses apply to all modes,
 no discrepancy can arise.
 
 
-\subsection{Running example: \texttt{queue} declarations}
+\subsection{Running example: queue declarations}
 \label{sec:queue-decl}
 
-Continuing with our \texttt{queue} example,
+Continuing with our queue example,
 we can work out from our intended interpretation of the queue operations,
 as well as from our intended way of calling them,
 what the types, modes, and determinism of each operation will be.
@@ -448,15 +450,15 @@ in Figure~\ref{fig:queue-spec}.
 
 \begin{figure}
 \begin{IEEEeqnarray*}{l}
-    \sym{init} = [] \\
-    \sym{put}(z, [t_1, \ldots, t_n], [t_1, \ldots, t_n, z]) \\
-    \sym{get}(z, [z, t_1, \ldots, t_n], [t_1, \ldots, t_n]) \\
-    \sym{unput}(z, [t_1, \ldots, t_n, z], [t_1, \ldots, t_n]) \\
-    \sym{unget}(z, [t_1, \ldots, t_n], [z, t_1, \ldots, t_n]) \\
-    \sym{eq}([t_1, \ldots, t_n], [t_1, \ldots, t_n]) \\
-    \sym{list}([t_1, \ldots, t_n]) = [t_1, \ldots, t_n]
+    \ct{init} = [] \\
+    \ct{put}(z, [t_1, \ldots, t_n], [t_1, \ldots, t_n, z]) \\
+    \ct{get}(z, [z, t_1, \ldots, t_n], [t_1, \ldots, t_n]) \\
+    \ct{unput}(z, [t_1, \ldots, t_n, z], [t_1, \ldots, t_n]) \\
+    \ct{unget}(z, [t_1, \ldots, t_n], [z, t_1, \ldots, t_n]) \\
+    \ct{eq}([t_1, \ldots, t_n], [t_1, \ldots, t_n]) \\
+    \ct{list}([t_1, \ldots, t_n]) = [t_1, \ldots, t_n]
 \end{IEEEeqnarray*}
-\caption{Intended interpretations for the \texttt{queue} operations
+\caption{Intended interpretations for the queue operations
 \label{fig:queue-spec}}
 \end{figure}
 
@@ -468,13 +470,13 @@ we should be able to use elements of any type.
 Since we intend to treat all elements in the queue the same way,
 we require that all of the elements in a queue are the same type,
 and the same is true for the lists we produce
-(for which we will use the standard \texttt{list/1} type).
+(for which we will use the standard \sym{list/1} type).
 
 We represent the type of elements with a \emph{type variable}
 in the predicate/function declarations of the queue operations.
 Any actual calls to these predicates and functions
 will operate on elements of a specific concrete type,
-such as \texttt{int} or \texttt{string}.
+such as \sym{int} or \sym{string}.
 You can think of this as
 having the value of the type variable
 bound to the actual concrete type of the elements,
@@ -483,7 +485,7 @@ just as e.g. the variable representing the first input argument
 is bound to the value being passed in that argument position in the call
 for the same duration.
 
-Most Mercury code uses \texttt{T}, the initial letter of \emph{type},
+Most Mercury code uses \co{T}, the initial letter of \emph{type},
 as the default name of type variables
 in type, predicate and function declarations
 that include only one type variable,
@@ -493,18 +495,18 @@ includes more than one type variable,
 or the role of the type variabl is not expected to be immediately clear,
 Mercury programmers tend to give the type variable(s) more meaningful names.)
 
-Therefore the abstract type definition for \texttt{queue(T)}
+Therefore the abstract type definition for queues
 will look like this:
 \begin{verbatim}
     :- type queue(T).
 \end{verbatim}
-% The lists will be of type \texttt{list(T)}.
+% The lists will be of type \co{list(T)}.
 % XXX But the list/1 type constructor does not need to be declared by users.
 
 The \sym{init/0} function has no arguments,
 and always returns the same queue every time it is called.
-So the return value has mode \texttt{out},
-and the function has determinism \texttt{det}.
+So the return value has mode \co{out},
+and the function has determinism \co{det}.
 These are the default mode and default determinism for functions,
 so the declaration is:
 \begin{verbatim}
@@ -514,7 +516,7 @@ so the declaration is:
 The four main operations have three arguments,
 the first being an element and the second and third being queues,
 with the elements in all three arguments being of the same type.
-Their \texttt{pred} declarations are therefore
+Their \co{pred} declarations are therefore
 \begin{verbatim}
     :- pred put(T, queue(T), queue(T)).
     :- pred get(T, queue(T), queue(T)).
@@ -524,14 +526,14 @@ Their \texttt{pred} declarations are therefore
 For some of these operations the first argument is an input,
 and for others it is an output.
 The second and third arguments
-form an `\texttt{in}, \texttt{out}' pair---%
+form an `\co{in}, \co{out}' pair---%
 this is a useful pattern to follow
 since it allows for the convenient use of state variables.
 We intend the main operations to produce at most one result,
 even though there may be
 multiple representations of the same output value,
 so the determinism of each operation
-should be either \texttt{det} or \texttt{semidet},
+should be either \co{det} or \co{semidet},
 depending on whether or not it always produces a solution.
 
 For both the \sym{put/3} and \sym{unget/3} operations,
@@ -539,13 +541,13 @@ the length of the output queue is one greater than
 the length of the input queue.
 There is no upper limit on the length of queues
 so these operations always have a solution,
-thus their determinism is \texttt{det}.
+thus their determinism is \co{det}.
 For the \sym{get/3} and \sym{unput/3} operations,
 on the other hand,
 the length of the output queue is one \emph{less} than
 the length of the input queue,
 which means there are no solutions if the input queue is empty.
-These operations must therefore be \texttt{semidet},
+These operations must therefore be \co{semidet},
 which leaves us with the following mode declarations:
 \begin{verbatim}
     :- mode put(in, in, out) is det.
@@ -557,7 +559,7 @@ which leaves us with the following mode declarations:
 The \sym{eq/2} predicate takes two queues and either succeeds or fails.
 It has no outputs,
 so it cannot produce multiple solutions
-and its determinism is therefore \texttt{semidet}.
+and its determinism is therefore \co{semidet}.
 It is declared as follows:
 \begin{verbatim}
     :- pred eq(queue(T), queue(T)).
@@ -568,7 +570,7 @@ Normally, programmers put the mode declaration(s) for a predicate or function
 immediately after the predicate or function declaration itself,
 as in this case.
 We separated the predicate declarations of
-\texttt{put}, \texttt{get}, \texttt{unput} and \texttt{unget} above
+\sym{put/3}, \sym{get/3}, \sym{unput/3} and \sym{unget/3} above
 from their mode declarations
 only to improve the flow of their explanations.
 
@@ -599,8 +601,10 @@ and like \sym{init/0} it uses the default function mode:
     :- func list(queue(T)) = list(T).
 \end{verbatim}
 
+\noindent
 The overall set of declarations for the queue operations is therefore
 
+% XXX this overflows; maybe we can shrink the font size for verbatim?
 \begin{verbatim}
     :- func init = queue(T).
     :- pred put(T::in, queue(T)::in, queue(T)::out) is det.
@@ -611,11 +615,12 @@ The overall set of declarations for the queue operations is therefore
     :- func list(queue(T)) = list(T).
 \end{verbatim}
 
+
 \subsection{Mode-dependent clauses}
 \label{sec:mode-dependent}
 
 It can be useful to define
-multi-moded predicates such as \texttt{append/3},
+multi-moded predicates such as \sym{append/3},
 the use of which can readily enable
 larger multi-moded predicates to be implemented.
 However,
@@ -623,17 +628,17 @@ it can sometimes be the case that,
 irrespective of how the clauses defining a predicate are written,
 making one mode efficient inevitably results in
 another mode being inefficient.
-An example of this is the following mode of \texttt{append/3},
+An example of this is the following mode of \sym{append/3},
 which is commented out in the standard library.
 \begin{verbatim}
     % :- mode append(out, in, in) is semidet.
 \end{verbatim}
 The explanation for why it is commented out says that the mode
-``is \texttt{semidet} in the sense that it does not
+``is \co{semidet} in the sense that it does not
 succeed more than once---but operationally, it does create a choice-point,
 which means both that it is inefficient,
-and that the compiler can't deduce that it is semidet.
-Use \texttt{remove\_suffix} instead.''
+and that the compiler can't deduce that it is \co{semidet}.
+Use \co{remove\_suffix} instead.''
 
 If such a mode is nonetheless required for a predicate,
 and the inefficiency would otherwise be unacceptable,
@@ -662,7 +667,7 @@ are typically referred to as ``non-logical\label{gi:non-logical}''.
 (Note that in Section~\ref{sec:syntax},
 we will see this term used in a different sense.)
 The canonical example of a non-logical predicate in Prolog
-is \texttt{var/1},
+is \co{var/1},
 which succeeds if and only if the argument is not bound.
 This can be implemented in Mercury as follows.
 \begin{verbatim}
@@ -673,12 +678,12 @@ This can be implemented in Mercury as follows.
     var(_::in) :- false.
     var(_::unused) :- true.
 \end{verbatim}
-A call to \texttt{var(X)} would succeed if,
+A call to \co{var(X)} would succeed if,
 at the point of call,
-\texttt{X} was not bound to anything.
+\co{X} was not bound to anything.
 This implies that the predicate is interpreted as true
 for \emph{every} possible argument value.
-If the same call was made with \texttt{X} bound to \texttt{a},
+If the same call was made with \co{X} bound to \co{a},
 however, then the call would fail.
 This implies that the predicate is interpreted as false
 for the value $a$,
@@ -689,20 +694,20 @@ since there does not exist a declarative interpretation
 that applies to all modes.
 
 
-\subsection{Case study: \texttt{string.append/3}}
+\subsection{Case study: \co{string.append/3}}
 \label{sec:purity-example}
 
 In this section we give an example
 of using the declarative semantics to resolve a problem
 related to the modes of a predicate.
 The problem arose in the course of developing the Mercury standard library,
-and involved the \texttt{string.append/3} predicate.
+and involved the \sym{append/3} predicate in the string module.
 
 In early versions of the Mercury,
 strings were defined as NUL terminated sequences of ASCII characters.
 % XXX should this be saying ISO-8859-1?
 As with lists,
-the \texttt{string.append/3} predicate had
+the string \sym{append/3} predicate had
 a ``forward'' mode that appended strings,
 as well as a ``reverse'' mode that split them apart.
 A consistent declarative semantics applied to both of these modes,
@@ -718,8 +723,8 @@ that each contain a varying number of code units.
 It is possible for sequences of code units to be ill-formed,
 in particular if strings can be split between arbitrary code units.
 
-In the forward (in, in, out) mode
-of the Unicode version of \texttt{string.append/3},
+In the forward (\co{in}, \co{in}, \co{out}) mode
+of the Unicode version of string \sym{append/3},
 the behaviour is to append the sequences of code units representing
 the (possibly ill-formed) input strings.
 Consider two strings $s_1$ and $s_2$,
@@ -727,18 +732,19 @@ neither of which is well-formed,
 but which, when appended together, result in a string,
 call it $s_3$, which \emph{is} well-formed.
 
-Given that the forward (in, in, out) mode of \texttt{string.append/3},
+Given that the forward mode of string \sym{append/3},
 when given $s_1$ and $s_2$ as the first two arguments,
 will return $s_3$ as the third argument,
-the intended interpretation of append
-must include ground atoms such as $\sym{append}(s_1, s_2, s_3)$.
+its intended interpretation
+must include ground atoms such as $\ct{append}(s_1, s_2, s_3)$.
 
-If we want the reverse (out, out, in) mode of \texttt{string.append/3}
+If we want the reverse (\co{out}, \co{out}, \co{in}) mode
+of string \sym{append/3}
 to have the same semantics as the forward mode, and we do,
-then the reverse (out, out, in) mode of the predicate
+then the reverse mode of the predicate
 \emph{must} return the pair $s_1$ and $s_2$ as one the solutions
 when given as input $s_3$ in the third argument position.
-This means that the reverse mode of \texttt{string.append/3}
+This means that the reverse mode of string \sym{append/3}
 must split its input string
 at all positions between \emph{code units},
 including those in the \emph{middle} of a code point,
@@ -749,20 +755,23 @@ at least if the input string is well formed.
 This means that we had to choose one of the following courses of action.
 \begin{itemize}
 \item
-We can make the (out,out,in) mode of \texttt{string.append/3}
+We can make the (\co{out},\co{out},\co{in}) mode
+of string \sym{append/3}
 break strings between code points,
 which conforms to programmer expectations,
 but gives the reverse mode a different interpretation,
 i.e.\ a different semantics, than the forward mode.
 \item
-We can make the (out,out,in) mode of \texttt{string.append/3}
+We can make the (\co{out},\co{out},\co{in}) mode
+of string \sym{append/3}
 break strings between code unit,
 which keeps the semantics the same between modes
 but breaks programmer expectations,
 and does so in a way that is likely to create bugs
 (by creating two ill-formed strings out of a well-formed input string).
 \item
-We can delete the (out,out,in) mode of \texttt{string.append/3}.
+We can delete the (\co{out},\co{out},\co{in}) mode
+of string \sym{append/3}.
 This does not break either the declarative semantics
 or programmer expectations,
 but it does have the downside of breaking existing code
@@ -770,16 +779,19 @@ that calls that predicate in that mode.
 \end{itemize}
 
 We chose the third approach as the best one available.
-We deleted the reverse (out,out,in) mode of \texttt{string.append/3},
-and created \texttt{string.nondet\_append/3}, a new predicate,
+We deleted the reverse (\co{out},\co{out},\co{in}) mode
+of string \sym{append/3},
+and created \sym{nondet\_append/3},
+a new predicate in the string module,
 to replace it.
-This new predicate has only one mode, the (out,out,in) mode,
+This new predicate has only one mode,
+the (\co{out},\co{out},\co{in}) mode,
 and it splits its input string between code points
 (provided the input string is itself well-formed).
 This does break backward compatibility, but it does so visibly:
-any old code that calls \texttt{string.append}
+any old code that calls string \sym{append/3}
 in its now-deleted mode it would get a compiler error,
-until the call site is updated to call \texttt{string.nondet\_append} instead.
+until the call site is updated to call \sym{nondet\_append/3} instead.
 
 
 \section{Partial correctness}
@@ -789,13 +801,13 @@ Clauses are supposed to state things that are
 true in the intended interpretation.
 For example,
 in Figure~\ref{fig:len-app}
-the first clause of \texttt{len/1} states that
+the first clause of \sym{len/1} states that
 the length of the empty list is zero.
 The second states that,
 no matter what terms we substitute
-for the variables \texttt{\_} and \texttt{Xs},
-the length of \texttt{[\_~|~Xs]} will be one greater than
-the length of \texttt{Xs}---%
+for the variables \co{\_} and \co{Xs},
+the length of \co{[\_~|~Xs]} will be one greater than
+the length of \co{Xs}---%
 in other words the length of a non-empty list
 is one greater than the length of its tail.
 Both statements are true
@@ -841,13 +853,13 @@ Mercury's mode and determinism systems can
 make the compiler check the coverage for us:
 if the determinism indicates that calls cannot fail
 (that is, if the determinism is
-\texttt{det}, \texttt{multi}, or \texttt{cc\_multi}),
+\co{det}, \co{multi}, or \co{cc\_multi}),
 then all possible values of the type must be covered
-for any argument with mode \texttt{in}.
-In this case of the \texttt{len/1} function,
+for any argument with mode \co{in}.
+In the case of the \sym{len/1} function,
 the one argument is an input
 because this is the default mode for functions,
-and this mode of the function is det
+and this mode of the function is \co{det}
 because this is the default determinism
 for functions in their default mode.
 Had we not covered every possible list,
@@ -858,17 +870,17 @@ The same also applies to any other function declared with
 the default mode.
 
 Continuing with the examples,
-the first clause of \texttt{app/3} is a fact, which states that
+the first clause of \sym{app/3} is a fact, which states that
 if you append the empty list and any other list,
 the result will be the same as the other list.
 The second clause is a rule;
 these are taken as logical implications
 in which the body implies the head
-(that is, \texttt{:-} is interpreted as $\leftarrow$).
+(that is, \co{:-} is interpreted as $\leftarrow$).
 So this clause is stating that, for any variable assignment,
-if \texttt{Cs} is the result of appending \texttt{As} and \texttt{Bs},
-then \texttt{[X | Cs]} is the result of
-appending \texttt{[X | As]} and \texttt{Bs}.
+if \co{Cs} is the result of appending \co{As} and \co{Bs},
+then \co{[X | Cs]} is the result of
+appending \co{[X | As]} and \co{Bs}.
 Again, both clauses are valid according to the intended interpretation,
 and the definition is clause complete.
 In this case clause completeness means that,
@@ -879,8 +891,8 @@ whose body is intended to be true
 (under the same variable assignment).
 
 Since both conditions are satisfied,
-we can conclude in a similar way to \texttt{len/1}
-that our implementation of \texttt{app/3} is correct.
+we can conclude in a similar way to \sym{len/1}
+that our implementation of \sym{app/3} is correct.
 
 We have been saying ``correct'' here,
 but this is only as far as the arguments
@@ -916,7 +928,7 @@ with an instance that is not true in the intended interpretation,
 or at least one definition that is not clause complete.
 
 
-\section{Running example: \texttt{queue} implementation}
+\section{Running example: queue implementation}
 \label{sec:queue-impl}
 
 Armed with the notion of partial correctness,
@@ -925,7 +937,7 @@ an implementation of the queue ADT,
 and make a judgement as to
 whether it implements the intended interpretation.
 
-We first need to choose an implementation for the \texttt{queue/1} type.
+We first need to choose an implementation for the \sym{queue/1} type.
 One technique is to use a pair of lists
 representing the front portion and the back portion of a queue.
 The queue is split at an arbitrary point
@@ -953,21 +965,21 @@ as a reminder that it is in fact back-to-front.
 % XXX I would prefer naming the data constructor "queue".
 
 To formalize the above description,
-we can give the intended interpretation of the \texttt{q/2}
+we can give the intended interpretation of the \sym{q/2}
 data constructor.
 Although it is just a symbol
 and not a function in the computational sense,
 it still has an intended interpretation,
 and we can describe it as follows:
 \[
-    q([y_1, \ldots, y_m], [x_1, \ldots, x_n]) =
+    \ct{q}([y_1, \ldots, y_m], [x_1, \ldots, x_n]) =
         [x_1, \ldots, x_n, y_m, \ldots, y_1]
 \]
 This just says exectly what we said above.
 % XXX This shows that putting "rev_back" before "front" is counter-intuitive.
 % XXX Using b and f (for back and front) would be better than x and y.
 
-We can first give a definition for the \texttt{list/1} function,
+We can first give a definition for the \sym{list/1} function,
 which is intended to be the identity function
 on the interpretation of its argument,
 but needs to convert between the two representations
@@ -979,26 +991,25 @@ The single clause is:
 % XXX We should use Front and Back.
 % XXX In general, we should encourage the use of one-character variable names.
 This code uses
-the \texttt{append/2} and \texttt{reverse/1} functions
-that are defined in the \texttt{list} module
-of the standard library.
+the \sym{append/2} and \sym{reverse/1} functions
+that are defined in the list module of the standard library.
 
 It is instructive to look at how
 the clause as a whole is interpreted.
-Since \texttt{X} and \texttt{Y} are lists,
+Since \co{X} and \co{Y} are lists,
 and we have given the interpretations of the other symbols,
 plugging things in results in the following
 for each side of the equation:
 \begin{IEEEeqnarray*}{rCl}
 \IEEEeqnarraymulticol{3}{l}{
-    \sym{list}(q([y_1, \ldots, y_m], [x_1, \ldots, x_n])
+    \ct{list}(\ct{q}([y_1, \ldots, y_m], [x_1, \ldots, x_n])
 } \\ \quad
-    & = & \sym{list}([x_1, \ldots, x_n, y_m, \ldots, y_1]) \\
+    & = & \ct{list}([x_1, \ldots, x_n, y_m, \ldots, y_1]) \\
     & = & [x_1, \ldots, x_n, y_m, \ldots, y_1] \\
 \IEEEeqnarraymulticol{3}{l}{
-    \sym{append}([x_1, \ldots, x_n], \sym{reverse}([y_1, \ldots, y_m]))
+    \ct{append}([x_1, \ldots, x_n], \ct{reverse}([y_1, \ldots, y_m]))
 } \\ \quad
-    & = & \sym{append}([x_1, \ldots, x_n], [y_m, \ldots, y_1]) \\
+    & = & \ct{append}([x_1, \ldots, x_n], [y_m, \ldots, y_1]) \\
     & = & [x_1, \ldots, x_n, y_m, \ldots, y_1]
 \end{IEEEeqnarray*}
 Both sides are interpreted equally,
@@ -1006,9 +1017,9 @@ so we can say that this clause is sound.
 Since this a function with the default mode,
 the clause completeness condition is checked for us,
 and thus we can conclude that
-our implementation of \texttt{list/1} is partially correct.
+our implementation of \sym{list/1} is partially correct.
 
-A simple version of \texttt{eq/2}
+A simple version of \sym{eq/2}
 can be defined by converting both queues to lists:
 \begin{verbatim}
     eq(Q1, Q2) :- list(Q1) = list(Q2).
@@ -1016,9 +1027,9 @@ can be defined by converting both queues to lists:
 The clause soundness condition can easily be verified,
 since the symbols all denote identities.
 The clause completeness condition holds
-because the calls to \texttt{list} cover every possible queue.
+because the calls to \sym{list/1} cover every possible queue.
 
-Implementing \texttt{init/0} is also simple,
+Implementing \sym{init/0} is also simple,
 as the empty queue must have both the front and back lists empty:
 \begin{verbatim}
     init = q([], []).
@@ -1048,64 +1059,64 @@ which means the clause soundness condition is satisfied.
 \end{verbatim}
 \begin{IEEEeqnarray*}{rCl}
     \IEEEeqnarraymulticol{3}{l}{
-        \sym{put}(z, q([y_1, \ldots, y_m], [x_1, \ldots, x_n]),
-            q([z, y_1, \ldots, y_m], [x_1, \ldots, x_n]))
+        \ct{put}(z, \ct{q}([y_1, \ldots, y_m], [x_1, \ldots, x_n]),
+            \ct{q}([z, y_1, \ldots, y_m], [x_1, \ldots, x_n]))
     } \\ \quad
     & \Leftrightarrow &
-        \sym{put}(z, [x_1, \ldots, x_n, y_m, \ldots, y_1],
+        \ct{put}(z, [x_1, \ldots, x_n, y_m, \ldots, y_1],
             [x_1, \ldots, x_n, y_m, \ldots, y_1, z]) \\
     & \Leftrightarrow &
-        \sym{put}(z, [t_1, \ldots, t_{m+n}], [t_1, \ldots, t_{m+n}, z])
+        \ct{put}(z, [t_1, \ldots, t_{m+n}], [t_1, \ldots, t_{m+n}, z])
 \end{IEEEeqnarray*}
 \begin{verbatim}
     get(Z, q(Y, [Z | X]), q(Y, X)).
 \end{verbatim}
 \begin{IEEEeqnarray*}{rCl}
     \IEEEeqnarraymulticol{3}{l}{
-        \sym{get}(z, q([y_1, \ldots, y_m], [z, x_1, \ldots, x_n]),
-            q([y_1, \ldots, y_m], [x_1, \ldots, x_n]))
+        \ct{get}(z, \ct{q}([y_1, \ldots, y_m], [z, x_1, \ldots, x_n]),
+            \ct{q}([y_1, \ldots, y_m], [x_1, \ldots, x_n]))
     } \\
     & \Leftrightarrow &
-        \sym{get}(z, [z, x_1, \ldots, x_n, y_m, \ldots, y_1],
+        \ct{get}(z, [z, x_1, \ldots, x_n, y_m, \ldots, y_1],
             [x_1, \ldots, x_n, y_m, \ldots, y_1]) \\
     & \Leftrightarrow &
-        \sym{get}(z, [z, t_1, \ldots, t_{m+n}], [t_1, \ldots, t_{m+n}])
+        \ct{get}(z, [z, t_1, \ldots, t_{m+n}], [t_1, \ldots, t_{m+n}])
 \end{IEEEeqnarray*}
 \begin{verbatim}
     unput(Z, q([Z | Y], X), q(Y, X)).
 \end{verbatim}
 \begin{IEEEeqnarray*}{rCl}
     \IEEEeqnarraymulticol{3}{l}{
-        \sym{unput}(z, q([z, y_1, \ldots, y_m], [x_1, \ldots, x_n]),
-            q([y_1, \ldots, y_m], [x_1, \ldots, x_n]))
+        \ct{unput}(z, \ct{q}([z, y_1, \ldots, y_m], [x_1, \ldots, x_n]),
+            \ct{q}([y_1, \ldots, y_m], [x_1, \ldots, x_n]))
     } \\
     & \Leftrightarrow &
-        \sym{unput}(z, [x_1, \ldots, x_n, y_m, \ldots, y_1, z],
+        \ct{unput}(z, [x_1, \ldots, x_n, y_m, \ldots, y_1, z],
             [x_1, \ldots, x_n, y_m, \ldots, y_1]) \\
     & \Leftrightarrow &
-        \sym{unput}(z, [t_1, \ldots, t_{m+n}, z], [t_1, \ldots, t_{m+n}])
+        \ct{unput}(z, [t_1, \ldots, t_{m+n}, z], [t_1, \ldots, t_{m+n}])
 \end{IEEEeqnarray*}
 \begin{verbatim}
     unget(Z, q(Y, X), q(Y, [Z | X])).
 \end{verbatim}
 \begin{IEEEeqnarray*}{rCl}
     \IEEEeqnarraymulticol{3}{l}{
-        \sym{unget}(z, q([y_1, \ldots, y_m], [x_1, \ldots, x_n]),
-            q([y_1, \ldots, y_m], [z, x_1, \ldots, x_n]))
+        \ct{unget}(z, \ct{q}([y_1, \ldots, y_m], [x_1, \ldots, x_n]),
+            \ct{q}([y_1, \ldots, y_m], [z, x_1, \ldots, x_n]))
     } \\
     & \Leftrightarrow &
-        \sym{unget}(z, [x_1, \ldots, x_n, y_m, \ldots, y_1],
+        \ct{unget}(z, [x_1, \ldots, x_n, y_m, \ldots, y_1],
             [z, x_1, \ldots, x_n, y_m, \ldots, y_1]) \\
     & \Leftrightarrow &
-        \sym{unget}(z, [t_1, \ldots, t_{m+n}], [z, t_1, \ldots, t_{m+n}])
+        \ct{unget}(z, [t_1, \ldots, t_{m+n}], [z, t_1, \ldots, t_{m+n}])
 \end{IEEEeqnarray*}
-\caption{Code and semantics of initial versions of \texttt{queue} operations
+\caption{Code and semantics of initial versions of queue operations.
 \label{fig:queue-ops}}
 \end{figure}
 
 At this point we could compile the above predicates successfully.
 If we run a test program, however,
-calls to the \texttt{semidet} predicates
+calls to the \co{semidet} predicates
 will sometimes fail when there is supposed to be a solution.
 For example,
 putting an element in an empty queue
@@ -1116,30 +1127,30 @@ The program has a missing answer bug!
 The problem is that we have only checked
 the clause soundness condition,
 and not the clause completeness condition.
-For the \texttt{det} predicates \texttt{put} and \texttt{unget},
+For the \co{det} predicates \sym{put/3} and \sym{unget/3},
 the compiler checks this latter condition for us,
-but for the \texttt{semidet} predicates \texttt{get} and \texttt{unput},
+but for the \co{semidet} predicates \sym{get/3} and \sym{unput/3},
 we need to make sure that
 all possible values of the second argument---%
 which is the input argument of both predicates---%
 are handled.
 
-The second argument in the above clause for \texttt{get/3}
-is \texttt{q(Y, [Z | X])},
+The second argument in the above clause for \sym{get/3}
+is \co{q(Y, [Z | X])},
 which only covers cases where the front list is not empty.
 % XXX The "front" list is the second argument, which again is contra-intuitive.
 We need to determine what should happen if the front list is empty.
 
 Consider the following equivalence:
 \[
-    q(y, []) = q([], \sym{reverse}(y))
+    \ct{q}(y, []) = \ct{q}([], \ct{reverse}(y))
 \]
 This can easily be seen to be true
 by plugging in the interpretation of the various symbols.
 If, for the empty list case,
 we replace the left hand side of this equation with the right hand side
 \emph{before} getting the element from the front of the list,
-the call won't fail,
+the call will not fail,
 unless the entire queue is empty,
 in which case failure is the expected result.
 The code that performs this is as follows:
@@ -1152,7 +1163,7 @@ we can once again plug in the interpretations.
 The clause body gives us:
 \begin{IEEEeqnarray*}{rCl}
     \IEEEeqnarraymulticol{3}{l}{
-        [z, x_1, \ldots, x_n] = \sym{reverse}([y_1, \ldots, y_m])
+        [z, x_1, \ldots, x_n] = \ct{reverse}([y_1, \ldots, y_m])
     } \\ \quad
     & \Leftrightarrow &
         [z, x_1, \ldots, x_n] = [y_m, \ldots, y_1] \\
@@ -1164,10 +1175,11 @@ when these last equations hold.
 For the clause head we get:
 \begin{IEEEeqnarray*}{rCl}
     \IEEEeqnarraymulticol{3}{l}{
-        \sym{get}(z, q([y_1, \ldots, y_m], []), q([], [x_1, \ldots, x_n]))
+        \ct{get}(z, \ct{q}([y_1, \ldots, y_m], []),
+            \ct{q}([], [x_1, \ldots, x_n]))
     } \\ \quad
     & \Leftrightarrow &
-        \sym{get}(z, [y_m, \ldots, y_1], [x_1, \ldots, x_n])
+        \ct{get}(z, [y_m, \ldots, y_1], [x_1, \ldots, x_n])
 \end{IEEEeqnarray*}
 If we use the equations derived from the clause body
 to substitute variables in the above,
@@ -1175,10 +1187,10 @@ and then rename some variables,
 we end up with:
 \begin{IEEEeqnarray*}{rCl}
     \quad & \Leftrightarrow &
-        \sym{get}(z, [z, x_1, \ldots, x_n], [x_1, \ldots, x_n])
+        \ct{get}(z, [z, x_1, \ldots, x_n], [x_1, \ldots, x_n])
         \hspace{1.4em} \\
     & \Leftrightarrow &
-        \sym{get}(z, [z, t_1, \ldots, t_n], [t_1, \ldots, t_n])
+        \ct{get}(z, [z, t_1, \ldots, t_n], [t_1, \ldots, t_n])
 \end{IEEEeqnarray*}
 This matches the intended interpretation, as required,
 and as the two clauses together now cover all possible solutions,
@@ -1191,7 +1203,7 @@ except that here it is the front list that is reversed and put at the back:
     unput(Z, q([], X), q(Y, [])) :-
         [Z | Y] = reverse(X).
 \end{verbatim}
-Verifying the correctness of \texttt{unput/3}
+Verifying the correctness of \sym{unput/3}
 is left as an exercise for the reader.
 
 
@@ -1245,7 +1257,7 @@ Theorem~\ref{thm:partial-correctness} implies that this is possible.
     add([A | As], [B | Bs]) = [A + B | add(As, Bs)].
 \end{verbatim}
 \caption{
-A buggy implementation of \texttt{digits},
+A buggy implementation of \co{digits},
 which represent arbitrary precision integers.
 \label{fig:buggy-ints}}
 \end{figure}
@@ -1254,27 +1266,24 @@ Consider the snippet of (buggy) code in Figure~\ref{fig:buggy-ints},
 that represents arbitrary precision integers
 as lists of decimal digits
 starting from the least significant.
-(This means that e.g.\ the list \texttt{[5,1]} represents the integer 15.)
+(This means that e.g.\: the list \co{[5,1]} represents the integer 15.)
 It provides a function
 to convert an integer to a string,
 and a function to add two integers.
 
-% XXX the following three paragraphs should be merged, and formulas
-% taken out-of-line somehow to avoid overfull hboxes.
-If we call \texttt{to\_string(add([2],[5,1]))}
-the answer \texttt{"17"} is returned,
+If we call $\ct{to\_string}(\ct{add}([2],[5,1]))$
+the answer ``17'' is returned,
 which is the answer that we intended (since 2 + 15 = 17).
-
-If we call \texttt{to\_string(add([6],[7]))}
-it returns \texttt{"13"},
+If we call $\ct{to\_string}(\ct{add}([6],[7]))$
+it returns ``13'',
 which is also the answer that we intended (since 6 + 7 = 13).
 In this case there were incorrect intermediate values,
 but we did not observe this in the result
 so we are not in a position to commence debugging.
 
-If we call \texttt{to\_string(add([2,6,1],[3,7]))}
-then we intend it to return \texttt{"235"} (since 162 + 73 = 235),
-but instead it returns \texttt{"1135"},
+If we call $\ct{to\_string}(\ct{add}([2,6,1],[3,7]))$
+then we intend it to return ``235'' (since 162 + 73 = 235),
+but instead it returns ``1135'',
 which is a wrong answer.
 Thus we have observed a bug symptom.
 
@@ -1283,7 +1292,7 @@ which for us is the atom that was incorrect:
 \begin{verbatim}
     to_string(add([2,6,1], [3,7])) = "1135"
 \end{verbatim}
-We can first check the call to \texttt{add/2}.
+We can first check the call to \sym{add/2}.
 In this case the following atom appears:
 \begin{verbatim}
     add([2,6,1], [3,7]) = [5,13,1]
@@ -1293,7 +1302,7 @@ because integers are supposed to be represented
 by a list whose elements are all in the range 0 to 9,
 and 13 is outside that range.
 Since this is a wrong answer, we proceed to debug the atom.
-It matches the third clause of \texttt{add/2},
+It matches the third clause of \sym{add/2},
 the instance of which contains the following calls:
 \begin{verbatim}
     2 + 3 = 5
@@ -1301,14 +1310,14 @@ the instance of which contains the following calls:
 \end{verbatim}
 The first is obviously true,
 but the second is false because $16 + 7 = 23$,
-so we intended the result to be \texttt{[3,2]}.
+so we intended the result to be $[3,2]$.
 Again, the third clause is matched and the calls made are:
 \begin{verbatim}
     6 + 7 = 13
     add([1], []) = [1]
 \end{verbatim}
 In this case \emph{both} atoms are true in the intended interpretation.
-Since this instance of the third clause of \texttt{add/2}
+Since this instance of the third clause of \sym{add/2}
 takes the results of these calls, all of which are correct,
 and constructs an incorrect result from them,
 we can conclude that the third clause contains a bug,
@@ -1317,11 +1326,11 @@ since it does not allow for a carry bit
 to flow over to the next digit.
 
 Figure~\ref{fig:dd-session} shows
-the transcript of an \texttt{mdb} session,
+the transcript of an \co{mdb} session,
 that uses the declarative debugger to find this problem.
 The process looks a bit different to how we just described it,
 but that is because the debugger assumes
-that builtin functions such as \texttt{+} are correct,
+that builtin functions such as \co{+} are correct,
 which means that it does not ask questions about their correctness.
 
 \begin{figure}[hb]
@@ -1351,11 +1360,11 @@ which means that it does not ask questions about their correctness.
     mdb> quit -y
 \end{verbatim}
 \caption{
-An \texttt{mdb} declarative debugging session.
+An \co{mdb} declarative debugging session.
 \label{fig:dd-session}}
 \end{figure}
 
-Note mdb uses ``contour'' to mean
+Note \co{mdb} uses ``contour'' to mean
 ``a path execution takes through the body of a clause''.
 In cases like this where the clause is a simple conjunction,
 this means all the goals in the clause,
@@ -1367,18 +1376,19 @@ inside those constructs to compute the wrong answer being debugged.
 
 Bug fixing,
 the third phase of debugging,
-might start with defining a function \texttt{add\_with\_carry/3},
+might start with defining a function \sym{add\_with\_carry/3},
 where the intended interpretation is:
 \[
     \text{for }a, b \in [0..9],\ c \in \{0, 1\},
-        \ssym{add\_with\_carry}(a, b, c) = a + b + c
+        \ct{add\_with\_carry}(a, b, c) = a + b + c
 \]
-Then \texttt{add/2} could be implemented as:
+Then \sym{add/2} could be implemented as:
 \begin{verbatim}
     add(As, Bs) = add_with_carry(As, Bs, 0).
 \end{verbatim}
-Implementing \texttt{add\_with\_carry/3}
+Implementing \sym{add\_with\_carry/3}
 is left as an exercise for the reader.
+
 
 \section{Summary}
 
@@ -1396,7 +1406,8 @@ The interpretation of multi-moded predicates
 greatly helps in clarifying how different modes should behave.
 This is particularly important when considering
 predicates and functions that use mode-dependent clauses
-(such as the predicate \texttt{string.append/3} in the standard library)
+(such as the predicate \sym{append/3}
+in the string module of the standard library)
 whose consistency the compiler cannot verify in the general case.
 
 One interpretation in particular
