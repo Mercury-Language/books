@@ -14,32 +14,32 @@
     %
 :- func init = queue(T).
 
-    % put(Z, Q0, Q):
+    % put(X, Q0, Q):
     %
-    % Q is Q0 with Z added to the back of the queue.
+    % Q is Q0 with X added to the back of the queue.
     %
 :- pred put(T, queue(T), queue(T)).
 :- mode put(in, in, out) is det.
 
-    % get(Z, Q0, Q):
+    % get(X, Q0, Q):
     %
-    % Q is Q0 with Z removed from the front of the queue.
+    % Q is Q0 with X removed from the front of the queue.
     % Fails if Q0 is empty.
     %
 :- pred get(T, queue(T), queue(T)).
 :- mode get(out, in, out) is semidet.
 
-    % unput(Z, Q0, Q):
+    % unput(X, Q0, Q):
     %
-    % Q is Q0 with Z removed from the back of the queue.
+    % Q is Q0 with X removed from the back of the queue.
     % Fails if Q0 is empty.
     %
 :- pred unput(T, queue(T), queue(T)).
 :- mode unput(out, in, out) is semidet.
 
-    % unget(Z, Q0, Q):
+    % unget(X, Q0, Q):
     %
-    % Q is Q0 with Z added to the front of the queue.
+    % Q is Q0 with X added to the front of the queue.
     %
 :- pred unget(T, queue(T), queue(T)).
 :- mode unget(in, in, out) is det.
@@ -58,30 +58,32 @@
 %------------------------------------------------------------%
 :- implementation.
 
-    % q(Y, X) represents the sequence append(X, reverse(Y)).
+    % queue(F, B) represents the sequence append(F, reverse(B)).
     %
 :- type queue(T)
-    --->    q(
-                back :: list(T),
-                front :: list(T)
+    --->    queue(
+                front :: list(T),
+                rev_back :: list(T)
             ).
 
-init = q([], []).
+init = queue([], []).
 
-put(Z, q(Y, X), q([Z | Y], X)).
+put(X, queue(F, B), queue(F, [X | B])).
 
-get(Z, q(Y, [Z | X]), q(Y, X)).
-get(Z, q(Y, []), q([], X)) :- [Z | X] = reverse(Y).
+get(X, queue([X | F], B), queue(F, B)).
+get(X, queue([], B), queue(F, [])) :-
+    [X | F] = reverse(B).
 
-unput(Z, q([Z | Y], X), q(Y, X)).
-unput(Z, q([], X), q(Y, [])) :- [Z | Y] = reverse(X).
+unput(X, queue(F, [X | B]), queue(F, B)).
+unput(X, queue(F, []), queue([], B)) :-
+    [X | B] = reverse(F).
 
-unget(Z, q(Y, X), q(Y, [Z | X])).
+unget(X, queue(F, B), queue([X | F], B)).
 
 eq(Q1, Q2) :-
     list(Q1) = list(Q2).
 
-list(q(Y, X)) = append(X, reverse(Y)).
+list(queue(F, B)) = append(F, reverse(B)).
 
 %------------------------------------------------------------%
 :- end_module dpm_queue.

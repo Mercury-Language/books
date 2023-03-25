@@ -299,19 +299,23 @@ is done with the \sym{put/3} predicate,
 which takes as arguments an element,
 the queue prior to putting the element at the end,
 and the queue after this has been done:
-\[ \ct{put}(z, [t_1, \ldots, t_n], [t_1, \ldots, t_n, z]) \]
+\[
+    \ct{put}(z, [x_1, \ldots, x_n], [x_1, \ldots, x_n, z])
+\]
 Getting an element from the front of the queue is done with
 a \sym{get/3} predicate,
 which is similar except that the second argument
 is the queue prior to getting the element from the front:
-\[ \ct{get}(z, [z, t_1, \ldots, t_n], [t_1, \ldots, t_n]) \]
+\[
+    \ct{get}(z, [z, x_1, \ldots, x_n], [x_1, \ldots, x_n])
+\]
 The inverse operations,
 \sym{unput/3} and \sym{unget/3},
 are the same as the forward operations
 except that the second and third arguments are reversed:
 \begin{IEEEeqnarray*}{c}
-    \ct{unput}(z, [t_1, \ldots, t_n, z], [t_1, \ldots, t_n]) \\
-    \ct{unget}(z, [t_1, \ldots, t_n], [z, t_1, \ldots, t_n])
+    \ct{unput}(z, [x_1, \ldots, x_n, z], [x_1, \ldots, x_n]) \\
+    \ct{unget}(z, [x_1, \ldots, x_n], [z, x_1, \ldots, x_n])
 \end{IEEEeqnarray*}
 Finally,
 both the predicate \sym{eq/2}
@@ -320,8 +324,8 @@ and the function \sym{list/1}
 that converts a queue to an ordinary list,
 are trivial to specify:
 \begin{IEEEeqnarray*}{c}
-    \ct{eq}([t_1, \ldots, t_n], [t_1, \ldots, t_n]) \\
-    \ct{list}([t_1, \ldots, t_n]) = [t_1, \ldots, t_n]
+    \ct{eq}([x_1, \ldots, x_n], [x_1, \ldots, x_n]) \\
+    \ct{list}([x_1, \ldots, x_n]) = [x_1, \ldots, x_n]
 \end{IEEEeqnarray*}
 That is,
 the intended interpretation of \sym{eq/2}
@@ -451,12 +455,12 @@ in Figure~\ref{fig:queue-spec}.
 \begin{figure}
 \begin{IEEEeqnarray*}{l}
     \ct{init} = [] \\
-    \ct{put}(z, [t_1, \ldots, t_n], [t_1, \ldots, t_n, z]) \\
-    \ct{get}(z, [z, t_1, \ldots, t_n], [t_1, \ldots, t_n]) \\
-    \ct{unput}(z, [t_1, \ldots, t_n, z], [t_1, \ldots, t_n]) \\
-    \ct{unget}(z, [t_1, \ldots, t_n], [z, t_1, \ldots, t_n]) \\
-    \ct{eq}([t_1, \ldots, t_n], [t_1, \ldots, t_n]) \\
-    \ct{list}([t_1, \ldots, t_n]) = [t_1, \ldots, t_n]
+    \ct{put}(z, [x_1, \ldots, x_n], [x_1, \ldots, x_n, z]) \\
+    \ct{get}(z, [z, x_1, \ldots, x_n], [x_1, \ldots, x_n]) \\
+    \ct{unput}(z, [x_1, \ldots, x_n, z], [x_1, \ldots, x_n]) \\
+    \ct{unget}(z, [x_1, \ldots, x_n], [z, x_1, \ldots, x_n]) \\
+    \ct{eq}([x_1, \ldots, x_n], [x_1, \ldots, x_n]) \\
+    \ct{list}([x_1, \ldots, x_n]) = [x_1, \ldots, x_n]
 \end{IEEEeqnarray*}
 \caption{Intended interpretations for the queue operations
 \label{fig:queue-spec}}
@@ -953,32 +957,23 @@ that our interface allows access to.
 The type can be defined as follows:
 \begin{verbatim}
     :- type queue(T)
-        --->    q(
-                    back  :: list(T),
-                    front :: list(T)
+        --->    queue(
+                    front :: list(T),
+                    rev_back  :: list(T)
                 ).
 \end{verbatim}
-We have placed the reversed back list as the first argument,
-as a reminder that it is in fact back-to-front.
-% XXX I wouldn't consider that to be a useful reminder.
-% XXX I would consider naming it "rev_back" to be a useful reminder.
-
-% XXX I would prefer naming the data constructor "queue".
-
 To formalize the above description,
-we can give the intended interpretation of the \sym{q/2}
+we can give the intended interpretation of the \sym{queue/2}
 data constructor.
 Although it is just a symbol
 and not a function in the computational sense,
 it still has an intended interpretation,
 and we can describe it as follows:
 \[
-    \ct{q}([y_1, \ldots, y_m], [x_1, \ldots, x_n]) =
-        [x_1, \ldots, x_n, y_m, \ldots, y_1]
+    \ct{queue}([f_1, \ldots, f_n], [b_1, \ldots, b_m]) =
+        [f_1, \ldots, f_n, b_m, \ldots, b_1]
 \]
 This just says exectly what we said above.
-% XXX This shows that putting "rev_back" before "front" is counter-intuitive.
-% XXX Using b and f (for back and front) would be better than x and y.
 
 We can first give a definition for the \sym{list/1} function,
 which is intended to be the identity function
@@ -987,35 +982,38 @@ but needs to convert between the two representations
 of a finite sequence.
 The single clause is:
 \begin{verbatim}
-    list(q(Y, X)) = append(X, reverse(Y)).
+    list(queue(F, B)) = append(F, reverse(B)).
 \end{verbatim}
-% XXX We should use Front and Back.
-% XXX In general, we should encourage the use of one-character variable names.
 This code uses
 the \sym{append/2} and \sym{reverse/1} functions
 that are defined in the list module of the standard library.
+Note that, here and elsewhere,
+we tend to use short variable names
+in order to keep the presentation compact in printed form.
+In real code it would be better to use more expressive names,
+such as \co{Front} and \co{Back}.
 
 It is instructive to look at how
 the clause as a whole is interpreted.
-Since \co{X} and \co{Y} are lists,
+Since \co{F} and \co{B} are lists,
 and we have given the interpretations of the other symbols,
 plugging things in results in the following
 for each side of the equation:
 \begin{IEEEeqnarray*}{rCl}
 \IEEEeqnarraymulticol{3}{l}{
-    \ct{list}(\ct{q}([y_1, \ldots, y_m], [x_1, \ldots, x_n])
+    \ct{list}(\ct{queue}([f_1, \ldots, f_n], [b_1, \ldots, b_m])
 } \\ \quad
-    & = & \ct{list}([x_1, \ldots, x_n, y_m, \ldots, y_1]) \\
-    & = & [x_1, \ldots, x_n, y_m, \ldots, y_1] \\
+    & = & \ct{list}([f_1, \ldots, f_n, b_m, \ldots, b_1]) \\
+    & = & [f_1, \ldots, f_n, b_m, \ldots, b_1] \\
 \IEEEeqnarraymulticol{3}{l}{
-    \ct{append}([x_1, \ldots, x_n], \ct{reverse}([y_1, \ldots, y_m]))
+    \ct{append}([f_1, \ldots, f_n], \ct{reverse}([b_1, \ldots, b_m]))
 } \\ \quad
-    & = & \ct{append}([x_1, \ldots, x_n], [y_m, \ldots, y_1]) \\
-    & = & [x_1, \ldots, x_n, y_m, \ldots, y_1]
+    & = & \ct{append}([f_1, \ldots, f_n], [b_m, \ldots, b_1]) \\
+    & = & [f_1, \ldots, f_n, b_m, \ldots, b_1]
 \end{IEEEeqnarray*}
 Both sides are interpreted equally,
 so we can say that this clause is sound.
-Since this a function with the default mode,
+Since this is a function with the default mode,
 the clause completeness condition is checked for us,
 and thus we can conclude that
 our implementation of \sym{list/1} is partially correct.
@@ -1033,21 +1031,20 @@ because the calls to \sym{list/1} cover every possible queue.
 Implementing \sym{init/0} is also simple,
 as the empty queue must have both the front and back lists empty:
 \begin{verbatim}
-    init = q([], []).
+    init = queue([], []).
 \end{verbatim}
 We can define the four main operations as follows:
 \begin{verbatim}
-    put(Z, q(Y, X), q([Z | Y], X)).
-    get(Z, q(Y, [Z | X]), q(Y, X)).
-    unput(Z, q([Z | Y], X), q(Y, X)).
-    unget(Z, q(Y, X), q(Y, [Z | X])).
+    put(Z, queue(F, B), queue(F, [Z | B])).
+    get(Z, queue([Z | F], B), queue(F, B)).
+    unput(Z, queue(F, [Z | B]), queue(F, B)).
+    unget(Z, queue(F, B), queue([Z | F], B)).
 \end{verbatim}
-% XXX Again, using B and F (for back and front) would be better than X and Y.
 As before,
 by plugging in our interpretations
 we can make judgements about correctness.
 Doing so,
-and then renaming lists of mixed $x$s and $y$s to lists of $t$s for clarity,
+and then renaming lists of mixed $f\!$s and $b$s to lists of $t$s for clarity,
 we get Figure~\ref{fig:queue-ops},
 which shows that our clauses match their intended interpretations exactly,
 which means the clause soundness condition is satisfied.
@@ -1056,60 +1053,60 @@ which means the clause soundness condition is satisfied.
 % but I don't see how this can be done within a single IEEEeqnarray.
 \begin{figure}[htb]
 \begin{verbatim}
-    put(Z, q(Y, X), q([Z | Y], X)).
+    put(Z, queue(F, B), queue(F, [Z | B])).
 \end{verbatim}
 \begin{IEEEeqnarray*}{rCl}
     \IEEEeqnarraymulticol{3}{l}{
-        \ct{put}(z, \ct{q}([y_1, \ldots, y_m], [x_1, \ldots, x_n]),
-            \ct{q}([z, y_1, \ldots, y_m], [x_1, \ldots, x_n]))
+        \ct{put}(z, \ct{queue}([f_1, \ldots, f_n], [b_1, \ldots, b_m]),
+            \ct{queue}([f_1, \ldots, f_n], [z, b_1, \ldots, b_m]))
     } \\ \quad
     & \Leftrightarrow &
-        \ct{put}(z, [x_1, \ldots, x_n, y_m, \ldots, y_1],
-            [x_1, \ldots, x_n, y_m, \ldots, y_1, z]) \\
+        \ct{put}(z, [f_1, \ldots, f_n, b_m, \ldots, b_1],
+            [f_1, \ldots, f_n, b_m, \ldots, b_1, z]) \\
     & \Leftrightarrow &
-        \ct{put}(z, [t_1, \ldots, t_{m+n}], [t_1, \ldots, t_{m+n}, z])
+        \ct{put}(z, [x_1, \ldots, x_{m+n}], [x_1, \ldots, x_{m+n}, z])
 \end{IEEEeqnarray*}
 \begin{verbatim}
-    get(Z, q(Y, [Z | X]), q(Y, X)).
+    get(Z, queue([Z | F], B), queue(F, B)).
 \end{verbatim}
 \begin{IEEEeqnarray*}{rCl}
     \IEEEeqnarraymulticol{3}{l}{
-        \ct{get}(z, \ct{q}([y_1, \ldots, y_m], [z, x_1, \ldots, x_n]),
-            \ct{q}([y_1, \ldots, y_m], [x_1, \ldots, x_n]))
-    } \\
+        \ct{get}(z, \ct{queue}([z, f_1, \ldots, f_n], [b_1, \ldots, b_m]),
+            \ct{queue}([f_1, \ldots, f_n], [b_1, \ldots, b_m]))
+    } \\ \quad
     & \Leftrightarrow &
-        \ct{get}(z, [z, x_1, \ldots, x_n, y_m, \ldots, y_1],
-            [x_1, \ldots, x_n, y_m, \ldots, y_1]) \\
+        \ct{get}(z, [z, f_1, \ldots, f_n, b_m, \ldots, b_1],
+            [f_1, \ldots, f_n, b_m, \ldots, b_1]) \\
     & \Leftrightarrow &
-        \ct{get}(z, [z, t_1, \ldots, t_{m+n}], [t_1, \ldots, t_{m+n}])
+        \ct{get}(z, [z, x_1, \ldots, x_{m+n}], [x_1, \ldots, x_{m+n}])
 \end{IEEEeqnarray*}
 \begin{verbatim}
-    unput(Z, q([Z | Y], X), q(Y, X)).
+    unput(Z, queue(F, [Z | B]), queue(F, B)).
 \end{verbatim}
 \begin{IEEEeqnarray*}{rCl}
     \IEEEeqnarraymulticol{3}{l}{
-        \ct{unput}(z, \ct{q}([z, y_1, \ldots, y_m], [x_1, \ldots, x_n]),
-            \ct{q}([y_1, \ldots, y_m], [x_1, \ldots, x_n]))
-    } \\
+        \ct{unput}(z, \ct{queue}([f_1, \ldots, f_n], [z, b_1, \ldots, b_m]),
+            \ct{queue}([f_1, \ldots, f_n], [b_1, \ldots, b_m]))
+    } \\ \quad
     & \Leftrightarrow &
-        \ct{unput}(z, [x_1, \ldots, x_n, y_m, \ldots, y_1, z],
-            [x_1, \ldots, x_n, y_m, \ldots, y_1]) \\
+        \ct{unput}(z, [f_1, \ldots, f_n, b_m, \ldots, b_1, z],
+            [f_1, \ldots, f_n, b_m, \ldots, b_1]) \\
     & \Leftrightarrow &
-        \ct{unput}(z, [t_1, \ldots, t_{m+n}, z], [t_1, \ldots, t_{m+n}])
+        \ct{unput}(z, [x_1, \ldots, x_{m+n}, z], [x_1, \ldots, x_{m+n}])
 \end{IEEEeqnarray*}
 \begin{verbatim}
-    unget(Z, q(Y, X), q(Y, [Z | X])).
+    unget(Z, queue(F, B), queue([Z | F], B)).
 \end{verbatim}
 \begin{IEEEeqnarray*}{rCl}
     \IEEEeqnarraymulticol{3}{l}{
-        \ct{unget}(z, \ct{q}([y_1, \ldots, y_m], [x_1, \ldots, x_n]),
-            \ct{q}([y_1, \ldots, y_m], [z, x_1, \ldots, x_n]))
-    } \\
+        \ct{unget}(z, \ct{queue}([f_1, \ldots, f_n], [b_1, \ldots, b_m]),
+            \ct{queue}([z, f_1, \ldots, f_n], [b_1, \ldots, b_m]))
+    } \\ \quad
     & \Leftrightarrow &
-        \ct{unget}(z, [x_1, \ldots, x_n, y_m, \ldots, y_1],
-            [z, x_1, \ldots, x_n, y_m, \ldots, y_1]) \\
+        \ct{unget}(z, [f_1, \ldots, f_n, b_m, \ldots, b_1],
+            [z, f_1, \ldots, f_n, b_m, \ldots, b_1]) \\
     & \Leftrightarrow &
-        \ct{unget}(z, [t_1, \ldots, t_{m+n}], [z, t_1, \ldots, t_{m+n}])
+        \ct{unget}(z, [x_1, \ldots, x_{m+n}], [z, x_1, \ldots, x_{m+n}])
 \end{IEEEeqnarray*}
 \caption{Code and semantics of initial versions of queue operations.
 \label{fig:queue-ops}}
@@ -1137,14 +1134,13 @@ which is the input argument of both predicates---%
 are handled.
 
 The second argument in the above clause for \sym{get/3}
-is \co{q(Y, [Z | X])},
+is \co{queue([Z | F], B)},
 which only covers cases where the front list is not empty.
-% XXX The "front" list is the second argument, which again is contra-intuitive.
 We need to determine what should happen if the front list is empty.
 
 Consider the following equivalence:
 \[
-    \ct{q}(y, []) = \ct{q}([], \ct{reverse}(y))
+    \ct{queue}([], b) = \ct{queue}(\ct{reverse}(b), [])
 \]
 This can easily be seen to be true
 by plugging in the interpretation of the various symbols.
@@ -1156,42 +1152,40 @@ unless the entire queue is empty,
 in which case failure is the expected result.
 The code that performs this is as follows:
 \begin{verbatim}
-    get(Z, q(Y, []), q([], X)) :-
-        [Z | X] = reverse(Y).
+    get(Z, queue([], B), queue(F, [])) :-
+        [Z | F] = reverse(B).
 \end{verbatim}
 To check the result,
 we can once again plug in the interpretations.
 The clause body gives us:
 \begin{IEEEeqnarray*}{rCl}
     \IEEEeqnarraymulticol{3}{l}{
-        [z, x_1, \ldots, x_n] = \ct{reverse}([y_1, \ldots, y_m])
+        [z, f_1, \ldots, f_n] = \ct{reverse}([b_1, \ldots, b_m])
     } \\ \quad
     & \Leftrightarrow &
-        [z, x_1, \ldots, x_n] = [y_m, \ldots, y_1] \\
-    & \Leftrightarrow &
-        z = y_m \land [x_1, \ldots, x_n] = [y_{m-1}, \ldots, y_1]
+        [z, f_1, \ldots, f_n] = [b_m, \ldots, b_1]
 \end{IEEEeqnarray*}
 This is saying that the body is only true
-when these last equations hold.
+when this last equation holds.
 For the clause head we get:
 \begin{IEEEeqnarray*}{rCl}
     \IEEEeqnarraymulticol{3}{l}{
-        \ct{get}(z, \ct{q}([y_1, \ldots, y_m], []),
-            \ct{q}([], [x_1, \ldots, x_n]))
+        \ct{get}(z, \ct{queue}([], [b_1, \ldots, b_m]),
+            \ct{queue}([f_1, \ldots, f_n], []))
     } \\ \quad
     & \Leftrightarrow &
-        \ct{get}(z, [y_m, \ldots, y_1], [x_1, \ldots, x_n])
+        \ct{get}(z, [b_m, \ldots, b_1], [f_1, \ldots, f_n])
 \end{IEEEeqnarray*}
-If we use the equations derived from the clause body
+If we use the equation derived from the clause body
 to substitute variables in the above,
 and then rename some variables,
 we end up with:
 \begin{IEEEeqnarray*}{rCl}
     \quad & \Leftrightarrow &
-        \ct{get}(z, [z, x_1, \ldots, x_n], [x_1, \ldots, x_n])
-        \hspace{1.4em} \\
+        \ct{get}(z, [z, f_1, \ldots, f_n], [f_1, \ldots, f_n])
+        \hspace{5.1em} \\
     & \Leftrightarrow &
-        \ct{get}(z, [z, t_1, \ldots, t_n], [t_1, \ldots, t_n])
+        \ct{get}(z, [z, x_1, \ldots, x_n], [x_1, \ldots, x_n])
 \end{IEEEeqnarray*}
 This matches the intended interpretation, as required,
 and as the two clauses together now cover all possible solutions,
@@ -1201,8 +1195,8 @@ An extra clause for \sym{unput/3} can be derived in a similar way
 to the extra clause for \sym{get/3},
 except that here it is the front list that is reversed and put at the back:
 \begin{verbatim}
-    unput(Z, q([], X), q(Y, [])) :-
-        [Z | Y] = reverse(X).
+    unput(Z, q(F, []), q([], B)) :-
+        [Z | B] = reverse(F).
 \end{verbatim}
 Verifying the correctness of \sym{unput/3}
 is left as an exercise for the reader.
