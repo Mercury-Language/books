@@ -500,8 +500,9 @@ will look like this:
 \begin{verbatim}
     :- type queue(T).
 \end{verbatim}
-% The lists will be of type \co{list(T)}.
-% XXX But the list/1 type constructor does not need to be declared by users.
+The lists will be of type \co{list(T)},
+the definition of which is imported from the standard library
+using `\co{:- import\_module list}'.
 
 The \sym{init/0} function has no arguments,
 and always returns the same queue every time it is called.
@@ -602,17 +603,17 @@ and like \sym{init/0} it uses the default function mode:
 \end{verbatim}
 
 \noindent
-The overall set of declarations for the queue operations is therefore
-
-% XXX this overflows; maybe we can shrink the font size for verbatim?
+The overall set of declarations for the queue operations is therefore:
+% XXX reduced indent to it doesn't overflow on the right; maybe we can
+% shrink the font size for verbatim?
 \begin{verbatim}
-    :- func init = queue(T).
-    :- pred put(T::in, queue(T)::in, queue(T)::out) is det.
-    :- pred get(T::out, queue(T)::in, queue(T)::out) is semidet.
-    :- pred unput(T::out, queue(T)::in, queue(T)::out) is semidet.
-    :- pred unget(T::in, queue(T)::in, queue(T)::out) is det.
-    :- pred eq(queue(T)::in, queue(T)::in) is semidet.
-    :- func list(queue(T)) = list(T).
+ :- func init = queue(T).
+ :- pred put(T::in, queue(T)::in, queue(T)::out) is det.
+ :- pred get(T::out, queue(T)::in, queue(T)::out) is semidet.
+ :- pred unput(T::out, queue(T)::in, queue(T)::out) is semidet.
+ :- pred unget(T::in, queue(T)::in, queue(T)::out) is det.
+ :- pred eq(queue(T)::in, queue(T)::in) is semidet.
+ :- func list(queue(T)) = list(T).
 \end{verbatim}
 
 
