@@ -33,8 +33,8 @@ app([A | As], Bs, [C | Cs]) :-
 
 Figure~\ref{fig:len-interp} gives a picture
 of the declarative semantics of \sym{len/1}.
-This semantics consists of a table of \emph{atoms},
-which in this case is short for \emph{atomic propositions}.
+This semantics consists of a table of \emph{atoms\label{gi:atom}},
+which in this case is short for \emph{atomic formulas}.
 (This is one of several uses of the word ``atom'' in logic programming;
 there are others as well.)
 For a function of arity $n$, each atom in the table
@@ -182,12 +182,12 @@ of \sym{len/1} and \sym{app/1} as follows:
 \text{for } 0 \leqslant m \leqslant n,
 \ct{app}([x_1, \ldots, x_m], [x_{m+1}, \ldots, x_n], [x_1, \ldots, x_n])
 \]
-From these formulas,
+From these statements,
 it should be clear whether a particular ground atom
 is true or false in these interpretations,
 even though the interpretations are infinite in size.
-The truth value of goals more generally
-can be determined by combining the truth values of atomic goals
+The truth value of formulas more generally
+can be determined by combining the truth values of atoms
 according to the truth tables of classical logic.
 
 It is the usual practice in Mercury

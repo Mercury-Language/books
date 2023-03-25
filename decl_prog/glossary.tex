@@ -15,8 +15,8 @@ A unification of the form \co{Y = X},
 where one of the sides has mode \co{in}
 and the other has mode \co{out}.
 
-\item[atomic goal]
-(p.~\pageref{gi:atomic})
+\item[atom]
+(pp.~\pageref{gi:atom},~\pageref{gi:atom2},~\pageref{gi:atom3})
 A unification, predicate call, or logical constant.
 
 \item[axiom]
@@ -119,6 +119,12 @@ or mode \co{unused}.
 (p.~\pageref{gi:definite})
 A clause is definite if it is either a fact,
 or its body is a conjunction of atomic goals.
+
+\item[derivation]
+(p.~\pageref{gi:derivation})
+An initial query,
+followed by a sequence of resolvents inferred
+via the resolution rule.
 
 \item[failure]
 (p.~\pageref{gi:failure})
@@ -251,6 +257,11 @@ to an otherwise untyped logic program.
 A type of inference rule.
 Logic programming uses SLD resolution
 as its primary mechanism of computation.
+
+\item[resolvent]
+(p.~\pageref{gi:resolvent})
+The query that results after performing an inference step
+using resolution.
 
 \item[satisfiable]
 (p.~\pageref{gi:satisfiable})

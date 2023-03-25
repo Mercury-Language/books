@@ -36,8 +36,8 @@ and show how \emph{SLD trees} are defined.
 These give the operational semantics
 of ``definite\label{gi:definite}'' logic programs,
 which are programs in which each clause body
-is a conjunction of atoms
-(that is, not using disjunction, negation, or if-then-else).
+is a conjunction of atoms\label{gi:atom3}
+(that is, unifications, predicate calls, and logical constants).
 
 Some important results in the meta-theory,
 known as soundness and completeness,
@@ -81,7 +81,7 @@ such queries can be written in the following form:
 \begin{verbatim}
     :- Goal1, Goal2, ..., GoalN.
 \end{verbatim}
-where each \co{GoalI} is an atomic goal,
+where each \co{GoalI} is an atom,
 and commas are read as conjunction.
 If the conjunction of goals is in solved form,
 as defined in the next section,
@@ -91,7 +91,7 @@ the corresponding substitution is the only answer.
 The query is interpreted as the formula:%
 \footnote{
 The origin of this notation,
-as with many other things,
+as with many other things in logic programming,
 comes from theorem provers.
 The list of goals on the right-hand side of `\co{:-}'
 is taken as a conjunction,
@@ -147,6 +147,8 @@ where \co{V1} to \co{VN} are variables,
 and \co{t1} to \co{tN} are arbitrary data terms
 (possibly variables themselves)
 that the variables respectively map to.
+The condition is that \co{Vi} does not occur in \co{tj},
+for any values of \co{i} and \co{j}.
 
 A substitution applied to an expression \co{t}
 yields an expression which is the same as \co{t},
@@ -188,7 +190,8 @@ While substitutions bear a resemblance to the assignments
 that we defined in Section~\ref{sec:assignments},
 note that assignments map variables to elements of the universe.
 That is, assignments are semantic in nature,
-whereas substitutions map variables to data terms,
+whereas substitutions map variables to data terms
+possibly containing other variables,
 and are thus syntactic.
 
 
@@ -325,7 +328,7 @@ as we would eventually reach the equation \co{Z = g(h(Z))}
 and thus we would fail due to the last rule,
 which is the occurs check.
 
-This algorithm described here
+The algorithm described here
 is originally due to Martelli and Montanari.
 We can extend the algorithm
 to also allow for function calls in the goals,
@@ -348,9 +351,10 @@ This provides an elegant understanding of how the logic works,
 but for logic programming this view is not particularly useful
 since these rules do not provide any computational interpretation---%
 they do not say how a program should be executed.
+
 Instead, at least for logic programs not using negation,
-there is one main inference rule.
-This rule is known as SLD resolution\label{gi:resolution}%
+we use one main inference rule,
+which is known as SLD resolution\label{gi:resolution}%
 \footnote{
 Historically,
 resolution was used as an inference technique
@@ -359,18 +363,27 @@ SLD resolution, which is an instance of this technique,
 was found to have a useful computational interpretation.
 It is from this that logic programming was developed.
 }.
-
-Proofs start with a query in the form:
+Proofs in this system start with a query in the form:
 \begin{verbatim}
     :- Goal1, ..., GoalN.
 \end{verbatim}
-Each of the goals is atomic\label{gi:atomic},
-meaning it is either a unification, a predicate call, or a logical constant.
+Each of the goals is an atom
+(that is, a unification, a predicate call, or a logical constant),
+and the commas are read as conjunction.
 We assume for now that the program clauses are definite,
 so the body of each clause
-consists of a (possibly empty) conjunction of atomic goals.
+consists of a (possibly empty) conjunction of atoms.
 The more general case of Mercury clauses
 will be addressed in Section~\ref{sec:structure}.
+
+Each inference step takes a query
+and produces a \emph{resolvent\label{gi:resolvent}},
+which is also in the form of a conjunction of atoms.
+The resolvent then
+either becomes the query for the next inference step,
+or the computation terminates.
+A sequence of resolvents that arises via this process
+is known as an \emph{SLD derivation\label{gi:derivation}}.
 
 As discussed in Section~\ref{sec:queries},
 a query represents an assertion that
@@ -438,7 +451,7 @@ given in the last section
 for the unification algorithm.
 If that fails then the derivation fails.
 \item
-If \co{G} is an atomic goal
+If \co{G} is an atom
 that contains a function call,
 and the selected function call in that goal is
 \co{f(t1,...,tN)} for a function \co{f/N},
