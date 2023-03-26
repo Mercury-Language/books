@@ -340,7 +340,7 @@ We will see how to do that as part of the resolution algorithm,
 in the next section.
 
 
-\section{SLD Resolution}
+\section{SLD resolution}
 \label{sec:resolution}
 
 Deductive systems often use
@@ -414,7 +414,7 @@ and we refer to this case as \emph{failure\label{gi:failure}}.
 
 The third possibility is that
 neither a contradiction nor a tautology is found.
-We refer to this case as \emph{nontermination},
+We refer to this case as \emph{nontermination\label{gi:nontermination}},
 but note that, aside from running forever,
 this also includes cases of
 abnormal termination such as throwing an exception.
@@ -484,59 +484,10 @@ we go back and select another unsolved goal.
 If there are no such goals,
 the derivation succeeds.
 
-The rules we have given are nondeterministic,
-in the sense that
-the order in which goals and clauses are selected
-is not fully specified.
-For the unification rules the order does not matter
-as the procedure will always lead to the same result,
-regardless of the choices made.
-The SLD resolution rules, on the other hand,
-require a bit more attention.
-
-When it comes to selecting a goal,
-Mercury's selection function chooses a goal or function call
-whose initial \co{inst}s
-are satisfied by the argument terms.
-In the strict sequential semantics,
-the leftmost goal that satisfies this condition is selected.
-In the strict commutative semantics
-the selected goal need not be the leftmost one,
-but if there are any goals
-that were expanded from the body of a clause
-then one of the most recently expanded goals is selected.
-
-For predicate and function calls,
-the algorithm also requires us to choose a clause from the program.
-In contrast to goal selection,
-where a single choice is committed to
-without going back and trying alternatives,
-clause selection results in a ``choice point\label{gi:choice-point}''
-being created.
-After exploring the derivations that follow from one choice,
-if more solutions are sought then
-execution \emph{backtracks\label{gi:backtrack}}
-to the most recent choice point
-and makes a different choice.
-If no such choice point exists,
-that is, if all choices have previously been explored,
-then execution of the query fails\label{gi:failure2}.
-
-In Mercury,
-the \co{nondet} determinism category
-refers to the second form of nondeterminism above,
-namely that relating to clause selection.
-Users do not need to declare the first form,
-as the compiler is responsible for making the choices in that regard.
-
-The collection of possible derivations arising from a query
-can be arranged into a tree,
-where derivations branch off at each choice point
-in accordance with execution of the query.
-A tree of this form is known as an SLD tree\label{gi:sld-tree}.
-
 To illustrate the algorithm,
 consider the call \co{append([a,b],[c],Xs)}.
+We will produce the derivation that results from
+a particular sequence of clause choices.
 For convenience we repeat the clauses for \co{append/3} here:
 \begin{verbatim}
     append([], Bs, Bs).
@@ -547,16 +498,12 @@ The initial query is as follows:
 \begin{verbatim}
     :- append([a,b], [c], Xs).
 \end{verbatim}
-If the first clause were chosen
-we would get the unification \co{[a,b] = []},
-among others,
-but this unification would fail.
-We therefore need to choose the second clause.
 
-We rename this clause's variables by adding a numerical suffix,
-and replace the call with argument unifications
-and the renamed clause body.
-This results in the following query:
+We start by choosing the second clause.
+We rename the clause's variables by adding a numerical suffix,
+and replace the call in the query
+with argument unifications and the renamed clause body.
+This results in the following resolvent:
 \begin{verbatim}
     :- [a,b] = [V1 | As1], [c] = Bs1, Xs = [V1 | Cs1],
        append(As1, Bs1, Cs1).
@@ -567,10 +514,7 @@ we get:
 \begin{verbatim}
     :- Xs = [a | Cs1], append([b], [c], Cs1).
 \end{verbatim}
-If the first clause were chosen
-we would get the unification \co{[b] = []},
-which would fail,
-so again we choose the second clause.
+We again choose the second clause.
 We rename the clause variables with a different suffix
 and replace the call as before,
 which results in:
@@ -616,6 +560,89 @@ if $\Gamma \vdash \phi$
 then $\Gamma \vdash \forall x.\, \phi$
 for any variable $x$.
 \end{definition}
+
+
+\section{SLD trees}
+\label{sec:sld-trees}
+
+The rules we have given are nondeterministic,
+in the sense that
+the order in which goals and clauses are selected
+is not fully specified.
+For the unification rules the order does not matter
+as the procedure will always lead to the same result,
+regardless of the choices made.
+The SLD resolution rules, on the other hand,
+require a bit more attention.
+
+When it comes to selecting a goal,
+Mercury's selection function chooses a goal or function call
+whose initial \co{inst}s
+are satisfied by the argument terms.
+In the strict sequential semantics,
+the leftmost goal that satisfies this condition is selected.
+In the strict commutative semantics
+the selected goal need not be the leftmost one,
+but if there are any goals
+that were expanded from the body of a clause
+then one of the most recently expanded goals is selected.
+
+For predicate and function calls,
+the algorithm also requires us to choose a clause from the program.
+In contrast to goal selection,
+where a single choice is committed to
+without going back and trying alternatives,
+clause selection results in a ``choice point\label{gi:choice-point}''
+being created.
+After exploring the derivations that follow from one choice,
+if more solutions are sought then
+execution \emph{backtracks\label{gi:backtrack}}
+to the most recent choice point
+and makes a different choice.
+If no such choice point exists,
+that is, if all choices have previously been explored,
+then execution of the query fails.
+
+In Mercury,
+the \co{nondet} determinism category
+refers to the second form of nondeterminism above,
+namely that relating to clause selection.
+Users do not need to declare the first form,
+as the compiler is responsible for making the choices in that regard.
+We will look at the second form of nondeterminism again
+in Section~\ref{sec:committed-choice}.
+
+The collection of possible derivations arising from a query
+can be arranged into a tree,
+where derivations branch off at each choice point
+in accordance with execution of the query.
+Thus, execution involves a depth-first traversal of the tree.
+Trees of this form are known as SLD trees\label{gi:sld-tree}.
+
+Like derivations,
+SLD trees can be considered successful, failed, or nonterminating.
+Since there may be multiple derivations to consider
+the correspondence is not direct,
+but is defined as follows:
+\begin{itemize}
+\item
+If \emph{any} of the derivations are successful,
+then the tree is successful\label{gi:success2}.
+\item
+If \emph{all} of the derivations are failed,
+then the tree is failed\label{gi:failure2}.
+(This case is also referred to as ``finite failure''.)
+\item
+If there is at least one derivation that is nonterminating,
+and there are no successful derivations,
+then the tree is nonterminating\label{gi:nontermination2}.
+\end{itemize}
+A query or goal is successful, failed, or nonterminating,
+depending on whether the SLD tree that derives from it
+is successful, failed, or nonterminating,
+respectively.
+
+% XXX example with pictures
 
 
 \section{Soundness and completeness}
@@ -824,7 +851,8 @@ the negation of that goal should succeed.
 We can implement negation-as-failure
 by adding an extra rule to the SLD rules
 from Section~\ref{sec:resolution};
-such a system is known as SLDNF resolution.
+a system with this additional rule
+is known as SLDNF resolution.
 
 Assuming that \co{G} is the selected goal,
 the additional rule for negation-as-failure
@@ -832,14 +860,13 @@ is as follows:
 \begin{itemize}
 \item
 If \co{G} is a conditional goal of the form
-\co{if GC then GT else GE},
+`\co{if GC then GT else GE}',
 then execute \co{GC} as a new query.
 If the query succeeds with a substitution \co{S},
 replace \co{G} with
 the result of applying \co{S} to \co{GT}.
-If the query fails without having produced an answer,
-that is, if all derivations have failed
-even after exhausting all possible choices,
+If the query fails
+(that is, after exhausting all possible choices),
 replace \co{G} with \co{GE}.
 \end{itemize}
 Note that if the condition succeeds,
@@ -848,25 +875,137 @@ These will lead to alternative substitutions
 being applied to \co{GT},
 leading to different derivations.
 
-It is possible to extend the Soundness theorem\label{gi:soundness2}
-to negation-as-failure if and only if
+Soundness\label{gi:soundness2} and completeness\label{gi:completeness2}
+of the negation-as-failure rule
+can be established if and only if
 the condition of the if-then-else
 does not cause any non-local variables to become instantiated.
 That is, resolving the condition
 should not lead to any variables
 that occur outside of the condition or then-branch
 to appear on the left hand side of an equation in the substitution.
-From the soundness of negation-as-failure,
-combined with our original Completeness theorem,
-We can also extend the Completeness theorem\label{gi:completeness2}
-to programs with negation.
 
-The requirement to ensure no non-local variables become instantiated
-can be challenging to verify manually.
+This requirement can be challenging to verify manually.
 Fortunately,
 Mercury's mode system tracks changes to variable instantiation,
 so the compiler is able to perform the check at compile time
 without manual assistance.
+
+% XXX example derivation/tree
+
+
+\section{Committed-choice nondeterminism}
+\label{sec:committed-choice}
+
+One of the forms of nondeterminism in the SLD resolution algorithm,
+as we discussed earlier,
+comes about because the algorithm needs to make a choice
+of which clause to apply.
+In order to be operationally complete
+the algorithm leaves behind a choice point after each choice,
+so that execution can later backtrack to that point
+in order to try the other clauses.
+
+There are two situations in which choice points are not required.
+The first occurs when it can be determined that execution is
+operationally complete without the need for backtracking.
+This happens if there is a goal with no output variables:
+in this case all answers are equivalent,
+so if \emph{any} successful derivation is found
+then completeness is achieved.
+Once success occurs,
+any choice points created during execution of the goal
+are therefore no longer needed,
+so they are pruned away.
+The action of pruning away choice points
+is referred to as a ``commit\label{gi:commit}''.
+
+For example, consider the following code:
+\begin{verbatim}
+    check(!IO) :-
+        ( if p(_Out) then
+            Res = yes
+        else
+            Res = no
+        ),
+        io.write_line(Res, !IO).
+\end{verbatim}
+where the predicate \sym{p/1} has the following \co{mode} declaration:
+\begin{verbatim}
+    :- mode p(out) is nondet.
+\end{verbatim}
+Since the output from \sym{p/1} is not used
+outside of the condition of the if-then-else,
+it follows that any answer for \sym{p/1}
+would lead to the same answer for the if-then-else as a whole,
+namely, the one in which \co{Res} is \co{yes}.
+Any choice points created by \sym{p/1} are therefore pruned.
+
+Given that completeness is not affected in this situation,
+we can conclude that
+there really is only ever one solution for \sym{check/2}.
+As such, its determinism is inferred to be \co{det}.
+
+The second situation in which choice points are not required
+is if the programmer only requires \emph{some} solution,
+and is not interested in finding any alternatives
+once a solution has been found.
+For example, consider the following code
+that is slightly different from before,
+in that the output from \sym{p/1} affects the result:
+\begin{verbatim}
+    check(!IO) :-
+        ( if p(Out) then
+            Res = yes(Out)
+        else
+            Res = no
+        ),
+        io.write_line(Res, !IO).
+\end{verbatim}
+The call to \sym{p/1} in the condition of the if-then-else
+may have multiple answers,
+each one of which leads to a different answers for the if-then-else.
+Therefore, in this case, \sym{check/2} is inferred to be \co{multi}.
+
+This is not a valid determinism for the predicate,
+since there is an I/O state whose uniqueness must be preserved,
+and backtracking into the predicate
+will cause uniqueness to be lost.
+The compiler will produce an error message to this effect.
+
+If, however,
+the programmer considers all answers to be equally good,
+then backtracking is not actually wanted.
+It can be avoided by declaring \sym{check/2}
+to have a determinism of \co{cc\_multi} as follows:
+\begin{verbatim}
+    :- pred check(io::di, io::uo) is cc_multi.
+\end{verbatim}
+This declaration indicates that the predicate is ``committed-choice'',
+which means that only the first solution will be sought.
+In other words,
+any choice points created by the call to \sym{p/1} will be pruned away,
+and backtracking over the I/O will not be required.
+The code is therefore accepted by the compiler.
+
+To support the committed-choice determinism categories,
+the compiler ensures that
+no call to a predicate with such a determinism
+occurs at a point in the code that is reachable via backtracking.
+As such,
+even though the choice points are required
+for operational completeness,
+the behaviour is still consistent
+with respect to a declarative semantics.
+
+Effectively,
+committed-choice nondeterminism allows the programmer
+to \emph{intentionally} introduce operational incompleteness,
+in controlled circumstances.
+As we will see later on,
+this can be used by a programmer
+to give a declarative semantics to a predicate
+whose real behaviour is only defined operationally.
 
 
 \section{Structural rules}

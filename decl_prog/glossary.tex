@@ -64,6 +64,10 @@ It consists of a code pointer,
 along with values for the free variables
 in the lambda term.
 
+\item[commit]
+(p.~\pageref{gi:commit})
+To prune away choice points that are no longer required.
+
 \item[completeness]
 (pp.~\pageref{thm:completeness},~\pageref{gi:completeness2})
 A deductive system is complete if validity implies provability.
@@ -128,10 +132,9 @@ via the resolution rule.
 
 \item[failure]
 (p.~\pageref{gi:failure})
-A derivation that terminates without producing an answer.
-(p.~\pageref{gi:failure})
-Finishing execution of a query
-after exhausting all choice points.
+An SLD derivation that terminates without producing an answer.
+(p.~\pageref{gi:failure2})
+An SLD that contains only failed derivations.
 
 \item[free]
 (p.~\pageref{gi:free})
@@ -211,6 +214,15 @@ not having a consistent declarative semantics across all calls; impure.
 (p.~\pageref{gi:non-logical2})
 Pertaining to the predicate and function symbols defined by the program,
 in contrast to the symbols that are a fixed part of the language.
+
+\item[nonterminating]
+(p.~\pageref{gi:nontermination})
+An SLD derivation that neither succeeds nor fails.
+This includes infinite derivations,
+as well as those which abort with an exception.
+(p.~\pageref{gi:nontermination2})
+An SLD tree that contains no successful derivations
+and at least one nonterminating derivation.
 
 \item[occurs check]
 (p.~\pageref{gi:occurs-check})
@@ -301,7 +313,9 @@ occurs in any of the terms in the mapping.
 
 \item[success]
 (p.~\pageref{gi:success})
-A derivation that produces an answer.
+An SLD derivation that produces an answer.
+(p.~\pageref{gi:success2})
+An SLD tree that contains at least one successful derivation.
 
 \item[test]
 (p.~\pageref{gi:test})
