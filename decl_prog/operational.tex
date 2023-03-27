@@ -875,7 +875,9 @@ These will lead to alternative substitutions
 being applied to \co{GT},
 leading to different derivations.
 
-Soundness\label{gi:soundness2} and completeness\label{gi:completeness2}
+% XXX example derivation/tree
+
+Soundness\label{gi:soundness2}
 of the negation-as-failure rule
 can be established if and only if
 the condition of the if-then-else
@@ -884,14 +886,29 @@ That is, resolving the condition
 should not lead to any variables
 that occur outside of the condition or then-branch
 to appear on the left hand side of an equation in the substitution.
-
 This requirement can be challenging to verify manually.
 Fortunately,
 Mercury's mode system tracks changes to variable instantiation,
 so the compiler is able to perform the check at compile time
 without manual assistance.
 
-% XXX example derivation/tree
+Completeness\label{gi:completeness2}
+of the negation-as-failure rule
+does not hold in the classical semantics.
+To see this,
+consider the following program:
+\begin{verbatim}
+    p :- ( q ; not q ).
+    q :- q.
+\end{verbatim}
+There is neither a successful nor a failed derivation of \texttt{q},
+since its truth value is contingent on the model.
+Therefore, there is no successful derivation for \texttt{p}
+using negation-as-failure,
+even though \texttt{p} must be true in every model.
+As with inconsistent programs,
+incompleteness in this case is moot
+since the program would not terminate if run.
 
 
 \section{Committed-choice nondeterminism}
