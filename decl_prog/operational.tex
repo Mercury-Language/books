@@ -619,6 +619,76 @@ in accordance with execution of the query.
 Thus, execution involves a depth-first traversal of the tree.
 Trees of this form are known as SLD trees\label{gi:sld-tree}.
 
+Figure~\ref{fig:sld-tree} shows the SLD tree
+for the goal \texttt{append(X, Y, [1,2])}.
+At each node, one of the conjuncts is selected,
+and there is one child node for each of the possible resolvents.
+Where nodes have multiple children
+due to multiple clauses being applicable
+(which is all non-leaf nodes in this case),
+a choice point is pushed onto a stack
+so that the tree can be traversed in a depth-first manner.
+
+\begin{figure}
+\begin{center}
+\setlength{\unitlength}{0.01\textwidth}
+\begin{picture}(95,85)(0,0)
+\put(25,80){\texttt{:- append(X, Y, [1,2]).}}
+\put(38,77){\line(-1,-1){20}}
+\put(42,77){\line(1,-1){18}}
+\put(40,55){\texttt{:- X = [1|As1], Y = Bs1,}}
+\put(40,51){\texttt{~~~append(As1, Bs1, [2]).}}
+\put(53,49){\line(-1,-1){17}}
+\put(57,49){\line(1,-1){15}}
+\put(55,30){\texttt{:- X = [1,2|As2], Y = Bs2,}}
+\put(55,26){\texttt{~~~append(As2, Bs2, []).}}
+\put(68,24){\line(-1,-1){17}}
+\put(72,24){\line(1,-1){17}}
+\put(89,3.5){$\blacksquare$}
+\put(0,53){\texttt{:- X = [], Y = [1,2].}}
+\put(15,28){\texttt{:- X = [1], Y = [2].}}
+\put(30,3){\texttt{:- X = [1,2], Y = [].}}
+\end{picture}
+\end{center}
+\caption{
+SLD tree for the goal \texttt{append(X, Y, [1,2])}.
+The first clause was selected for the leftward edges,
+and the second clause for the rightward edges.
+Leaf nodes with solved goals are the computed answers.
+The black square indicates failure.
+\label{fig:sld-tree}
+}
+\end{figure}
+
+For the leftward pointing edges,
+the first clause was chosen,
+and for the rightward pointing edges,
+the second clause was chosen.
+After each clause choice,
+the clause variables are renamed apart,
+and the head variable unifications are solved as far as possible
+and substituted into the body.
+The resulting goal is the resolvent for that edge.
+
+Leaf nodes containing solved goals are the computed answers.
+The black square indicates that
+unification of the head variables failed,
+thus the derivation
+(that is, the branch of the tree)
+fails.
+Thus,
+a depth-first, left-right traversal of this tree
+produces the following three answers:
+\begin{verbatim}
+    { X = [], Y = [1,2] }
+    { X = [1], Y = [2] }
+    { X = [1,2], Y = [] }
+\end{verbatim}
+There are no choice points remaining
+once the black square is reached,
+so if further solutions are sought after the first three
+then the query as a whole will fail.
+
 Like derivations,
 SLD trees can be considered successful, failed, or nonterminating.
 Since there may be multiple derivations to consider
@@ -641,8 +711,10 @@ A query or goal is successful, failed, or nonterminating,
 depending on whether the SLD tree that derives from it
 is successful, failed, or nonterminating,
 respectively.
-
-% XXX example with pictures
+For example,
+the query from Figure~\ref{fig:sld-tree}
+is successful since three answers are computed
+before it fails.
 
 
 \section{Soundness and completeness}
@@ -656,6 +728,13 @@ In many cases the concepts come in pairs,
 one corresponding to the declarative view
 and the other to the operational view,
 which nonetheless reflect the same underlying concept.
+
+Figure~\ref{fig:correspondence} shows some of the correspondences
+between declarative concepts and their operational counterparts.
+Of particular importance is that between validity and provability,
+as that provides the basis for many of the other equivalences.
+The relationship between them
+is expressed by the following theorems.
 
 \begin{figure}
 \begin{center}
@@ -676,13 +755,6 @@ Correspondences between declarative and operational concepts.
 \label{fig:correspondence}
 }
 \end{figure}
-
-Figure~\ref{fig:correspondence} shows some of the correspondences
-between declarative concepts and their operational counterparts.
-Of particular importance is that between validity and provability,
-as that provides the basis for many of the other equivalences.
-The relationship between them
-is expressed by the following theorems.
 
 \begin{theorem}[Soundness] \label{thm:soundness}
 Let $\phi$ be any formula.
