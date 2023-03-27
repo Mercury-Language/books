@@ -539,6 +539,7 @@ so we wish to exclude it as a possible solution.
 
 To support these requirements,
 a number of axioms are generated for each type.
+These are known as the \emph{free equality axioms}.
 Consider the type definitions in Figure~\ref{fig:decl-foobar}.
 The constants are \sym{a}, \sym{b} and \sym{nil},
 and \sym{cons/2} is the only other function symbol.
@@ -555,7 +556,7 @@ or declared functions.
 \label{fig:decl-foobar}}
 \end{figure}
 
-The equality axioms for \sym{foo} and \sym{bar}
+The free equality axioms for \sym{foo} and \sym{bar}
 are shown in Figure~\ref{fig:ax-foobar}.
 The two in the first row say that
 ground data terms are not equal
@@ -612,8 +613,7 @@ which would otherwise describe an infinite term,
 is always false because $x$ occurs in the term
 that it is supposedly equal to.
 
-With the axioms we have defined
-we can no longer say that
+With the free equality axioms we can no longer say that
 ground data terms that are syntactically different may be equal.
 For example, the axioms allow us to infer
 \[
@@ -628,7 +628,7 @@ then by the third axiom we have that $\ct{a} = \ct{b}$.
 This contradicts the first axiom,
 which means that our assumption must have been false.
 
-Without the equality axioms there would have been
+Without the free equality axioms there would have been
 no way to derive this proof.
 
 
