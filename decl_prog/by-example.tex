@@ -958,8 +958,8 @@ The type can be defined as follows:
 \begin{verbatim}
     :- type queue(T)
         --->    queue(
-                    front :: list(T),
-                    rev_back  :: list(T)
+                    front    :: list(T),
+                    rev_back :: list(T)
                 ).
 \end{verbatim}
 To formalize the above description,
@@ -991,7 +991,7 @@ Note that, here and elsewhere,
 we tend to use short variable names
 in order to keep the presentation compact in printed form.
 In real code it would be better to use more expressive names,
-such as \co{Front} and \co{Back}.
+such as \co{Front} and \co{RevBack}.
 
 It is instructive to look at how
 the clause as a whole is interpreted.

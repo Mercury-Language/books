@@ -20,14 +20,14 @@ We will take a similar approach,
 however we present the semantics,
 with a particular focus on how (first-order) Mercury programs
 are converted to logic formulas,
-before the deductive system is covered.
+\emph{before} we cover the deductive system.
 In the next chapter we will present the deductive system,
 which gives a computational interpretation to the logic.
 
 Mercury supports higher-order code, of course,
 so a first-order description will not directly cover all of it.
 First-order logic is also untyped.
-Despite this,
+Despite these differences,
 we can reduce Mercury's declarative semantics to first-order logic,
 which is conceptually much simpler than the alternatives---%
 first-order theories have relatively simple models,
@@ -82,10 +82,17 @@ Punctuation: we will use parentheses and commas in the usual way.
 For $n \geqslant 0$,
 a set of function symbols with arity $n$:
 \sym{f/2}, \sym{g/1}, \ldots
+% XXX This quantification seems strange. Why not say
+% A set of function symbols
+% \sym{f}, \sym{g}, \ldots,
+% each of which has a non-negative arity,
+% which we denote as e.g.
+% \sym{f/2}, \sym{g/1}, \ldots
 \item
 For $n \geqslant 0$,
 a set of predicate symbols with arity $n$:
 \sym{p/2}, \sym{q/3}, \ldots
+% XXX I would propose the same wording here.
 \end{enumerate}
 \caption{Symbols used in predicate calculus.\label{fig:symbols}}
 \end{figure}
@@ -104,37 +111,51 @@ To put it in programming terms,
 ``logical'' here means that
 the symbol is a fixed part of the language,
 while ``non-logical'' really just means user-defined.
+% XXX Which is why we should use "user-defined", instead of "non-logical",
+% from now on.
 
 By convention,
 we will use italics such as $a$, $b$, $x$, $y$ and $z$,
 possibly with subscripts,
 to stand for arbitrary variables.
+% XXX Then why not include $a$, $b$ in point 1 above?
+% XXX Should we write that we use "letters near the ends of the alphabet"
+% for variables?
 A sequence of variables may be written with an overbar,
 as in $\bar{x}$.
 The logical constants, logical connectives and quantifiers
 have their usual meanings,
 and we will write formulas following
 the usual rules of operator precedence.
+% XXX Which is?
+% usually negation bind tightest, followed by conjunction, followed by
+% disjunction, but where do implications and quantifiers fit in?
 Parentheses will be used in the conventional way
 to override this when required.
 
-The non-logical symbols are derived from declarations in the Mercury program.
-Function symbols include
-the data constructors declared in discriminated union types,
-as well as the declared functions.
-Predicate symbols are the declared predicates.
+The user-defined symbols in the semantics of a Mercury program
+come from the declarations in that program.
+Function symbols in the semantics include
+data constructors declared in discriminated union types,
+as well as declared functions.
+Predicate symbols come from declared predicates.
 We will use names such as \sym{f} and \sym{g} to stand for arbitrary functions,
-and names such as \sym{p} and \sym{q} to stand for arbitrary predicates.
+% XXX If you mean to include data constructors in this,
+% then this should say "function symbols" instead of "arbitrary functions".
+and names such as \sym{p} and \sym{q} to stand for predicates.
 We will sometimes refer to function symbols with arity zero
 as \emph{constants\label{gi:constant}},
 and use names such as \sym{a}, \sym{b} and \sym{c}
 to stand for arbitrary constants.
+% XXX This clashes with the use of $a$, $b$ etc as variables, mentioned above.
+% They differ in font, but (1) some readers won't notice that,
+% and (2) syntactic constants also need their semantic equivalents.
 
 The arity of a predicate or function symbol
 is listed after a slash, for example \sym{f/2} or \sym{p/1}.
 However,
 we will sometimes leave the arity off entirely
-when it is zero or clear from the context.
+when it is zero, and/or when the arity is clear from the context.
 Note that the arity is part of each symbol's identity:
 two symbols with the same name but different arities
 are considered different symbols.
@@ -175,8 +196,8 @@ we will refer to as a \emph{ground data term}.
 
 We will assume the existence of two function symbols,
 $[|]/2$ and $[]/0$,
-representing the list constructor and the empty list,
-respectively.
+representing the data constructors
+for nonempty lists and the empty list respectively.
 We will write list terms in an analogous way to Mercury list syntax,
 for example,
 we will write
@@ -204,7 +225,7 @@ otherwise it is \emph{free\label{gi:free}}.
 For example,
 $x$ is bound and $y$ is free
 in the formula $\forall x. \ct{f}(x, y) = y$.
-(Despite the nomenclature,
+(Despite the shared nomenclature,
 these notions are different from the notions of bound and free
 in Mercury's mode system.)
 
@@ -232,8 +253,10 @@ but for convenience
 Figure~\ref{fig:goals} summarizes the most important bits.
 In line with our notational convention,
 $\phi$ is the formula that corresponds to goals such as \co{Goal}.
-A subscript may be used in cases where there are multiple goals,
-so \co{Goal1} maps to $\phi_1$, and so on.
+For goals that have more than one subgoal,
+they are distinguished by suffixes in the expressions,
+and by the same suffixes being used as subscripts in formulae,
+so that \co{Goal1} maps to $\phi_1$, and so on.
 
 \begin{figure}
 \begin{center}
@@ -248,49 +271,142 @@ so \co{Goal1} maps to $\phi_1$, and so on.
 \qquad\co{false} & \false \\
 \qquad\co{t1 = t2} & $t_1 = t_2$ \\
 \qquad\co{p(t1, ..., tN)} & $\ct{p}(t_1, \ldots, t_n)$ \\
+\qquad\co{not Goal} & $\lnot \phi$ \\
 \qquad\co{Goal1, ..., GoalN} & $\phi_1 \land \ldots \land \phi_n$ \\
 \qquad\co{( Goal1 ; ... ; GoalN )} & $\phi_1 \lor \ldots \lor \phi_n$ \\
 \qquad\co{( if C then T else E )}
     & $(\phi_c \land \phi_t) \lor (\lnot \phi_c \land \phi_e)$ \\
-\qquad\co{some [X] Goal} & $\exists x.\, \phi$ \\[.5em]
+\qquad\co{some [X] Goal} & $\exists x.\, \phi$ \\
+\qquad\co{all [X] Goal} & see below \\
+\qquad\co{Goal1 => Goal2} & see below \\
+\qquad\co{Goal1 <= Goal2} & see below \\
+\qquad\co{Goal1 <=> Goal2} & see below \\[.5em]
 \multicolumn{2}{l}{where $\phi$ is the formula corresponding to \co{Goal}}
 \end{tabular}
 \end{center}
 \caption{Semantics of Mercury expressions and goals.\label{fig:goals}}
 \end{figure}
 
-Negations are not listed as goals,
-since in Mercury a negated goal is
-an abbreviation for a conditional goal.
-Specifically,
-the following translation takes place at the level of Mercury syntax.
-\begin{center}
-\begin{tabular}{rcl}
-\verb#not G#
-& $\quad\Longrightarrow\quad$ &
-\verb#( if G then false else true )#
-\end{tabular}
-\end{center}
-It should be easy to see that the resulting formula
-is equivalent to negation,
-since the goal on the right maps to the formula
+This table lists negations as a separate kind of goal,
+but any goal of the form \co{not Goal} can be transparently replaced
+by the equivalent goal
 \[
-    (\phi \land \false) \lor (\lnot \phi \land \true)
+    \verb#( if Goal then false else true )#
 \]
-which is logically equivalent to $\lnot \phi$.
+One can see that these two goals are equivalent
+by noting that the if-then-else form maps to the formula
+$(\phi \land \false) \lor (\lnot \phi \land \true)$.
+Since $\psi \land \false$ is always $\false$
+and since $\psi \land \true$ is always $\psi$,
+this is logically equivalent to $\lnot \phi$.
+The Mercury compiler \emph{could} therefore implement negations
+by reducing them to if-then-else, though it does not do so.
 
-Similarly,
-universal quantifications are not listed as goals.
-In this guide,
-the universal quantifications we encounter will be
-generated in ways other than from goals.
-The reference manual specifies all cases
-in which goal constructs are actually just syntactic abbreviations.
+However, there are some kinds of goals
+that the Mercury compiler \emph{does} implement
+by reducing them to other kinds of goals:
+unidirectional implications,
+bidirectional implications,
+and universal quantification.
 
-The mapping we have given here is not quite the full story,
-since we will need to add implicit quantifiers to the formulas,
-and extend the mapping to program clauses.
-We will address these points in the next two sections.
+In classical logic,
+the semantics of unidirectional implication,
+in both its forward \co{Goal1 => Goal2} form
+and in its equivalent backward form \co{Goal2 <= Goal1},
+is usually given as $(\lnot \phi_1) \lor \phi_2$.
+This short formula is adequate for the purposes of classical logic,
+because, when given a ground instance of this goal,
+it can tell you whether it is true or false in a given interpretation.
+However, it is inadequate for a programming language,
+whose concern is not judging whether a ground instance of a formula is true,
+but \emph{finding} the true ground instances,
+or, in other words,
+\emph{computing} the values of the variables that make the formula true.
+For this purpose,
+viewing \co{Goal1 => Goal2} as $(\lnot \phi_1) \lor \phi_2$ is limiting,
+because the fact that $\phi_1$ is negated
+does not allow variable bindings to flow from $\phi_1$ to $\phi_2$.
+Mercury therefore views the semantics of \co{Goal1 => Goal2}
+as being $(\lnot (\phi_1 \land (\lnot \phi_2))$.
+This formula \emph{does} allow variable bindings
+to flow from $\phi_1$ to $\phi_2$.
+
+The formulas
+$(\lnot \phi_1) \lor \phi_2$ and
+$\lnot (\phi_1 \land (\lnot \phi_2))$
+are equivalent in classical logic,
+which is concerned with truth,
+but they are \emph{not} equivalent in \emph{intuitionistic logic}
+(sometimes called \emph{constructive logic}),
+which is concerned with computability as well as truth.
+The main difference between the two logics is that
+while both accept proofs of the form
+``there exists an entity with this given property,
+and here is how you construct that entity'',
+only classical logic accepts proofs of the form
+``there must exist an entity with this given property,
+because assuming its nonexistence leads to a contradiction,
+but we don't have a method of constructing it''.
+There are therefore propositions
+that classical logic would say are true
+for which intuitionistic logic cannot say whether they are true or false.
+
+Just as $(\lnot \phi_1) \lor \phi_2$ is the obvious formula
+for \co{Goal1 => Goal2},
+$\forall x.\, \phi$ is the obvious formula for \co{all [X] Goal}.
+However, this formula does not work in a programming language either,
+because it does not provide a useful way
+to enumerate the values of \co{X}
+for which \co{Goal} should be checked to be true.
+(In theory, we could try to check whether
+\co{Goal} is true for all values in the type of \co{X},
+but even types as simple as ``list of integers''
+have an infinite number of values,
+so that does not work.)
+Mercury therefore views the semantics of \co{all [X] Goal}
+as being $\lnot (\exists x.\, \lnot \phi)$.
+This formula is equivalent to $\forall x.\, \phi$ in classical logic,
+but it allows code within $\phi$ itself
+to act the generator of the values of $x$.
+For example, in the frequent case
+where the goal inside the universal quantification is an implication,
+such as
+\begin{verbatim}
+    all [Item] (
+        set.member(Item, Set) => property(Item)
+    )
+\end{verbatim}
+the goal calling \co{set.member}
+will return all the items in \co{Set} one at a time as Item
+(\co{Set} having been bound by earlier code),
+until either
+\begin{itemize}
+\item
+one of the items fails the property test
+(in which case the universal quantification goal fails), or
+\item
+there are no more items left to return
+(in which case the universal quantification goal succeeds).
+\end{itemize}
+
+In cases where the goal inside the universal quantification
+is a bidirectional implication,
+both subgoals of that implication
+must be able to generate values for the quantified variable.
+We will discuss the semantics of bidirectional implications
+at the end of the next section.
+
+% universal quantifications are not listed as goals.
+% In this guide,
+% the universal quantifications we encounter will be
+% generated in ways other than from goals.
+% The reference manual specifies all cases
+% in which goal constructs are actually just syntactic abbreviations.
+
+% The mapping we have given here is not quite the full story,
+% since we will need to add implicit quantifiers to the formulas,
+% and extend the mapping to program clauses.
+% We will address these points in the next two sections.
 
 
 \section{Implicit quantification}
@@ -299,44 +415,97 @@ We will address these points in the next two sections.
 The usual rule in mathematics
 is that free variables in a formula
 are implicitly universally quantified across the whole formula%
-\footnote{
-For example,
+% \footnote{
+(For example,
 in a mathematical identity such as
 $\sin^2\theta + \cos^2\theta = 1$,
 the equation is meant to be taken as true
-for \emph{all} values of $\theta$.
-}.
+for \emph{all} values of $\theta$.)
+% }.
 This is not quite what we want for Mercury's semantics,
-since in Mercury code there are common cases
-which require existential quantification
-in order to avoid spurious errors.
-It is convenient for the programmer,
-and produces a natural result,
-if these existential quantifications are added implicitly
-before applying the usual mathematical rule.
+because in Mercury code there are common situations
+in which universal quantification over the entire clause
+clashes with what most programmers expect.
+To avoid violating the ``law of least astonishment'',
+Mercury therefore quantifies some variables
+differently to the usual mathematical rule.
 
 In first-order code,
-the most important case is that of variables in a conditional goal
-that are used in the condition and possibly also in the then-branch,
-but not anywhere else that bindings from the condition
-could reach during execution.
-For a conditional that maps to the formula
-$(\phi_c \land \phi_t) \lor (\lnot \phi_c \land \phi_e)$,
-if $\bar{x}$ is the set of variables in question
-then the formula is implicitly quantified as follows.
+the most important exception consists of variables
+that are intended to be bound by the condition of an if-then-else.
+The values of such variables are available
+in the rest of the condition (the part after the goal that bound them)
+and in the then-part of the if-then-else, but
+\begin{itemize}
+\item
+they are not available in the else-part of that if-then-else
+because that code is executed only if the condition fails,
+and failed computations cannot generate any bindings; and
+\item
+they are not available in any part of the clause outside of that if-then-else,
+because execution may get after taking the else branch in that if-then-else,
+which again means that the variable binding won't have taken place.
+\end{itemize}
+
+This means that variables that
+the programmer intends to be bound by the condition of an if-then-else
+may occur in that condition and in the then-part that follows it,
+but nowhere else in the clause.
+Mercury implicitly quantifies an if-then-else \co{( if C then T else E )}
+where $\bar{x}$ is the set of the variable for which this is true
+like this:
 \[
     (\exists \bar{x}.\, \phi_c \land \phi_t) \lor
     (\lnot (\exists \bar{x}.\, \phi_c) \land \phi_e)
 \]
-Note that the first quantifier ranges over the then-branch
-but the second quantifier does not range over the else-branch.
-This reflects the fact that variables bound in the condition
-can be used in the former but not the latter.
+Note that
+\begin{itemize}
+\item
+the variables in $\bar{x}$ are quantified existentially
+and in these scopes derived from just the if-then-else goal,
+rather than universally and over the scope of the entire clause, and
+\item
+the first quantifier's scope includes the then-branch goal
+but the second quantifier's scope does not include the else-branch goal,
+reflecting the fact that such variables cannot be used there.
+\end{itemize}
 
-The implicit quantification process is applied
-\emph{after} the expansion of syntactic abbreviations,
-so an analogous process effectively applies to negations
-and other goals that are abbreviations for conditional goals.
+This implicit introduction of existential quantifiers
+interacts with the semantics of bidirectional implications
+(or bi-implications for short).
+The obvious semantics of \co{Goal1 <=> Goal2}
+is the conjunction of the formulae
+for \co{Goal1 => Goal2} and \co{Goal2 => Goal1},
+which for Mercury is
+\[
+    (\lnot (\phi_1 \land (\lnot \phi_2))) \land
+    (\lnot (\phi_2 \land (\lnot \phi_1)))
+\]
+However, this does have the effect of duplicating both $\phi_1$ and $\phi_2$.
+If either $\phi_1$ or $\phi_2$ (or both) contain if-then-elses,
+then any variable that \emph{used} to occur
+only in the condition and the then-part of such an if-then-else,
+will now occur outside of that if-then-else:
+specifically, it will occur in the other copy of that if-then-else.
+This is why the Mercury compiler expands out bi-implications
+(in other words, it replaces \co{Goal1 <=> Goal2}
+with the conjunction of \co{Goal1 => Goal2} and \co{Goal2 => Goal1})
+only \emph{after} it has inserted all needed existential quantifiers
+into if-then-elses.
+Bi-implications are the only Mercury constructs
+whose implementation in terms of other Mercury constructs
+can duplicate subgoals,
+so other Mercury constructs that are implemented this way
+(such as unidirectional implications)
+are expanded out much earlier.
+% XXX Is the info added by that last sentence
+% useful to readers of this guide?
+
+% The implicit quantification process is applied
+% \emph{after} the expansion of syntactic abbreviations,
+% so an analogous process effectively applies to negations
+% and other goals that are abbreviations for conditional goals.
+% % XXX Readers don't yet know what those "other goals" are.
 
 
 \section{Clauses}
