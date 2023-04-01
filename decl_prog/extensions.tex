@@ -278,11 +278,78 @@ they can always be wrapped in a \co{semidet} predicate.
 \section{Exceptions}
 \label{sec:exceptions}
 
-What is the declarative semantics of throwing an exception?
-This may seem an obvious question,
-since a declarative semantics is provided for catching exceptions.
-But despite this, at the time of writing
-the Mercury documentation does not give a clear answer.
+\subsection{Catching}
+\label{sec:catch}
+
+Mercury allows for thrown exceptions to be caught
+with the use of ``try'' goals.
+One way a try goal can be written is as follows:
+\begin{verbatim}
+    try [] Goal
+    then Then
+    catch_any V -> Catch
+\end{verbatim}
+Here \co{Goal}, \co{Then} and \co{Catch} are goals,
+and \co{V} is a variable.
+We will assume that none of the goals can fail,
+and neither can any of them succeed more than once.
+(This is not the most general form of ``try'' goals;
+see the Mercury reference manual for the full specification.)
+
+Operationally,
+\co{Goal} is executed first.
+If that succeeds without throwing an exception
+then \co{Then} is executed.
+Otherwise, if an exception is thrown,
+\co{Catch} is executed.
+In the end the try goal as a whole succeeds exactly once.
+
+The declarative semantics of this code is as follows:
+\[
+    (\phi_{\ct{goal}} \land \phi_{\ct{then}}) \lor
+    (\exists v.\, \phi_{\ct{catch}})
+\]
+This states that either
+$\phi_{\ct{goal}}$ and $\phi_{\ct{then}}$ are both true,
+or there is some value $v$ (the exception value)
+for which $\phi_{\ct{catch}}$ is true.
+In other words,
+there are multiple solutions to the try goal:
+one from the normal code
+and one from the exception-handling code
+for each possible exception value.
+
+If execution was to be operationally complete,
+it would need to produce all of these solutions.
+Obviously,
+this is not what is intended:
+we only want the solution from the normal code if possible,
+otherwise a single solution from the exception-handling code
+for the exception that is thrown.
+
+For this we use the technique
+that we introduced earlier in Section~\ref{sec:committed-choice}.
+The compiler infers the try goal to be \co{cc\_multi},
+and leaves an intentional completeness gap
+between the declarative and operational semantics.
+Thus,
+while declaratively all solutions are defined,
+operationally the try goal
+is defined in terms of the operational semantics of $\phi_{\ct{goal}}$.
+The behaviour is kept consistent with the declarative semantics,
+since the compiler ensures that
+backtracking will not require
+both the normal and the exceptional outputs
+to be produced.
+
+
+\subsection{Throwing}
+\label{sec:throw}
+
+We have given a semantics for catching exceptions
+that allows exception handling to be embedded
+into the classical, two-valued logic.
+How do we do the same with throwing exceptions?
 
 It might be tempting to just say that, declaratively,
 throwing an exception is the same as being false.
@@ -294,15 +361,17 @@ If exceptions are meant to be false
 then negated exceptions must be true,
 which breaks our own rule.
 
-The operational requirements are sufficiently understood:
+The required operational requirements are sufficiently clear:
 resolving an exception must neither succeed nor fail.
 There can be no problem with soundness,
 since success and failure are
-the only results that would constrain the models,
-but this is not the case for completeness.
+the only results that would constrain the models.
+This is not the case for completeness, however.
 In order to maintain completeness,
-throwing an exception cannot be valid as that would require success,
-and it cannot be unsatisfiable as that would require failure.
+throwing an exception cannot be considered valid
+as that would require success,
+and it cannot be considered unsatisfiable
+as that would require failure.
 
 There is a third option, however,
 which is that throwing an exception
@@ -310,7 +379,7 @@ can be considered contingent\label{gi:contingent2}.
 That is, there exists a model in which it is true
 and another in which it is false.
 With this arrangement
-the deductive system can arguably be considered complete,
+the deductive system can be seen to be reasonably complete,
 since it would not be required to
 prove anything at all in the case of thrown exceptions.
 
@@ -350,8 +419,16 @@ is true in that model.
 The compiler would therefore be justified
 in replacing this goal with \co{Y = 1},
 meaning that the exception does not get thrown.
-As discussed above, however,
-it will not do so if the operational semantics is strict.
+
+In general, however,
+it is not possible to verify that the two branches
+of the if-then-else goal have the same solutions,
+except by executing both of them.
+Thus, the operational semantics must still be incomplete,
+since it is not always possible to do this.
+This incompleteness does not matter, though,
+since we can reasonably assume that
+the programmer intends the exception to be thrown.
 
 
 \section{Types}

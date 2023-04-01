@@ -1039,6 +1039,7 @@ The second situation in which choice points are not required
 is if the programmer only requires \emph{some} solution,
 and is not interested in finding any alternatives
 once a solution has been found.
+This is sometimes referred to as ``don't care'' nondeterminism.
 For example, consider the following code
 that is slightly different from before,
 in that the output from \sym{p/1} affects the result:
@@ -1063,7 +1064,8 @@ will cause uniqueness to be lost.
 The compiler will produce an error message to this effect.
 
 If, however,
-the programmer considers all answers to be equally good,
+the programmer considers all answers to be equally good
+(that is, they don't care which answer they get),
 then backtracking is not actually wanted.
 It can be avoided by declaring \sym{check/2}
 to have a determinism of \co{cc\_multi} as follows:
@@ -1079,13 +1081,41 @@ The code is therefore accepted by the compiler.
 
 To support the committed-choice determinism categories,
 the compiler ensures that
-no call to a predicate with such a determinism
+no goal with such a determinism
 occurs at a point in the code that is reachable via backtracking.
-As such,
-even though the choice points are required
-for operational completeness,
+One implication of this is that,
+if committed-choice nondeterminism is introduced by a goal,
+one of the following three things must hold:
+\begin{itemize}
+\item
+The compiler determines that it can perform a commit
+after some ancestor goal,
+prior to any possible failure occurring.
+\item
+The programmer uses a ``promise'' on some ancestor goal,
+prior to any possible failure occurring,
+to state that all solutions are equivalent.
+This allows the compiler to perform the commit
+without further verification.
+\item
+The \sym{main/2} predicate has determinism \co{cc\_multi}.
+\end{itemize}
+In the third case,
+the program as a whole commits to one of the possible solutions,
+that is, final I/O states,
+that is defined by the declarative semantics.
+
+Given that none of the code in question
+can be reached via backtracking,
+we can infer that
 the behaviour is still consistent
 with respect to a declarative semantics.
+As such,
+even though choice points would be required
+for operational completeness,
+the code is still pure and
+the programmer is still able to
+reason about the program declaratively.
 
 Effectively,
 committed-choice nondeterminism allows the programmer
@@ -1093,7 +1123,7 @@ to \emph{intentionally} introduce operational incompleteness,
 in controlled circumstances.
 As we will see later on,
 this can be used by a programmer
-to give a declarative semantics to a predicate
+to give a declarative semantics to code
 whose real behaviour is only defined operationally.
 
 
