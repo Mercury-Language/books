@@ -8,13 +8,13 @@ Consider the code in Figure~\ref{fig:len-app}
 that defines versions of length and append
 that are specialized to operate on lists
 whose elements belong to a very simple type
-that has only two values: \verb#a# and \verb#b#.
+that has only two values: \verb#c# and \verb#d#.
 
 \begin{figure}[htb]
 \begin{verbatim}
 :- type e
-    --->    a
-    ;       b.
+    --->    c
+    ;       d.
 
 :- func len(list(e)) = int.
 
@@ -32,22 +32,26 @@ app([A | As], Bs, [C | Cs]) :-
 \end{figure}
 
 Figure~\ref{fig:len-interp} gives a picture
-of the declarative semantics of \sym{len/1}.
-This semantics consists of a table of \emph{atoms\label{gi:atom}},
-which in this case is short for \emph{atomic formulas}.
+of the declarative semantics of \sym{len/1},
+which consists of a table of \emph{atomic formulas},
+or \emph{atoms\label{gi:atom}} for short.
 (This is one of several uses of the word ``atom'' in logic programming;
 there are others as well.)
 For a function of arity $n$, each atom in the table
-consists of the function name applied to $n + 1$ terms,
-where the last, distinguished term is the function result.
-(For a predicate of arity $n$, each atom in the table
-consists of the predicate name applied to $n$ terms,
-none of the terms being distinguished.)
-% each of which is an \emph{instance}
-% of the head of one (or more) of the clauses of the function,
-% mapping each possible argument value of the \sym{len/1} function
-% to the corresponding result.
-These atoms must be \emph{ground},
+consists of an equation between
+the function name applied to $n$ argument terms,
+and a term that is the result of
+applying that function to the argument terms.
+So for \sym{len/1},
+this is an equation between \sym{len} applied to a list,
+and the length of that list.
+
+% XXX the following point is made in the next para:
+% (For a predicate of arity $n$, each atom in the table
+% consists of the predicate name applied to $n$ terms,
+% none of the terms being distinguished.)
+
+The atoms in the table must be \emph{ground},
 which means that they may not contain any variables.
 The table is infinite,
 but like the multiplication table---which is also infinite---%
@@ -58,22 +62,22 @@ by looking at (or thinking about) only a finite part of it.
 \begin{minipage}{0.5\textwidth}
 \begin{verbatim}
 len([]) = 0
-len([a]) = 1
-len([b]) = 1
-len([a, a]) = 2
-len([a, b]) = 2
-len([b, a]) = 2
-len([b, b]) = 2
+len([c]) = 1
+len([d]) = 1
+len([c, c]) = 2
+len([c, d]) = 2
+len([d, c]) = 2
+len([d, d]) = 2
 \end{verbatim}
 \end{minipage}%
 \begin{minipage}{0.5\textwidth}
 \begin{verbatim}
-len([a, a, a]) = 3
-len([a, a, b]) = 3
-len([a, b, a]) = 3
-len([a, b, b]) = 3
-len([b, a, a]) = 3
-len([b, a, b]) = 3
+len([c, c, c]) = 3
+len([c, c, d]) = 3
+len([c, d, c]) = 3
+len([c, d, d]) = 3
+len([d, c, c]) = 3
+len([d, c, d]) = 3
 ...
 \end{verbatim}
 \end{minipage}
@@ -83,37 +87,39 @@ len([b, a, b]) = 3
 
 Similarly, Figure~\ref{fig:app-interp} gives a picture
 of the declarative semantics of \sym{app/3}.
-It again also consists of a table of ground instances
-of the head of the \sym{app/3} predicate,
-although in this case,
-since \sym{app/3} is a predicate,
-no argument is distinguished as the return value.
-Instead, the arguments must satisfy the relation that holds
-between the two input lists
-and the output list that results from appending them.
+For a predicate of arity $n$,
+each atom in the table consists of
+the predicate name applied to $n$ terms.
+In this case the atom is not an equation
+and there is no result term,
+rather, it states that
+the arguments satisfy the relation denoted by that predicate.
+In the case of \sym{app/3}
+there are three list arguments,
+the third of which is the result of appending the first two.
 
 \begin{figure}[htb]
 \begin{minipage}{0.5\textwidth}
 \begin{verbatim}
 app([], [], [])
-app([], [a], [a])
-app([a], [], [a])
-app([], [b], [b])
-app([b], [], [b])
-app([], [a, a], [a, a])
-app([a], [a], [a, a])
-app([a, a], [], [a, a])
+app([], [c], [c])
+app([c], [], [c])
+app([], [d], [d])
+app([d], [], [d])
+app([], [c, c], [c, c])
+app([c], [c], [c, c])
+app([c, c], [], [c, c])
 \end{verbatim}
 \end{minipage}%
 \begin{minipage}{0.5\textwidth}
 \begin{verbatim}
-app([], [a, b], [a, b])
-app([a], [b], [a, b])
-app([a, b], [], [a, b])
-app([], [b, a], [b, a])
-app([b], [a], [b, a])
-app([b, a], [], [b, a])
-app([], [b, b], [b, b])
+app([], [c, d], [c, d])
+app([c], [d], [c, d])
+app([c, d], [], [c, d])
+app([], [d, c], [d, c])
+app([d], [c], [d, c])
+app([d, c], [], [d, c])
+app([], [d, d], [d, d])
 ...
 \end{verbatim}
 \end{minipage}
