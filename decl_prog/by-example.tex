@@ -25,7 +25,7 @@ len([_ | Xs]) = 1 + len(Xs).
 :- mode app(in, in, out) is det.
 
 app([], Bs, Bs).
-app([A | As], Bs, [C | Cs]) :-
+app([X | As], Bs, [X | Cs]) :-
     app(As, Bs, Cs).
 \end{verbatim}
 \caption{Specialized versions of length and append.\label{fig:len-app}}
@@ -1247,7 +1247,7 @@ Theorem~\ref{thm:partial-correctness} implies that this is possible.
 \begin{verbatim}
     :- type digits == list(int).
 
-    :- func to_string(integer) = string.
+    :- func to_string(digits) = string.
     to_string([]) = "0".
     to_string(As @ [_ | _]) =
         append_list(map(string, reverse(As))).
